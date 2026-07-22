@@ -1,6 +1,6 @@
-# [Project name]
+# DataVerse Data Product Catalog
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An enterprise data product catalog where data engineers browse data products, inspect glossary/schema and sample data, trigger pipeline runs, and publish/unpublish products.
 
 ## Run & Operate
 

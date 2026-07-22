@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: DataVerse data product catalog API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dataProducts
+    description: Data product catalog operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,193 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /catalog/summary:
+    get:
+      operationId: getCatalogSummary
+      tags: [dataProducts]
+      summary: Catalog summary counts
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CatalogSummary"
+  /data-products:
+    get:
+      operationId: listDataProducts
+      tags: [dataProducts]
+      summary: List data products
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - name: domain
+          in: query
+          required: false
+          schema: { type: string }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Data products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataProduct"
+  /data-products/{id}:
+    get:
+      operationId: getDataProduct
+      tags: [dataProducts]
+      summary: Get a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Data product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataProduct"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /data-products/{id}/status:
+    patch:
+      operationId: updateDataProductStatus
+      tags: [dataProducts]
+      summary: Publish or unpublish a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataProductStatusUpdate"
+      responses:
+        "200":
+          description: Updated data product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataProduct"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /data-products/{id}/glossary:
+    get:
+      operationId: getGlossaryFields
+      tags: [dataProducts]
+      summary: Glossary fields of a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Glossary fields
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GlossaryField"
+  /data-products/{id}/sample-data:
+    get:
+      operationId: getSampleData
+      tags: [dataProducts]
+      summary: Sample data rows of a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Sample data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SampleData"
+  /data-products/{id}/runs:
+    get:
+      operationId: listRuns
+      tags: [dataProducts]
+      summary: Run history of a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Runs, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductRun"
+    post:
+      operationId: triggerRun
+      tags: [dataProducts]
+      summary: Trigger a run now
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "201":
+          description: The created run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductRun"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+  /data-products/{id}/consumers:
+    get:
+      operationId: listConsumers
+      tags: [dataProducts]
+      summary: Consumers of a data product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Consumers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Consumer"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +222,116 @@ components:
           type: string
       required:
         - status
-
+    ApiMessage:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    CatalogSummary:
+      type: object
+      required: [totalProducts, publishedCount, draftCount, domains, healthyCount, failedCount]
+      properties:
+        totalProducts: { type: integer }
+        publishedCount: { type: integer }
+        draftCount: { type: integer }
+        healthyCount: { type: integer }
+        failedCount: { type: integer }
+        domains:
+          type: array
+          items:
+            type: object
+            required: [domain, count]
+            properties:
+              domain: { type: string }
+              count: { type: integer }
+    DataProduct:
+      type: object
+      required:
+        - id
+        - name
+        - urn
+        - description
+        - domain
+        - owner
+        - status
+        - version
+        - schedule
+        - tags
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        urn: { type: string }
+        description: { type: string }
+        domain: { type: string }
+        owner: { type: string }
+        status:
+          type: string
+          enum: [published, draft]
+        version: { type: string }
+        schedule: { type: string }
+        project: { type: ["string", "null"] }
+        sourceAlignment: { type: ["string", "null"] }
+        tags:
+          type: array
+          items: { type: string }
+        latestRun:
+          oneOf:
+            - $ref: "#/components/schemas/ProductRun"
+            - type: "null"
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    DataProductStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [published, draft]
+    GlossaryField:
+      type: object
+      required: [id, fieldName, mandatory, dataType, sourceTable, sourceColumn]
+      properties:
+        id: { type: integer }
+        fieldName: { type: string }
+        mandatory: { type: boolean }
+        dataType: { type: string }
+        sourceTable: { type: string }
+        sourceColumn: { type: string }
+        description: { type: ["string", "null"] }
+    SampleData:
+      type: object
+      required: [columns, rows]
+      properties:
+        columns:
+          type: array
+          items: { type: string }
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: { type: string }
+    ProductRun:
+      type: object
+      required: [id, dataProductId, status, startedAt]
+      properties:
+        id: { type: integer }
+        dataProductId: { type: integer }
+        status:
+          type: string
+          enum: [running, success, failed]
+        message: { type: ["string", "null"] }
+        startedAt: { type: string }
+        endedAt: { type: ["string", "null"] }
+        durationSeconds: { type: ["integer", "null"] }
+        rowsProcessed: { type: ["integer", "null"] }
+    Consumer:
+      type: object
+      required: [id, name, type, channel, lastAccessAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        type: { type: string }
+        channel: { type: string }
+        lastAccessAt: { type: string }

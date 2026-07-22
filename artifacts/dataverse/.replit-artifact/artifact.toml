@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "DataVerse Data Product Catalog"
+version = "1.0.0"
+id = "artifacts/dataverse"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23953
+
+[services.development]
+run = "pnpm --filter @workspace/dataverse run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dataverse", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/dataverse/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23953"
+BASE_PATH = "/"
