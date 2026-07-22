@@ -8,7 +8,7 @@
  * replace them with your API data, or pass a product via props.
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Play,
   Archive,
@@ -29,6 +29,60 @@ import {
   Search,
   AlertCircle,
 } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Styling bootstrap
+// ---------------------------------------------------------------------------
+// If your project does NOT have Tailwind CSS configured, this hook loads the
+// Tailwind Play CDN at runtime so every className in this file works
+// out of the box. If your project already has Tailwind, it does nothing
+// (it detects existing Tailwind styles and skips the CDN).
+//
+// NOTE: The Play CDN is fine for demos/prototypes. For production, install
+// Tailwind properly (https://tailwindcss.com/docs/installation) and this
+// hook will automatically be a no-op.
+
+const BASE_CSS = `
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  .dp-page {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .dp-page button { font-family: inherit; cursor: pointer; background: none; border: none; padding: 0; }
+  .dp-page table { border-collapse: collapse; }
+  .dp-page code, .dp-page .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+`;
+
+function useTailwind() {
+  useEffect(() => {
+    // Inject base reset + font styles once.
+    if (!document.getElementById("dp-base-css")) {
+      const style = document.createElement("style");
+      style.id = "dp-base-css";
+      style.textContent = BASE_CSS;
+      document.head.appendChild(style);
+    }
+
+    // Detect whether Tailwind is already available by testing a utility class.
+    const probe = document.createElement("div");
+    probe.className = "hidden";
+    probe.style.position = "absolute";
+    document.body.appendChild(probe);
+    const hasTailwind = getComputedStyle(probe).display === "none";
+    document.body.removeChild(probe);
+
+    if (!hasTailwind && !document.getElementById("dp-tailwind-cdn")) {
+      const script = document.createElement("script");
+      script.id = "dp-tailwind-cdn";
+      script.src = "https://cdn.tailwindcss.com";
+      document.head.appendChild(script);
+    }
+  }, []);
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,6 +251,8 @@ export default function DataProductDetailPage({
   onRunNow,
   onToggleStatus,
 }: DataProductDetailPageProps) {
+  useTailwind();
+
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [glossaryOpen, setGlossaryOpen] = useState(true);
@@ -218,7 +274,7 @@ export default function DataProductDetailPage({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="dp-page min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-[1600px] mx-auto px-6 py-4">
