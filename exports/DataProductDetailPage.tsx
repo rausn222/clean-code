@@ -1,14 +1,17 @@
 /**
- * DataProductDetailPage — single-file React + Tailwind CSS component (TSX).
+ * DataProductDetailPage — fully self-contained React component (TSX).
  *
- * Dependencies: react, lucide-react (icons), Tailwind CSS configured in the host app.
- * Drop this file into any React project and render <DataProductDetailPage />.
+ * ALL styling (colors, shadows, spacing, tabs, tables, hover states) is
+ * embedded in this file as plain CSS — no Tailwind, no external stylesheet,
+ * no CDN required. Only dependencies: react and lucide-react (icons).
  *
- * All data is self-contained below in SAMPLE_PRODUCT / SAMPLE_* constants —
- * replace them with your API data, or pass a product via props.
+ * Usage: drop this file into any React project and render
+ *   <DataProductDetailPage />
+ *
+ * Sample data is inlined below; replace it or pass props to use real data.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Play,
   Archive,
@@ -31,58 +34,331 @@ import {
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Styling bootstrap
+// Embedded stylesheet — every color, shadow and style used by the page
 // ---------------------------------------------------------------------------
-// If your project does NOT have Tailwind CSS configured, this hook loads the
-// Tailwind Play CDN at runtime so every className in this file works
-// out of the box. If your project already has Tailwind, it does nothing
-// (it detects existing Tailwind styles and skips the CDN).
-//
-// NOTE: The Play CDN is fine for demos/prototypes. For production, install
-// Tailwind properly (https://tailwindcss.com/docs/installation) and this
-// hook will automatically be a no-op.
 
-const BASE_CSS = `
-  *, *::before, *::after { box-sizing: border-box; }
-  body { margin: 0; }
-  .dp-page {
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .dp-page button { font-family: inherit; cursor: pointer; background: none; border: none; padding: 0; }
-  .dp-page table { border-collapse: collapse; }
-  .dp-page code, .dp-page .font-mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  }
-`;
+const STYLES = `
+/* ---------- Color palette ----------
+   Background page:   #f8fafc  (light slate)
+   Card background:   #ffffff
+   Borders:           #e2e8f0 / #f1f5f9
+   Text primary:      #0f172a
+   Text secondary:    #475569
+   Text muted:        #94a3b8
+   Brand (indigo):    #4f46e5 (buttons), #4338ca (hover), #eef2ff (tint)
+   Success (emerald): #059669 text, #ecfdf5 bg, #a7f3d0 border
+   Danger (rose):     #e11d48 text, #fff1f2 bg, #fecdd3 border
+------------------------------------- */
 
-function useTailwind() {
-  useEffect(() => {
-    // Inject base reset + font styles once.
-    if (!document.getElementById("dp-base-css")) {
-      const style = document.createElement("style");
-      style.id = "dp-base-css";
-      style.textContent = BASE_CSS;
-      document.head.appendChild(style);
-    }
+.dpd, .dpd * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    // Detect whether Tailwind is already available by testing a utility class.
-    const probe = document.createElement("div");
-    probe.className = "hidden";
-    probe.style.position = "absolute";
-    document.body.appendChild(probe);
-    const hasTailwind = getComputedStyle(probe).display === "none";
-    document.body.removeChild(probe);
-
-    if (!hasTailwind && !document.getElementById("dp-tailwind-cdn")) {
-      const script = document.createElement("script");
-      script.id = "dp-tailwind-cdn";
-      script.src = "https://cdn.tailwindcss.com";
-      document.head.appendChild(script);
-    }
-  }, []);
+.dpd {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+  line-height: 1.5;
 }
+
+.dpd button { font-family: inherit; cursor: pointer; background: none; border: none; color: inherit; }
+.dpd table { border-collapse: collapse; width: 100%; }
+.dpd .mono, .dpd code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* ---------- Header ---------- */
+.dpd-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.dpd-header-inner { max-width: 1600px; margin: 0 auto; padding: 16px 24px 0; }
+.dpd-header-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+
+.dpd-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #64748b; margin-bottom: 8px; }
+.dpd-breadcrumb .crumb-link { cursor: pointer; }
+.dpd-breadcrumb .crumb-link:hover { color: #0f172a; }
+.dpd-breadcrumb .crumb-current { color: #0f172a; font-weight: 500; }
+
+.dpd-title-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.dpd-title { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: #0f172a; }
+
+/* Badges */
+.dpd-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.dpd-badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+.dpd-badge-published { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.dpd-badge-published .dpd-badge-dot { background: #10b981; }
+.dpd-badge-draft { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+.dpd-badge-draft .dpd-badge-dot { background: #94a3b8; }
+.dpd-version {
+  font-size: 14px; color: #64748b; border: 1px solid #e2e8f0;
+  padding: 2px 8px; border-radius: 6px; background: #f8fafc;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Metadata ribbon */
+.dpd-meta { display: flex; flex-wrap: wrap; align-items: center; column-gap: 24px; row-gap: 8px; margin-top: 16px; font-size: 14px; color: #475569; }
+.dpd-meta-item { display: flex; align-items: center; gap: 8px; }
+.dpd-meta-label { color: #94a3b8; }
+.dpd-meta-value { font-weight: 500; color: #0f172a; display: inline-flex; align-items: center; gap: 6px; }
+.dpd-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #e0e7ff; color: #4338ca;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.dpd-meta-icon { width: 16px; height: 16px; color: #94a3b8; }
+
+/* Action buttons */
+.dpd-actions { display: flex; align-items: center; gap: 12px; align-self: flex-start; }
+.dpd-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 14px; font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.dpd-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.dpd-btn-secondary { background: #ffffff; border: 1px solid #cbd5e1; color: #334155; }
+.dpd-btn-secondary:hover:not(:disabled) { background: #f8fafc; color: #0f172a; }
+.dpd-btn-primary { background: #4f46e5; border: 1px solid #4f46e5; color: #ffffff; }
+.dpd-btn-primary:hover:not(:disabled) { background: #4338ca; }
+.dpd-btn-icon { padding: 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; color: #334155; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+.dpd-btn-icon:hover { background: #f8fafc; }
+.dpd-btn-tint {
+  padding: 6px 12px; background: #eef2ff; color: #4338ca;
+  border: 1px solid #c7d2fe; border-radius: 6px;
+  font-size: 14px; font-weight: 500; transition: background-color 0.15s ease;
+}
+.dpd-btn-tint:hover:not(:disabled) { background: #e0e7ff; }
+.dpd-btn-tint:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- Tabs ---------- */
+.dpd-tabs { max-width: 1600px; margin: 16px auto 0; padding: 0 24px; }
+.dpd-tabs-list { display: flex; gap: 4px; border-bottom: 1px solid #e2e8f0; overflow-x: auto; }
+.dpd-tab {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px; font-weight: 500;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.dpd-tab:hover { color: #1e293b; border-bottom-color: #cbd5e1; }
+.dpd-tab.active { color: #4338ca; border-bottom-color: #4f46e5; }
+.dpd-tab svg { width: 16px; height: 16px; }
+.dpd-tab.active svg { color: #4f46e5; }
+
+/* ---------- Layout ---------- */
+.dpd-main {
+  flex: 1; max-width: 1600px; width: 100%; margin: 0 auto;
+  padding: 24px; display: flex; align-items: flex-start; gap: 24px;
+}
+.dpd-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.dpd-rail { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 24px; }
+@media (max-width: 1024px) {
+  .dpd-main { flex-direction: column; }
+  .dpd-rail { width: 100%; }
+}
+
+/* ---------- Cards ---------- */
+.dpd-card {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+.dpd-card-pad { padding: 24px; }
+.dpd-section-title { font-size: 18px; font-weight: 600; color: #0f172a; }
+.dpd-desc { color: #475569; font-size: 14px; line-height: 1.65; margin: 16px 0 24px; white-space: pre-wrap; }
+
+/* URN box */
+.dpd-urn-box {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px; background: #f8fafc; border-radius: 8px;
+  border: 1px solid #f1f5f9; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.04);
+}
+.dpd-urn-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.dpd-urn-value {
+  font-size: 14px; color: #1e293b; word-break: break-all;
+  background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.dpd-copy-btn {
+  flex-shrink: 0; padding: 8px; margin-top: 20px; border-radius: 6px;
+  color: #64748b; border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+.dpd-copy-btn:hover { background: #ffffff; color: #4f46e5; border-color: #e2e8f0; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+
+/* Collapsible section headers */
+.dpd-collapse-head {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 16px; text-align: left;
+  background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.15s ease;
+}
+.dpd-collapse-head:hover { background: #f1f5f9; }
+.dpd-collapse-title { display: flex; align-items: center; gap: 8px; }
+.dpd-collapse-title svg { width: 20px; height: 20px; color: #4f46e5; }
+.dpd-chevron { width: 20px; height: 20px; color: #94a3b8; }
+.dpd-count-pill {
+  padding: 2px 10px; border-radius: 999px; margin-left: 8px;
+  background: #ffffff; border: 1px solid #e2e8f0; color: #475569;
+  font-size: 12px; font-weight: 500; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+
+/* ---------- Tables ---------- */
+.dpd-table-wrap { overflow-x: auto; }
+.dpd th {
+  padding: 12px 24px; text-align: left;
+  font-size: 11px; font-weight: 600; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+.dpd td { padding: 12px 24px; font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+.dpd tbody tr { transition: background-color 0.15s ease; }
+.dpd tbody tr:hover { background: rgba(248, 250, 252, 0.8); }
+.dpd tbody tr:last-child td { border-bottom: none; }
+.dpd td.strong { font-weight: 500; color: #0f172a; }
+.dpd td.muted { color: #475569; }
+.dpd td.mono-cell { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+
+/* Small badges inside tables */
+.dpd-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 12px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.04); }
+.dpd-pill-yes { color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; font-weight: 700; }
+.dpd-pill-no  { color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; font-weight: 500; }
+.dpd-datatype {
+  font-size: 12px; padding: 2px 6px; border-radius: 4px;
+  background: #eef2ff; border: 1px solid #e0e7ff; color: #4338ca;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Run status badges */
+.dpd-run-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+.dpd-run-badge svg { width: 14px; height: 14px; }
+.dpd-run-success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.dpd-run-failed  { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.dpd-run-running { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+
+/* Sample data table */
+.dpd-sample-table { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.dpd-sample-table td { color: #475569; padding: 10px 24px; }
+.dpd-sample-table td.first { font-weight: 500; color: #0f172a; }
+.dpd-sample-footer { background: #f8fafc; padding: 12px; text-align: center; border-top: 1px solid #e2e8f0; }
+.dpd-link-btn { font-size: 14px; font-weight: 500; color: #4f46e5; transition: color 0.15s ease; }
+.dpd-link-btn:hover { color: #3730a3; }
+
+/* Empty states */
+.dpd-empty {
+  text-align: center; padding: 48px 16px; color: #64748b;
+  border: 1px dashed #e2e8f0; border-radius: 8px;
+}
+.dpd-empty svg { width: 32px; height: 32px; color: #cbd5e1; margin: 0 auto 12px; display: block; }
+
+/* Consumers grid */
+.dpd-consumers { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 768px) { .dpd-consumers { grid-template-columns: 1fr 1fr; } }
+.dpd-consumer {
+  display: flex; align-items: flex-start; gap: 16px; padding: 16px;
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+  transition: border-color 0.15s ease;
+}
+.dpd-consumer:hover { border-color: #c7d2fe; }
+.dpd-consumer-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: #f1f5f9; color: #64748b;
+  display: flex; align-items: center; justify-content: center;
+}
+.dpd-consumer-icon svg { width: 20px; height: 20px; }
+.dpd-consumer-name { font-weight: 600; color: #0f172a; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dpd-consumer-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.dpd-consumer-tag { padding: 2px 8px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px; font-weight: 500; color: #475569; }
+.dpd-consumer-access { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+.dpd-consumer-access svg { width: 14px; height: 14px; }
+
+/* Lineage placeholder */
+.dpd-lineage { text-align: center; padding: 64px 16px; color: #64748b; }
+.dpd-lineage svg { width: 48px; height: 48px; color: #cbd5e1; margin: 0 auto 16px; display: block; }
+.dpd-lineage h3 { font-size: 18px; font-weight: 500; color: #0f172a; margin-bottom: 8px; }
+.dpd-lineage p { max-width: 420px; margin: 0 auto; font-size: 14px; }
+.dpd-alignment { margin-top: 24px; display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px; text-align: left; }
+.dpd-alignment-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 4px; }
+.dpd-alignment code { font-size: 14px; color: #4338ca; }
+
+/* ---------- Right rail ---------- */
+.dpd-rail-head {
+  padding: 16px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dpd-rail-title { font-weight: 600; color: #0f172a; font-size: 15px; }
+.dpd-rail-link { font-size: 12px; font-weight: 500; color: #4f46e5; }
+.dpd-rail-link:hover { color: #3730a3; }
+.dpd-rail-body { padding: 20px; }
+
+.dpd-health { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.dpd-health-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; border: 1px solid;
+}
+.dpd-health-icon svg { width: 24px; height: 24px; }
+.dpd-health-success { background: #ecfdf5; border-color: #d1fae5; color: #059669; }
+.dpd-health-failed  { background: #fff1f2; border-color: #ffe4e6; color: #e11d48; }
+.dpd-health-running { background: #eef2ff; border-color: #e0e7ff; color: #4f46e5; }
+.dpd-health-status { font-size: 18px; font-weight: 700; color: #0f172a; text-transform: capitalize; }
+.dpd-health-msg { font-size: 12px; color: #64748b; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dpd-stat-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 16px; }
+.dpd-stat-row:last-child { margin-bottom: 0; }
+.dpd-stat-label { display: flex; align-items: center; gap: 8px; color: #64748b; }
+.dpd-stat-label svg { width: 16px; height: 16px; }
+.dpd-stat-value { color: #0f172a; font-weight: 500; }
+
+.dpd-tags-block { margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+.dpd-tags-label {
+  font-size: 11px; font-weight: 700; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+}
+.dpd-tags-label svg { width: 14px; height: 14px; }
+.dpd-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.dpd-tag {
+  padding: 4px 10px; background: #f1f5f9; border: 1px solid #e2e8f0;
+  color: #334155; font-size: 12px; font-weight: 500; border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+
+.dpd-quicklinks { padding: 16px; }
+.dpd-quicklinks h3 { font-weight: 600; color: #0f172a; margin-bottom: 12px; font-size: 14px; }
+.dpd-quicklink {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 8px; font-size: 14px; color: #475569; border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  font-weight: 500; text-align: left;
+}
+.dpd-quicklink:hover { color: #0f172a; background: #f8fafc; }
+.dpd-quicklink svg { width: 16px; height: 16px; color: #94a3b8; }
+
+/* Utility */
+.dpd-icon-sm { width: 16px; height: 16px; }
+.dpd-pulse { animation: dpd-pulse 1.5s ease-in-out infinite; }
+@keyframes dpd-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -251,8 +527,6 @@ export default function DataProductDetailPage({
   onRunNow,
   onToggleStatus,
 }: DataProductDetailPageProps) {
-  useTailwind();
-
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [glossaryOpen, setGlossaryOpen] = useState(true);
@@ -274,117 +548,102 @@ export default function DataProductDetailPage({
   ];
 
   return (
-    <div className="dp-page min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+    <div className="dpd">
+      {/* Embedded stylesheet — makes the component fully self-contained */}
+      <style dangerouslySetInnerHTML={{ __html: STYLES }} />
+
+      {/* ---------------- Header ---------------- */}
+      <header className="dpd-header">
+        <div className="dpd-header-inner">
+          <div className="dpd-header-row">
             <div>
-              <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                <span className="hover:text-slate-900 cursor-pointer">DataVerse</span>
+              <div className="dpd-breadcrumb">
+                <span className="crumb-link">DataVerse</span>
                 <span>/</span>
-                <span className="hover:text-slate-900 cursor-pointer">{product.domain}</span>
+                <span className="crumb-link">{product.domain}</span>
                 <span>/</span>
-                <span className="text-slate-900 font-medium truncate max-w-[200px] sm:max-w-md">{product.name}</span>
+                <span className="crumb-current">{product.name}</span>
               </div>
 
-              <div className="flex items-center gap-4 flex-wrap">
-                <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{product.name}</h1>
+              <div className="dpd-title-row">
+                <h1 className="dpd-title">{product.name}</h1>
                 {product.status === "published" ? (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="dpd-badge dpd-badge-published">
+                    <span className="dpd-badge-dot" />
                     Published
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 shadow-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  <span className="dpd-badge dpd-badge-draft">
+                    <span className="dpd-badge-dot" />
                     Draft
                   </span>
                 )}
-                <span className="text-sm text-slate-500 border border-slate-200 px-2 py-0.5 rounded-md bg-slate-50 shadow-sm font-mono">
-                  v{product.version}
-                </span>
+                <span className="dpd-version">v{product.version}</span>
               </div>
 
-              {/* Metadata ribbon */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 text-sm text-slate-600">
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Domain:</span>
-                  <span className="font-medium text-slate-900">{product.domain}</span>
+              <div className="dpd-meta">
+                <div className="dpd-meta-item">
+                  <span className="dpd-meta-label">Domain:</span>
+                  <span className="dpd-meta-value">{product.domain}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Owner:</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shadow-sm">
-                      {product.owner.substring(0, 2).toUpperCase()}
-                    </span>
-                    <span className="font-medium text-slate-900">{product.owner}</span>
-                  </div>
+                <div className="dpd-meta-item">
+                  <span className="dpd-meta-label">Owner:</span>
+                  <span className="dpd-meta-value">
+                    <span className="dpd-avatar">{product.owner.substring(0, 2).toUpperCase()}</span>
+                    {product.owner}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Schedule:</span>
-                  <div className="flex items-center gap-1.5 text-slate-900 font-medium">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span>{product.schedule}</span>
-                  </div>
+                <div className="dpd-meta-item">
+                  <span className="dpd-meta-label">Schedule:</span>
+                  <span className="dpd-meta-value">
+                    <Clock className="dpd-meta-icon" />
+                    {product.schedule}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Last Updated:</span>
-                  <span className="text-slate-900 font-medium">{formatDateTime(product.updatedAt)}</span>
+                <div className="dpd-meta-item">
+                  <span className="dpd-meta-label">Last Updated:</span>
+                  <span className="dpd-meta-value">{formatDateTime(product.updatedAt)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 self-start">
-              <button
-                onClick={onToggleStatus}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm"
-              >
-                <Archive className="w-4 h-4" />
+            <div className="dpd-actions">
+              <button className="dpd-btn dpd-btn-secondary" onClick={onToggleStatus}>
+                <Archive className="dpd-icon-sm" />
                 {product.status === "published" ? "Unpublish" : "Publish"}
               </button>
-              <button
-                onClick={onRunNow}
-                disabled={isRunning}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-              >
+              <button className="dpd-btn dpd-btn-primary" onClick={onRunNow} disabled={isRunning}>
                 {isRunning ? (
                   <>
-                    <Activity className="w-4 h-4 animate-pulse" />
+                    <Activity className="dpd-icon-sm dpd-pulse" />
                     Running...
                   </>
                 ) : (
                   <>
-                    <Play className="w-4 h-4" />
+                    <Play className="dpd-icon-sm" />
                     Run Now
                   </>
                 )}
               </button>
-              <button className="p-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
-                <MoreVertical className="w-4 h-4" />
+              <button className="dpd-btn-icon">
+                <MoreVertical className="dpd-icon-sm" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="max-w-[1600px] mx-auto px-6 mt-4">
-          <div className="flex gap-1 border-b border-slate-200 overflow-x-auto">
+        {/* ---------------- Tabs ---------------- */}
+        <div className="dpd-tabs">
+          <div className="dpd-tabs-list">
             {tabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  className={`dpd-tab${activeTab === tab.id ? " active" : ""}`}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    isActive
-                      ? "border-indigo-600 text-indigo-700"
-                      : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                  }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-indigo-600" : ""}`} />
+                  <Icon />
                   {tab.label}
                 </button>
               );
@@ -393,99 +652,73 @@ export default function DataProductDetailPage({
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 flex flex-col lg:flex-row items-start gap-6">
-        {/* Center content */}
-        <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
+      {/* ---------------- Main ---------------- */}
+      <main className="dpd-main">
+        <div className="dpd-content">
           {activeTab === "overview" && (
             <>
               {/* About */}
-              <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">About</h2>
-                <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">
-                  {product.description || "No description provided."}
-                </p>
+              <section className="dpd-card dpd-card-pad">
+                <h2 className="dpd-section-title">About</h2>
+                <p className="dpd-desc">{product.description || "No description provided."}</p>
 
-                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100 shadow-sm">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">
-                      URN (Universal Resource Name)
-                    </div>
-                    <div className="text-sm font-mono text-slate-800 break-all bg-white p-2 rounded border border-slate-200">
-                      {product.urn}
-                    </div>
+                <div className="dpd-urn-box">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="dpd-urn-label">URN (Universal Resource Name)</div>
+                    <div className="dpd-urn-value">{product.urn}</div>
                   </div>
-                  <button
-                    onClick={handleCopyUrn}
-                    className="flex-shrink-0 p-2 text-slate-500 hover:bg-white hover:shadow-sm hover:text-indigo-600 rounded-md transition-all border border-transparent hover:border-slate-200 mt-5"
-                    title="Copy URN"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <button className="dpd-copy-btn" onClick={handleCopyUrn} title="Copy URN">
+                    {copied ? <Check className="dpd-icon-sm" style={{ color: "#059669" }} /> : <Copy className="dpd-icon-sm" />}
                   </button>
                 </div>
               </section>
 
               {/* Glossary */}
-              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <button
-                  onClick={() => setGlossaryOpen(!glossaryOpen)}
-                  className="flex items-center justify-between p-4 w-full bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-200"
-                >
-                  <div className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-indigo-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Data Product Glossary</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-medium ml-2 shadow-sm">
-                      {glossary.length} columns
-                    </span>
-                  </div>
-                  {glossaryOpen ? (
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
-                  )}
+              <section className="dpd-card">
+                <button className="dpd-collapse-head" onClick={() => setGlossaryOpen(!glossaryOpen)}>
+                  <span className="dpd-collapse-title">
+                    <Database />
+                    <span className="dpd-section-title">Data Product Glossary</span>
+                    <span className="dpd-count-pill">{glossary.length} columns</span>
+                  </span>
+                  {glossaryOpen ? <ChevronDown className="dpd-chevron" /> : <ChevronRight className="dpd-chevron" />}
                 </button>
 
                 {glossaryOpen && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left whitespace-nowrap">
-                      <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200 font-semibold tracking-wider">
+                  <div className="dpd-table-wrap">
+                    <table>
+                      <thead>
                         <tr>
-                          <th className="px-6 py-3">Field Name</th>
-                          <th className="px-6 py-3">Mandatory</th>
-                          <th className="px-6 py-3">Data Type</th>
-                          <th className="px-6 py-3">Source Table</th>
-                          <th className="px-6 py-3">Source Column</th>
+                          <th>Field Name</th>
+                          <th>Mandatory</th>
+                          <th>Data Type</th>
+                          <th>Source Table</th>
+                          <th>Source Column</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                      <tbody>
                         {glossary.length === 0 ? (
                           <tr>
-                            <td colSpan={5} className="px-6 py-8 text-center text-slate-500 italic">
+                            <td colSpan={5} style={{ textAlign: "center", padding: "32px", fontStyle: "italic", color: "#64748b" }}>
                               No glossary fields defined
                             </td>
                           </tr>
                         ) : (
                           glossary.map((row) => (
-                            <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="px-6 py-3 font-medium text-slate-900">{row.fieldName}</td>
-                              <td className="px-6 py-3">
+                            <tr key={row.id}>
+                              <td className="strong">{row.fieldName}</td>
+                              <td>
                                 {row.mandatory ? (
-                                  <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-xs font-bold shadow-sm">
-                                    Yes
-                                  </span>
+                                  <span className="dpd-pill dpd-pill-yes">Yes</span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-xs font-medium shadow-sm">
-                                    No
-                                  </span>
+                                  <span className="dpd-pill dpd-pill-no">No</span>
                                 )}
                               </td>
-                              <td className="px-6 py-3">
-                                <code className="text-xs font-mono bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded text-indigo-700">
-                                  {row.dataType}
-                                </code>
+                              <td>
+                                <code className="dpd-datatype">{row.dataType}</code>
                               </td>
-                              <td className="px-6 py-3 text-slate-600">{row.sourceTable}</td>
-                              <td className="px-6 py-3 text-slate-600 font-mono text-xs">{row.sourceColumn}</td>
+                              <td className="muted">{row.sourceTable}</td>
+                              <td className="muted mono-cell">{row.sourceColumn}</td>
                             </tr>
                           ))
                         )}
@@ -496,58 +729,36 @@ export default function DataProductDetailPage({
               </section>
 
               {/* Sample Data */}
-              <section className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                <button
-                  onClick={() => setSampleDataOpen(!sampleDataOpen)}
-                  className="flex items-center justify-between p-4 w-full bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-200"
-                >
-                  <div className="flex items-center gap-2">
-                    <Search className="w-5 h-5 text-indigo-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Sample Data</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-medium ml-2 shadow-sm">
-                      {sampleData.rows.length} rows
-                    </span>
-                  </div>
-                  {sampleDataOpen ? (
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
-                  )}
+              <section className="dpd-card">
+                <button className="dpd-collapse-head" onClick={() => setSampleDataOpen(!sampleDataOpen)}>
+                  <span className="dpd-collapse-title">
+                    <Search />
+                    <span className="dpd-section-title">Sample Data</span>
+                    <span className="dpd-count-pill">{sampleData.rows.length} rows</span>
+                  </span>
+                  {sampleDataOpen ? <ChevronDown className="dpd-chevron" /> : <ChevronRight className="dpd-chevron" />}
                 </button>
 
                 {sampleDataOpen && (
-                  <div className="overflow-x-auto relative">
-                    <div className="absolute top-0 bottom-0 right-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-20" />
+                  <div className="dpd-table-wrap">
                     {sampleData.rows.length === 0 ? (
-                      <div className="p-8 text-center text-slate-500 italic">No sample data available</div>
+                      <div style={{ padding: "32px", textAlign: "center", fontStyle: "italic", color: "#64748b" }}>
+                        No sample data available
+                      </div>
                     ) : (
-                      <table className="w-full text-sm text-left whitespace-nowrap font-mono">
-                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                      <table className="dpd-sample-table">
+                        <thead>
                           <tr>
-                            {sampleData.columns.map((col, idx) => (
-                              <th
-                                key={col}
-                                className={`px-6 py-3 font-semibold tracking-wider ${
-                                  idx === 0 ? "bg-slate-50 sticky left-0 z-10 shadow-[1px_0_0_0_#e2e8f0]" : ""
-                                }`}
-                              >
-                                {col}
-                              </th>
+                            {sampleData.columns.map((col) => (
+                              <th key={col}>{col}</th>
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-600">
+                        <tbody>
                           {sampleData.rows.map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50 transition-colors">
+                            <tr key={i}>
                               {sampleData.columns.map((col, idx) => (
-                                <td
-                                  key={col}
-                                  className={`px-6 py-2.5 ${
-                                    idx === 0
-                                      ? "font-medium text-slate-900 bg-white sticky left-0 z-10 shadow-[1px_0_0_0_#e2e8f0]"
-                                      : ""
-                                  }`}
-                                >
+                                <td key={col} className={idx === 0 ? "first" : ""}>
                                   {row[col]}
                                 </td>
                               ))}
@@ -559,10 +770,8 @@ export default function DataProductDetailPage({
                   </div>
                 )}
                 {sampleDataOpen && sampleData.rows.length > 0 && (
-                  <div className="bg-slate-50 p-3 text-center border-t border-slate-200">
-                    <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
-                      View full dataset in Explorer
-                    </button>
+                  <div className="dpd-sample-footer">
+                    <button className="dpd-link-btn">View full dataset in Explorer</button>
                   </div>
                 )}
               </section>
@@ -570,61 +779,57 @@ export default function DataProductDetailPage({
           )}
 
           {activeTab === "operations" && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-slate-900">Run History</h2>
-                <button
-                  onClick={onRunNow}
-                  disabled={isRunning}
-                  className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium hover:bg-indigo-100 transition-colors border border-indigo-200 disabled:opacity-50"
-                >
+            <section className="dpd-card dpd-card-pad">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+                <h2 className="dpd-section-title">Run History</h2>
+                <button className="dpd-btn-tint" onClick={onRunNow} disabled={isRunning}>
                   Trigger Run
                 </button>
               </div>
 
               {runs.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-lg">
-                  <Activity className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <div className="dpd-empty">
+                  <Activity />
                   <p>No runs recorded yet.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
+                <div className="dpd-table-wrap">
+                  <table>
+                    <thead>
                       <tr>
-                        <th className="px-6 py-3 font-semibold">Status</th>
-                        <th className="px-6 py-3 font-semibold">Started At</th>
-                        <th className="px-6 py-3 font-semibold">Duration</th>
-                        <th className="px-6 py-3 font-semibold">Rows Processed</th>
-                        <th className="px-6 py-3 font-semibold">Message</th>
+                        <th>Status</th>
+                        <th>Started At</th>
+                        <th>Duration</th>
+                        <th>Rows Processed</th>
+                        <th>Message</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {runs.map((run) => (
-                        <tr key={run.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-3">
+                        <tr key={run.id}>
+                          <td>
                             {run.status === "success" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Success
+                              <span className="dpd-run-badge dpd-run-success">
+                                <CheckCircle2 /> Success
                               </span>
                             )}
                             {run.status === "failed" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                                <AlertCircle className="w-3.5 h-3.5" /> Failed
+                              <span className="dpd-run-badge dpd-run-failed">
+                                <AlertCircle /> Failed
                               </span>
                             )}
                             {run.status === "running" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                <Activity className="w-3.5 h-3.5 animate-pulse" /> Running
+                              <span className="dpd-run-badge dpd-run-running">
+                                <Activity className="dpd-pulse" /> Running
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-3 text-slate-900 font-medium">{formatDateTime(run.startedAt)}</td>
-                          <td className="px-6 py-3 text-slate-600 font-mono">{formatDuration(run.durationSeconds)}</td>
-                          <td className="px-6 py-3 text-slate-600 font-mono">
+                          <td className="strong">{formatDateTime(run.startedAt)}</td>
+                          <td className="muted mono-cell">{formatDuration(run.durationSeconds)}</td>
+                          <td className="muted mono-cell">
                             {run.rowsProcessed != null ? run.rowsProcessed.toLocaleString() : "-"}
                           </td>
-                          <td className="px-6 py-3 text-slate-500 text-xs truncate max-w-[200px]" title={run.message || ""}>
+                          <td className="muted" style={{ fontSize: 12, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }} title={run.message || ""}>
                             {run.message || "-"}
                           </td>
                         </tr>
@@ -637,35 +842,30 @@ export default function DataProductDetailPage({
           )}
 
           {activeTab === "consumers" && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-slate-900 mb-6">Known Consumers</h2>
+            <section className="dpd-card dpd-card-pad">
+              <h2 className="dpd-section-title" style={{ marginBottom: 24 }}>
+                Known Consumers
+              </h2>
               {consumers.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-lg">
-                  <Users className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                <div className="dpd-empty">
+                  <Users />
                   <p>No consumers registered.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="dpd-consumers">
                   {consumers.map((consumer) => (
-                    <div
-                      key={consumer.id}
-                      className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg hover:border-indigo-200 transition-colors shadow-sm"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 flex-shrink-0">
-                        <Database className="w-5 h-5" />
+                    <div key={consumer.id} className="dpd-consumer">
+                      <div className="dpd-consumer-icon">
+                        <Database />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-slate-900 truncate">{consumer.name}</h3>
-                        <div className="flex flex-wrap gap-2 mt-1 mb-2">
-                          <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs font-medium text-slate-600">
-                            {consumer.type}
-                          </span>
-                          <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs font-medium text-slate-600">
-                            {consumer.channel}
-                          </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 className="dpd-consumer-name">{consumer.name}</h3>
+                        <div className="dpd-consumer-tags">
+                          <span className="dpd-consumer-tag">{consumer.type}</span>
+                          <span className="dpd-consumer-tag">{consumer.channel}</span>
                         </div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" /> Last accessed: {formatDateTime(consumer.lastAccessAt)}
+                        <div className="dpd-consumer-access">
+                          <Clock /> Last accessed: {formatDateTime(consumer.lastAccessAt)}
                         </div>
                       </div>
                     </div>
@@ -676,20 +876,18 @@ export default function DataProductDetailPage({
           )}
 
           {activeTab === "definition" && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="text-center py-16 text-slate-500">
-                <GitBranch className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-slate-900 mb-2">Lineage Graph</h3>
-                <p className="max-w-md mx-auto">
+            <section className="dpd-card dpd-card-pad">
+              <div className="dpd-lineage">
+                <GitBranch />
+                <h3>Lineage Graph</h3>
+                <p>
                   Visual lineage representation would be rendered here, showing upstream sources and downstream
                   dependencies based on the glossary definition.
                 </p>
                 {product.sourceAlignment && (
-                  <div className="mt-6 inline-block bg-slate-50 border border-slate-200 p-4 rounded-lg text-left">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                      Source Alignment
-                    </div>
-                    <code className="text-sm font-mono text-indigo-700">{product.sourceAlignment}</code>
+                  <div className="dpd-alignment">
+                    <div className="dpd-alignment-label">Source Alignment</div>
+                    <code>{product.sourceAlignment}</code>
                   </div>
                 )}
               </div>
@@ -697,121 +895,100 @@ export default function DataProductDetailPage({
           )}
         </div>
 
-        {/* Right rail */}
-        <aside className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-6">
-          {/* Run health */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-900">Latest Run Health</h3>
-              <button
-                onClick={() => setActiveTab("operations")}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-              >
+        {/* ---------------- Right rail ---------------- */}
+        <aside className="dpd-rail">
+          <div className="dpd-card">
+            <div className="dpd-rail-head">
+              <h3 className="dpd-rail-title">Latest Run Health</h3>
+              <button className="dpd-rail-link" onClick={() => setActiveTab("operations")}>
                 View history
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="dpd-rail-body">
               {!product.latestRun ? (
-                <div className="text-slate-500 text-sm text-center py-4 italic">No runs yet</div>
+                <div style={{ color: "#64748b", fontSize: 14, textAlign: "center", padding: "16px 0", fontStyle: "italic" }}>
+                  No runs yet
+                </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="dpd-health">
                     <div
-                      className={`w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                      className={`dpd-health-icon ${
                         product.latestRun.status === "success"
-                          ? "bg-emerald-50 border-emerald-100 text-emerald-600"
+                          ? "dpd-health-success"
                           : product.latestRun.status === "failed"
-                            ? "bg-rose-50 border-rose-100 text-rose-600"
-                            : "bg-indigo-50 border-indigo-100 text-indigo-600"
+                            ? "dpd-health-failed"
+                            : "dpd-health-running"
                       }`}
                     >
-                      {product.latestRun.status === "success" && <CheckCircle2 className="w-6 h-6" />}
-                      {product.latestRun.status === "failed" && <AlertCircle className="w-6 h-6" />}
-                      {product.latestRun.status === "running" && <Activity className="w-6 h-6 animate-pulse" />}
+                      {product.latestRun.status === "success" && <CheckCircle2 />}
+                      {product.latestRun.status === "failed" && <AlertCircle />}
+                      {product.latestRun.status === "running" && <Activity className="dpd-pulse" />}
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-slate-900 capitalize">{product.latestRun.status}</div>
-                      <div
-                        className="text-xs text-slate-500 truncate max-w-[180px]"
-                        title={product.latestRun.message || "Pipeline status"}
-                      >
+                      <div className="dpd-health-status">{product.latestRun.status}</div>
+                      <div className="dpd-health-msg" title={product.latestRun.message || "Pipeline status"}>
                         {product.latestRun.message ||
                           (product.latestRun.status === "running" ? "Pipeline currently running" : "Pipeline completed")}
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Calendar className="w-4 h-4" />
-                        <span>Started</span>
-                      </div>
-                      <span className="text-slate-900 font-medium">{formatDateTime(product.latestRun.startedAt)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Clock className="w-4 h-4" />
-                        <span>Ended</span>
-                      </div>
-                      <span className="text-slate-900 font-medium">{formatDateTime(product.latestRun.endedAt)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Activity className="w-4 h-4" />
-                        <span>Duration</span>
-                      </div>
-                      <span className="text-slate-900 font-mono font-medium">
-                        {formatDuration(product.latestRun.durationSeconds)}
-                      </span>
-                    </div>
+                  <div className="dpd-stat-row">
+                    <span className="dpd-stat-label">
+                      <Calendar />
+                      Started
+                    </span>
+                    <span className="dpd-stat-value">{formatDateTime(product.latestRun.startedAt)}</span>
+                  </div>
+                  <div className="dpd-stat-row">
+                    <span className="dpd-stat-label">
+                      <Clock />
+                      Ended
+                    </span>
+                    <span className="dpd-stat-value">{formatDateTime(product.latestRun.endedAt)}</span>
+                  </div>
+                  <div className="dpd-stat-row">
+                    <span className="dpd-stat-label">
+                      <Activity />
+                      Duration
+                    </span>
+                    <span className="dpd-stat-value mono">{formatDuration(product.latestRun.durationSeconds)}</span>
                   </div>
                 </>
               )}
 
-              <div className="mt-6 pt-4 border-t border-slate-100">
-                <div className="text-xs font-bold text-slate-500 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                  <Tag className="w-3.5 h-3.5" />
+              <div className="dpd-tags-block">
+                <div className="dpd-tags-label">
+                  <Tag />
                   Tags
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="dpd-tags">
                   {product.tags.length > 0 ? (
                     product.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium rounded-md shadow-sm"
-                      >
+                      <span key={tag} className="dpd-tag">
                         {tag}
                       </span>
                     ))
                   ) : (
-                    <span className="text-slate-400 text-xs italic">No tags</span>
+                    <span style={{ color: "#94a3b8", fontSize: 12, fontStyle: "italic" }}>No tags</span>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Quick links */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-            <h3 className="font-semibold text-slate-900 mb-3 text-sm">Quick Links</h3>
-            <div className="space-y-1">
-              <button
-                onClick={() => setActiveTab("definition")}
-                className="w-full flex items-center justify-between p-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
-              >
-                <span className="font-medium">View Source Alignment</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-              <button
-                onClick={() => setActiveTab("consumers")}
-                className="w-full flex items-center justify-between p-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
-              >
-                <span className="font-medium">Review Subscriptions</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </button>
-            </div>
+          <div className="dpd-card dpd-quicklinks">
+            <h3>Quick Links</h3>
+            <button className="dpd-quicklink" onClick={() => setActiveTab("definition")}>
+              <span>View Source Alignment</span>
+              <ChevronRight />
+            </button>
+            <button className="dpd-quicklink" onClick={() => setActiveTab("consumers")}>
+              <span>Review Subscriptions</span>
+              <ChevronRight />
+            </button>
           </div>
         </aside>
       </main>
