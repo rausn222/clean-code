@@ -233,3 +233,47 @@ export const ListConsumersResponseItem = zod.object({
 export const ListConsumersResponse = zod.array(ListConsumersResponseItem)
 
 
+/**
+ * @summary List favourited data product ids
+ */
+export const ListFavouritesResponse = zod.object({
+  "productIds": zod.array(zod.number())
+})
+
+
+/**
+ * @summary Merge a set of data product ids into favourites
+ */
+export const SyncFavouritesBody = zod.object({
+  "productIds": zod.array(zod.number())
+})
+
+export const SyncFavouritesResponse = zod.object({
+  "productIds": zod.array(zod.number())
+})
+
+
+/**
+ * @summary Add a data product to favourites
+ */
+export const AddFavouriteParams = zod.object({
+  "productId": zod.coerce.number()
+})
+
+export const AddFavouriteResponse = zod.object({
+  "productIds": zod.array(zod.number())
+})
+
+
+/**
+ * @summary Remove a data product from favourites
+ */
+export const RemoveFavouriteParams = zod.object({
+  "productId": zod.coerce.number()
+})
+
+export const RemoveFavouriteResponse = zod.object({
+  "productIds": zod.array(zod.number())
+})
+
+

@@ -14,6 +14,8 @@ export * from './dataProduct';
 export * from './dataProductStatus';
 export * from './dataProductStatusUpdate';
 export * from './dataProductStatusUpdateStatus';
+export * from './favouritesList';
+export * from './favouritesSyncRequest';
 export * from './glossaryField';
 export * from './healthStatus';
 export * from './listDataProductsParams';

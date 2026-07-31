@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: dataProducts
     description: Data product catalog operations
+  - name: favourites
+    description: Favourited data products
 paths:
   /healthz:
     get:
@@ -213,8 +215,91 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Consumer"
+  /favourites:
+    get:
+      operationId: listFavourites
+      tags: [favourites]
+      summary: List favourited data product ids
+      responses:
+        "200":
+          description: Favourited data product ids
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavouritesList"
+  /favourites/sync:
+    post:
+      operationId: syncFavourites
+      tags: [favourites]
+      summary: Merge a set of data product ids into favourites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FavouritesSyncRequest"
+      responses:
+        "200":
+          description: Merged favourites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavouritesList"
+  /favourites/{productId}:
+    put:
+      operationId: addFavourite
+      tags: [favourites]
+      summary: Add a data product to favourites
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated favourites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavouritesList"
+        "404":
+          description: Data product not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+    delete:
+      operationId: removeFavourite
+      tags: [favourites]
+      summary: Remove a data product from favourites
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated favourites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FavouritesList"
 components:
   schemas:
+    FavouritesList:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items: { type: integer }
+    FavouritesSyncRequest:
+      type: object
+      required: [productIds]
+      properties:
+        productIds:
+          type: array
+          items: { type: integer }
     HealthStatus:
       type: object
       properties:

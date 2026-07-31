@@ -25,6 +25,8 @@ import type {
   Consumer,
   DataProduct,
   DataProductStatusUpdate,
+  FavouritesList,
+  FavouritesSyncRequest,
   GlossaryField,
   HealthStatus,
   ListDataProductsParams,
@@ -825,4 +827,294 @@ export function useListConsumers<TData = Awaited<ReturnType<typeof listConsumers
 
 
 
+
+export const getListFavouritesUrl = () => {
+
+
+
+
+  return `/api/favourites`
+}
+
+/**
+ * @summary List favourited data product ids
+ */
+export const listFavourites = async ( options?: RequestInit): Promise<FavouritesList> => {
+
+  return customFetch<FavouritesList>(getListFavouritesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListFavouritesQueryKey = () => {
+    return [
+    `/api/favourites`
+    ] as const;
+    }
+
+
+export const getListFavouritesQueryOptions = <TData = Awaited<ReturnType<typeof listFavourites>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFavourites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListFavouritesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listFavourites>>> = ({ signal }) => listFavourites({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listFavourites>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListFavouritesQueryResult = NonNullable<Awaited<ReturnType<typeof listFavourites>>>
+export type ListFavouritesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List favourited data product ids
+ */
+
+export function useListFavourites<TData = Awaited<ReturnType<typeof listFavourites>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listFavourites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListFavouritesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSyncFavouritesUrl = () => {
+
+
+
+
+  return `/api/favourites/sync`
+}
+
+/**
+ * @summary Merge a set of data product ids into favourites
+ */
+export const syncFavourites = async (favouritesSyncRequest: FavouritesSyncRequest, options?: RequestInit): Promise<FavouritesList> => {
+
+  return customFetch<FavouritesList>(getSyncFavouritesUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(favouritesSyncRequest)
+  }
+);}
+
+
+
+
+
+export const getSyncFavouritesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncFavourites>>, TError,{data: BodyType<FavouritesSyncRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof syncFavourites>>, TError,{data: BodyType<FavouritesSyncRequest>}, TContext> => {
+
+const mutationKey = ['syncFavourites'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof syncFavourites>>, {data: BodyType<FavouritesSyncRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  syncFavourites(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SyncFavouritesMutationResult = NonNullable<Awaited<ReturnType<typeof syncFavourites>>>
+    export type SyncFavouritesMutationBody = BodyType<FavouritesSyncRequest>
+    export type SyncFavouritesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Merge a set of data product ids into favourites
+ */
+export const useSyncFavourites = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncFavourites>>, TError,{data: BodyType<FavouritesSyncRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof syncFavourites>>,
+        TError,
+        {data: BodyType<FavouritesSyncRequest>},
+        TContext
+      > => {
+      return useMutation(getSyncFavouritesMutationOptions(options));
+    }
+
+export const getAddFavouriteUrl = (productId: number,) => {
+
+
+
+
+  return `/api/favourites/${productId}`
+}
+
+/**
+ * @summary Add a data product to favourites
+ */
+export const addFavourite = async (productId: number, options?: RequestInit): Promise<FavouritesList> => {
+
+  return customFetch<FavouritesList>(getAddFavouriteUrl(productId),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getAddFavouriteMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addFavourite>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addFavourite>>, TError,{productId: number}, TContext> => {
+
+const mutationKey = ['addFavourite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addFavourite>>, {productId: number}> = (props) => {
+          const {productId} = props ?? {};
+
+          return  addFavourite(productId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddFavouriteMutationResult = NonNullable<Awaited<ReturnType<typeof addFavourite>>>
+
+    export type AddFavouriteMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Add a data product to favourites
+ */
+export const useAddFavourite = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addFavourite>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addFavourite>>,
+        TError,
+        {productId: number},
+        TContext
+      > => {
+      return useMutation(getAddFavouriteMutationOptions(options));
+    }
+
+export const getRemoveFavouriteUrl = (productId: number,) => {
+
+
+
+
+  return `/api/favourites/${productId}`
+}
+
+/**
+ * @summary Remove a data product from favourites
+ */
+export const removeFavourite = async (productId: number, options?: RequestInit): Promise<FavouritesList> => {
+
+  return customFetch<FavouritesList>(getRemoveFavouriteUrl(productId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveFavouriteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,{productId: number}, TContext> => {
+
+const mutationKey = ['removeFavourite'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeFavourite>>, {productId: number}> = (props) => {
+          const {productId} = props ?? {};
+
+          return  removeFavourite(productId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveFavouriteMutationResult = NonNullable<Awaited<ReturnType<typeof removeFavourite>>>
+
+    export type RemoveFavouriteMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove a data product from favourites
+ */
+export const useRemoveFavourite = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeFavourite>>,
+        TError,
+        {productId: number},
+        TContext
+      > => {
+      return useMutation(getRemoveFavouriteMutationOptions(options));
+    }
 

@@ -5,6 +5,14 @@
  * DataVerse data product catalog API
  * OpenAPI spec version: 0.1.0
  */
+export interface FavouritesList {
+  productIds: number[];
+}
+
+export interface FavouritesSyncRequest {
+  productIds: number[];
+}
+
 export interface HealthStatus {
   status: string;
 }

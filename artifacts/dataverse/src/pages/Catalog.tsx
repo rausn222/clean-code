@@ -1,10 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   useGetCatalogSummary, 
   useListDataProducts, 
   getGetCatalogSummaryQueryKey,
-  getListDataProductsQueryKey
+  getListDataProductsQueryKey,
+  useListFavourites,
+  getListFavouritesQueryKey,
+  useAddFavourite,
+  useRemoveFavourite,
+  useSyncFavourites,
+  type FavouritesList
 } from "@workspace/api-client-react";
 import { 
   Database, 
@@ -19,15 +26,18 @@ import {
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
 
-// Favourites persistence (per-browser localStorage)
+// Legacy per-browser favourites (migrated to the server on first load)
 const FAV_KEY = "dataverse-favourites";
 
-function loadFavourites(): Set<string> {
+function loadLegacyFavouriteIds(): number[] {
   try {
     const raw = localStorage.getItem(FAV_KEY);
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+    if (!raw) return [];
+    return (JSON.parse(raw) as string[])
+      .map((id) => Number(id))
+      .filter((id) => Number.isInteger(id) && id > 0);
   } catch {
-    return new Set();
+    return [];
   }
 }
 
@@ -36,23 +46,70 @@ export default function Catalog() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [favouritesOnly, setFavouritesOnly] = useState(false);
-  const [favourites, setFavourites] = useState<Set<string>>(loadFavourites);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(FAV_KEY, JSON.stringify([...favourites]));
-    } catch {
-      /* storage unavailable — favourites just won't persist */
+  const queryClient = useQueryClient();
+  const favouritesQueryKey = getListFavouritesQueryKey();
+
+  // Server-side favourites (shared across browsers and devices)
+  const { data: favouritesData, isLoading: loadingFavourites } = useListFavourites({
+    query: { queryKey: favouritesQueryKey }
+  });
+  const favourites = useMemo(
+    () => new Set((favouritesData?.productIds ?? []).map(String)),
+    [favouritesData],
+  );
+
+  const setFavouritesCache = (result: FavouritesList) => {
+    queryClient.setQueryData(favouritesQueryKey, result);
+  };
+  const addFavourite = useAddFavourite({
+    mutation: { onSuccess: setFavouritesCache }
+  });
+  const removeFavourite = useRemoveFavourite({
+    mutation: { onSuccess: setFavouritesCache }
+  });
+  const syncFavourites = useSyncFavourites({
+    mutation: {
+      onSuccess: (result) => {
+        setFavouritesCache(result);
+        try {
+          localStorage.removeItem(FAV_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
     }
-  }, [favourites]);
+  });
+
+  // One-time migration of legacy localStorage favourites to the server
+  const migratedRef = useRef(false);
+  useEffect(() => {
+    if (migratedRef.current) return;
+    migratedRef.current = true;
+    const legacy = loadLegacyFavouriteIds();
+    if (legacy.length > 0) {
+      syncFavourites.mutate({ data: { productIds: legacy } });
+    }
+  }, []);
 
   const toggleFavourite = (id: string) => {
-    setFavourites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+    const productId = Number(id);
+    const isFaved = favourites.has(id);
+    // Optimistic update so the star responds instantly
+    const current = favouritesData?.productIds ?? [];
+    setFavouritesCache({
+      productIds: isFaved
+        ? current.filter((pid) => pid !== productId)
+        : [...current, productId],
     });
+    const rollback = () => {
+      queryClient.invalidateQueries({ queryKey: favouritesQueryKey });
+    };
+    if (isFaved) {
+      removeFavourite.mutate({ productId }, { onError: rollback });
+    } else {
+      addFavourite.mutate({ productId }, { onError: rollback });
+    }
   };
 
   const { data: summary, isLoading: loadingSummary } = useGetCatalogSummary({
@@ -82,7 +139,7 @@ export default function Catalog() {
     );
   }, [products, favouritesOnly, favourites]);
 
-  if (loadingSummary || loadingProducts) return <PageLoader />;
+  if (loadingSummary || loadingProducts || loadingFavourites) return <PageLoader />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
 
   return (
