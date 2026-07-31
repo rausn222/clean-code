@@ -31,6 +31,16 @@ import {
   Check,
   Search,
   AlertCircle,
+  CreditCard,
+  Server,
+  Globe,
+  CalendarDays,
+  RefreshCw,
+  Gauge,
+  BadgeCheck,
+  AlertTriangle,
+  Zap,
+  Plus,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -358,6 +368,84 @@ const STYLES = `
 .dpd-icon-sm { width: 16px; height: 16px; }
 .dpd-pulse { animation: dpd-pulse 1.5s ease-in-out infinite; }
 @keyframes dpd-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ---------- Subscriptions tab ---------- */
+.dpd-subs-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.dpd-subs-title { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.dpd-subs-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+.dpd-subs-add {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  background: #ffffff; color: #4338ca; border: 1px solid #c7d2fe;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.dpd-subs-add:hover { background: #eef2ff; border-color: #a5b4fc; }
+.dpd-subs-add svg { width: 15px; height: 15px; }
+
+.dpd-subs-group { margin-bottom: 28px; }
+.dpd-subs-group:last-child { margin-bottom: 0; }
+.dpd-subs-group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.dpd-subs-group-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: #eef2ff; color: #4f46e5;
+  display: flex; align-items: center; justify-content: center;
+}
+.dpd-subs-group-icon svg { width: 17px; height: 17px; }
+.dpd-subs-group-title { font-size: 15px; font-weight: 600; }
+.dpd-subs-group-count { font-size: 12px; color: #64748b; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 999px; }
+
+.dpd-subs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+.dpd-subs-card {
+  background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+  padding: 18px; display: flex; flex-direction: column; gap: 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dpd-subs-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 12px rgba(79,70,229,0.08); }
+.dpd-subs-card.subscribed { border-color: #a7f3d0; background: linear-gradient(180deg, #f0fdf9 0%, #ffffff 45%); }
+.dpd-subs-card.expiring { border-color: #fcd34d; background: linear-gradient(180deg, #fffbeb 0%, #ffffff 45%); }
+
+.dpd-subs-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.dpd-subs-plan-name { font-size: 16px; font-weight: 600; }
+.dpd-subs-plan-price { font-size: 13px; color: #64748b; margin-top: 2px; }
+.dpd-subs-plan-price b { color: #0f172a; font-size: 14px; }
+
+.dpd-subs-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.dpd-subs-badge svg { width: 13px; height: 13px; }
+.dpd-subs-badge-active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.dpd-subs-badge-expiring { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+
+.dpd-subs-remaining { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+.dpd-subs-remaining-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.dpd-subs-days-left { font-size: 22px; font-weight: 700; color: #047857; line-height: 1; }
+.dpd-subs-days-left.warn { color: #b45309; }
+.dpd-subs-days-label { font-size: 12px; color: #64748b; font-weight: 500; }
+.dpd-subs-expiry { font-size: 12px; color: #64748b; text-align: right; }
+.dpd-subs-expiry b { color: #334155; }
+.dpd-subs-progress { height: 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.dpd-subs-progress-fill { height: 100%; border-radius: 999px; background: #10b981; transition: width 0.3s ease; }
+.dpd-subs-progress-fill.warn { background: #f59e0b; }
+.dpd-subs-renews { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; margin-top: 10px; }
+.dpd-subs-renews svg { width: 13px; height: 13px; }
+
+.dpd-subs-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.dpd-subs-spec { display: flex; align-items: flex-start; gap: 8px; }
+.dpd-subs-spec svg { width: 15px; height: 15px; color: #94a3b8; margin-top: 2px; flex-shrink: 0; }
+.dpd-subs-spec-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+.dpd-subs-spec-value { font-size: 13px; color: #1e293b; font-weight: 500; }
+
+.dpd-subs-cta {
+  width: 100%; padding: 9px 16px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; text-align: center;
+  transition: background-color 0.15s ease;
+}
+.dpd-subs-cta-primary { background: #4f46e5; color: #ffffff; border: 1px solid #4f46e5; }
+.dpd-subs-cta-primary:hover { background: #4338ca; }
+.dpd-subs-cta-ghost { background: #ffffff; color: #334155; border: 1px solid #cbd5e1; }
+.dpd-subs-cta-ghost:hover { background: #f8fafc; }
+.dpd-subs-cta-row { display: flex; gap: 10px; }
+.dpd-subs-cta-row .dpd-subs-cta { flex: 1; }
 `;
 
 // ---------------------------------------------------------------------------
@@ -503,10 +591,94 @@ function formatDuration(seconds?: number | null): string {
 }
 
 // ---------------------------------------------------------------------------
+// Subscriptions — types, sample data & helpers
+// ---------------------------------------------------------------------------
+
+export interface SubscriptionPlan {
+  id: number;
+  name: string;
+  channel: "Dataproduct" | "Postgres" | "REST-API";
+  price?: string; // e.g. "₹10 / month" or "Free"
+  validityMonths: number;
+  type: "Recurring Subscription" | "One-time Subscription";
+  frequency?: string; // e.g. "Daily"
+  callLimit: number;
+  subscribed?: boolean;
+  subscribedAt?: string; // ISO date, required when subscribed
+  autoRenew?: boolean;
+}
+
+const SAMPLE_PLANS: SubscriptionPlan[] = [
+  {
+    id: 1,
+    name: "Test Plan 1",
+    channel: "Dataproduct",
+    price: "Free",
+    validityMonths: 12,
+    type: "Recurring Subscription",
+    frequency: "Daily",
+    callLimit: 100000,
+    subscribed: true,
+    subscribedAt: "2025-10-15T00:00:00Z",
+    autoRenew: true,
+  },
+  {
+    id: 2,
+    name: "Test Postgres",
+    channel: "Postgres",
+    price: "₹10",
+    validityMonths: 12,
+    type: "One-time Subscription",
+    callLimit: 10000,
+  },
+  {
+    id: 3,
+    name: "Demo",
+    channel: "Postgres",
+    price: "₹1",
+    validityMonths: 1,
+    type: "One-time Subscription",
+    callLimit: 1,
+  },
+  {
+    id: 4,
+    name: "Test REST Plan",
+    channel: "REST-API",
+    price: "Free",
+    validityMonths: 12,
+    type: "Recurring Subscription",
+    frequency: "Daily",
+    callLimit: 100000,
+  },
+];
+
+const SUBS_CHANNELS: SubscriptionPlan["channel"][] = ["Dataproduct", "Postgres", "REST-API"];
+
+const SUBS_CHANNEL_ICONS: Record<SubscriptionPlan["channel"], React.ElementType> = {
+  Dataproduct: Database,
+  Postgres: Server,
+  "REST-API": Globe,
+};
+
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function daysBetween(a: Date, b: Date): number {
+  return Math.ceil((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatShortDate(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-type TabId = "overview" | "definition" | "operations" | "consumers";
+type TabId = "overview" | "definition" | "operations" | "consumers" | "subscriptions";
 
 export interface DataProductDetailPageProps {
   product?: DataProduct;
@@ -514,8 +686,12 @@ export interface DataProductDetailPageProps {
   sampleData?: SampleData;
   runs?: ProductRun[];
   consumers?: Consumer[];
+  plans?: SubscriptionPlan[];
   onRunNow?: () => void;
   onToggleStatus?: () => void;
+  onSubscribe?: (plan: SubscriptionPlan) => void;
+  onManagePlan?: (plan: SubscriptionPlan) => void;
+  onAddPlan?: () => void;
 }
 
 export default function DataProductDetailPage({
@@ -524,13 +700,18 @@ export default function DataProductDetailPage({
   sampleData = SAMPLE_DATA,
   runs = SAMPLE_RUNS,
   consumers = SAMPLE_CONSUMERS,
+  plans = SAMPLE_PLANS,
   onRunNow,
   onToggleStatus,
+  onSubscribe,
+  onManagePlan,
+  onAddPlan,
 }: DataProductDetailPageProps) {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [glossaryOpen, setGlossaryOpen] = useState(true);
   const [sampleDataOpen, setSampleDataOpen] = useState(true);
+  const [localSubscribed, setLocalSubscribed] = useState<Record<number, boolean>>({});
 
   const handleCopyUrn = () => {
     navigator.clipboard.writeText(product.urn);
@@ -545,7 +726,133 @@ export default function DataProductDetailPage({
     { id: "definition", label: "Definition & Lineage", icon: GitBranch },
     { id: "operations", label: "Runs & Health", icon: Activity },
     { id: "consumers", label: "Consumers", icon: Users },
+    { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
   ];
+
+  const handleSubscribe = (plan: SubscriptionPlan) => {
+    setLocalSubscribed((s) => ({ ...s, [plan.id]: true }));
+    onSubscribe?.(plan);
+  };
+
+  const renderPlanCard = (plan: SubscriptionPlan) => {
+    const now = new Date();
+    const isSubscribed = plan.subscribed || localSubscribed[plan.id];
+
+    let daysLeft = 0;
+    let totalDays = 0;
+    let expiry: Date | null = null;
+    if (isSubscribed) {
+      const start = plan.subscribedAt ? new Date(plan.subscribedAt) : now;
+      expiry = addMonths(start, plan.validityMonths);
+      totalDays = daysBetween(start, expiry);
+      daysLeft = Math.max(0, daysBetween(now, expiry));
+    }
+    const pctLeft = totalDays > 0 ? Math.min(100, Math.round((daysLeft / totalDays) * 100)) : 0;
+    const expiringSoon = !!isSubscribed && daysLeft <= 30;
+
+    return (
+      <div key={plan.id} className={`dpd-subs-card${isSubscribed ? (expiringSoon ? " expiring" : " subscribed") : ""}`}>
+        <div className="dpd-subs-card-top">
+          <div>
+            <div className="dpd-subs-plan-name">{plan.name}</div>
+            <div className="dpd-subs-plan-price">
+              <b>{plan.price ?? "Free"}</b>
+            </div>
+          </div>
+          {isSubscribed &&
+            (expiringSoon ? (
+              <span className="dpd-subs-badge dpd-subs-badge-expiring">
+                <AlertTriangle /> Expiring soon
+              </span>
+            ) : (
+              <span className="dpd-subs-badge dpd-subs-badge-active">
+                <BadgeCheck /> Subscribed
+              </span>
+            ))}
+        </div>
+
+        {isSubscribed && expiry && (
+          <div className="dpd-subs-remaining">
+            <div className="dpd-subs-remaining-row">
+              <div>
+                <div className={`dpd-subs-days-left${expiringSoon ? " warn" : ""}`}>{daysLeft} days</div>
+                <div className="dpd-subs-days-label">remaining of {totalDays}-day term</div>
+              </div>
+              <div className="dpd-subs-expiry">
+                Expires on
+                <br />
+                <b>{formatShortDate(expiry)}</b>
+              </div>
+            </div>
+            <div className="dpd-subs-progress">
+              <div className={`dpd-subs-progress-fill${expiringSoon ? " warn" : ""}`} style={{ width: `${pctLeft}%` }} />
+            </div>
+            <div className="dpd-subs-renews">
+              <RefreshCw />
+              {plan.type === "Recurring Subscription"
+                ? plan.autoRenew
+                  ? `Auto-renews on ${formatShortDate(expiry)}`
+                  : "Auto-renewal is off"
+                : "One-time subscription — will not renew"}
+            </div>
+          </div>
+        )}
+
+        <div className="dpd-subs-specs">
+          <div className="dpd-subs-spec">
+            <CalendarDays />
+            <div>
+              <div className="dpd-subs-spec-label">Validity</div>
+              <div className="dpd-subs-spec-value">
+                {plan.validityMonths} {plan.validityMonths === 1 ? "month" : "months"}
+              </div>
+            </div>
+          </div>
+          <div className="dpd-subs-spec">
+            <RefreshCw />
+            <div>
+              <div className="dpd-subs-spec-label">Type</div>
+              <div className="dpd-subs-spec-value">{plan.type.replace(" Subscription", "")}</div>
+            </div>
+          </div>
+          {plan.frequency && (
+            <div className="dpd-subs-spec">
+              <Clock />
+              <div>
+                <div className="dpd-subs-spec-label">Frequency</div>
+                <div className="dpd-subs-spec-value">{plan.frequency}</div>
+              </div>
+            </div>
+          )}
+          <div className="dpd-subs-spec">
+            <Gauge />
+            <div>
+              <div className="dpd-subs-spec-label">Call limit</div>
+              <div className="dpd-subs-spec-value mono">{plan.callLimit.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        {isSubscribed ? (
+          <div className="dpd-subs-cta-row">
+            <button className="dpd-subs-cta dpd-subs-cta-ghost" onClick={() => onManagePlan?.(plan)}>
+              Manage
+            </button>
+            {expiringSoon && (
+              <button className="dpd-subs-cta dpd-subs-cta-primary" onClick={() => handleSubscribe(plan)}>
+                Renew now
+              </button>
+            )}
+          </div>
+        ) : (
+          <button className="dpd-subs-cta dpd-subs-cta-primary" onClick={() => handleSubscribe(plan)}>
+            <Zap style={{ width: 14, height: 14, verticalAlign: "-2px", marginRight: 6 }} />
+            Subscribe
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="dpd">
@@ -875,6 +1182,46 @@ export default function DataProductDetailPage({
             </section>
           )}
 
+          {activeTab === "subscriptions" && (
+            <section className="dpd-card dpd-card-pad">
+              <div className="dpd-subs-head">
+                <div>
+                  <h2 className="dpd-subs-title">
+                    Subscriptions{" "}
+                    <span style={{ color: "#94a3b8", fontWeight: 500 }}>({plans.length})</span>
+                  </h2>
+                  <p className="dpd-subs-subtitle">
+                    Subscribe to a plan from any channel. Active subscriptions show remaining validity below.
+                  </p>
+                </div>
+                <button className="dpd-subs-add" onClick={onAddPlan}>
+                  <Plus />
+                  Add Subscription Plan
+                </button>
+              </div>
+
+              {SUBS_CHANNELS.map((channel) => {
+                const channelPlans = plans.filter((p) => p.channel === channel);
+                if (channelPlans.length === 0) return null;
+                const Icon = SUBS_CHANNEL_ICONS[channel];
+                return (
+                  <div key={channel} className="dpd-subs-group">
+                    <div className="dpd-subs-group-head">
+                      <span className="dpd-subs-group-icon">
+                        <Icon />
+                      </span>
+                      <h3 className="dpd-subs-group-title">{channel}</h3>
+                      <span className="dpd-subs-group-count">
+                        {channelPlans.length} {channelPlans.length === 1 ? "plan" : "plans"}
+                      </span>
+                    </div>
+                    <div className="dpd-subs-grid">{channelPlans.map(renderPlanCard)}</div>
+                  </div>
+                );
+              })}
+            </section>
+          )}
+
           {activeTab === "definition" && (
             <section className="dpd-card dpd-card-pad">
               <div className="dpd-lineage">
@@ -985,7 +1332,7 @@ export default function DataProductDetailPage({
               <span>View Source Alignment</span>
               <ChevronRight />
             </button>
-            <button className="dpd-quicklink" onClick={() => setActiveTab("consumers")}>
+            <button className="dpd-quicklink" onClick={() => setActiveTab("subscriptions")}>
               <span>Review Subscriptions</span>
               <ChevronRight />
             </button>
