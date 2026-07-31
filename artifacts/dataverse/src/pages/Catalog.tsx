@@ -108,7 +108,12 @@ export default function Catalog() {
         ? current.filter((pid) => pid !== productId)
         : [...current, productId],
     });
+    // Deterministic rollback: restore the pre-mutation snapshot locally so
+    // favourites can't get stuck in an optimistic state even when the server
+    // is completely unreachable, then revalidate in the background.
+    const snapshot = { productIds: current };
     const rollback = () => {
+      setFavouritesCache(snapshot);
       queryClient.invalidateQueries({ queryKey: favouritesQueryKey });
     };
     if (isFaved) {

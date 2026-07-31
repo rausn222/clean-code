@@ -1,0 +1,1 @@
+- [Testing setup & pitfalls](testing-setup.md) — vitest wiring per package, dev-DB test snapshotting, react-query async assertions, post-merge `pnpm install` + db push.
