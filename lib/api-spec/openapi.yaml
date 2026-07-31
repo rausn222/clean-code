@@ -215,6 +215,48 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Consumer"
+  /data-products/{id}/subscription-plans:
+    get:
+      operationId: listSubscriptionPlans
+      tags: [dataProducts]
+      summary: Subscription plans of a data product, with active subscription info
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Subscription plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlan"
+  /subscription-plans/{planId}/subscribe:
+    post:
+      operationId: subscribeToPlan
+      tags: [dataProducts]
+      summary: Subscribe to a plan, or renew an existing subscription
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: The plan with its updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionPlan"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /favourites:
     get:
       operationId: listFavourites
@@ -411,6 +453,43 @@ components:
         endedAt: { type: ["string", "null"] }
         durationSeconds: { type: ["integer", "null"] }
         rowsProcessed: { type: ["integer", "null"] }
+    PlanSubscription:
+      type: object
+      required: [id, subscribedAt, expiresAt, autoRenew]
+      properties:
+        id: { type: integer }
+        subscribedAt: { type: string }
+        expiresAt: { type: string }
+        autoRenew: { type: boolean }
+    SubscriptionPlan:
+      type: object
+      required:
+        - id
+        - dataProductId
+        - name
+        - channel
+        - price
+        - validityMonths
+        - type
+        - callLimit
+      properties:
+        id: { type: integer }
+        dataProductId: { type: integer }
+        name: { type: string }
+        channel:
+          type: string
+          enum: [Data Product, Postgres, REST-API]
+        price: { type: string }
+        validityMonths: { type: integer }
+        type:
+          type: string
+          enum: [Recurring Subscription, One-time Subscription]
+        frequency: { type: ["string", "null"] }
+        callLimit: { type: integer }
+        subscription:
+          oneOf:
+            - $ref: "#/components/schemas/PlanSubscription"
+            - type: "null"
     Consumer:
       type: object
       required: [id, name, type, channel, lastAccessAt]

@@ -81,6 +81,31 @@ export const consumersTable = pgTable("consumers", {
     .defaultNow(),
 });
 
+export const subscriptionPlansTable = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  dataProductId: integer("data_product_id")
+    .notNull()
+    .references(() => dataProductsTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  channel: text("channel").notNull(), // "Data Product" | "Postgres" | "REST-API"
+  price: text("price").notNull().default("Free"),
+  validityMonths: integer("validity_months").notNull(),
+  type: text("type").notNull().default("Recurring Subscription"),
+  frequency: text("frequency"),
+  callLimit: integer("call_limit").notNull(),
+});
+
+export const subscriptionsTable = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  planId: integer("plan_id")
+    .notNull()
+    .references(() => subscriptionPlansTable.id, { onDelete: "cascade" }),
+  subscribedAt: timestamp("subscribed_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  autoRenew: boolean("auto_renew").notNull().default(false),
+});
+
 export const insertDataProductSchema = createInsertSchema(
   dataProductsTable,
 ).omit({ id: true, createdAt: true, updatedAt: true });
@@ -89,3 +114,5 @@ export type DataProductRow = typeof dataProductsTable.$inferSelect;
 export type GlossaryFieldRow = typeof glossaryFieldsTable.$inferSelect;
 export type ProductRunRow = typeof productRunsTable.$inferSelect;
 export type ConsumerRow = typeof consumersTable.$inferSelect;
+export type SubscriptionPlanRow = typeof subscriptionPlansTable.$inferSelect;
+export type SubscriptionRow = typeof subscriptionsTable.$inferSelect;

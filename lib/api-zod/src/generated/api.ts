@@ -234,6 +234,59 @@ export const ListConsumersResponse = zod.array(ListConsumersResponseItem)
 
 
 /**
+ * @summary Subscription plans of a data product, with active subscription info
+ */
+export const ListSubscriptionPlansParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ListSubscriptionPlansResponseItem = zod.object({
+  "id": zod.number(),
+  "dataProductId": zod.number(),
+  "name": zod.string(),
+  "channel": zod.enum(['Data Product', 'Postgres', 'REST-API']),
+  "price": zod.string(),
+  "validityMonths": zod.number(),
+  "type": zod.enum(['Recurring Subscription', 'One-time Subscription']),
+  "frequency": zod.string().nullish(),
+  "callLimit": zod.number(),
+  "subscription": zod.union([zod.object({
+  "id": zod.number(),
+  "subscribedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "autoRenew": zod.boolean()
+}),zod.null()]).optional()
+})
+export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResponseItem)
+
+
+/**
+ * @summary Subscribe to a plan, or renew an existing subscription
+ */
+export const SubscribeToPlanParams = zod.object({
+  "planId": zod.coerce.number()
+})
+
+export const SubscribeToPlanResponse = zod.object({
+  "id": zod.number(),
+  "dataProductId": zod.number(),
+  "name": zod.string(),
+  "channel": zod.enum(['Data Product', 'Postgres', 'REST-API']),
+  "price": zod.string(),
+  "validityMonths": zod.number(),
+  "type": zod.enum(['Recurring Subscription', 'One-time Subscription']),
+  "frequency": zod.string().nullish(),
+  "callLimit": zod.number(),
+  "subscription": zod.union([zod.object({
+  "id": zod.number(),
+  "subscribedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "autoRenew": zod.boolean()
+}),zod.null()]).optional()
+})
+
+
+/**
  * @summary List favourited data product ids
  */
 export const ListFavouritesResponse = zod.object({

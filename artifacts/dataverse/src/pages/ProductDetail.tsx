@@ -19,7 +19,8 @@ import {
   Info,
   Check,
   Search,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 import {
   useGetDataProduct,
@@ -38,6 +39,7 @@ import {
   Consumer
 } from '@workspace/api-client-react';
 import { PageLoader, ErrorState, LoadingSpinner } from '../components/ui/states';
+import SubscriptionsTab from '../components/SubscriptionsTab';
 import { formatDateTime, formatDuration } from '../lib/format';
 
 export default function ProductDetail() {
@@ -46,7 +48,12 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
 
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    return tab && ['overview', 'definition', 'operations', 'consumers', 'subscriptions'].includes(tab)
+      ? tab
+      : 'overview';
+  });
   const [glossaryOpen, setGlossaryOpen] = useState(true);
   const [sampleDataOpen, setSampleDataOpen] = useState(true);
 
@@ -114,6 +121,7 @@ export default function ProductDetail() {
     { id: 'definition', label: 'Definition & Lineage', icon: GitBranch },
     { id: 'operations', label: 'Runs & Health', icon: Activity },
     { id: 'consumers', label: 'Consumers', icon: Users },
+    { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
   ];
 
   return (
@@ -485,6 +493,8 @@ export default function ProductDetail() {
               )}
             </section>
           )}
+
+          {activeTab === 'subscriptions' && <SubscriptionsTab productId={id} />}
 
           {activeTab === 'definition' && (
             <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">

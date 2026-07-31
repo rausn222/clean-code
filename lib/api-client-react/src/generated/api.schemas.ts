@@ -117,6 +117,44 @@ export interface SampleData {
   rows: SampleDataRowsItem[];
 }
 
+export interface PlanSubscription {
+  id: number;
+  subscribedAt: string;
+  expiresAt: string;
+  autoRenew: boolean;
+}
+
+export type SubscriptionPlanChannel = typeof SubscriptionPlanChannel[keyof typeof SubscriptionPlanChannel];
+
+
+export const SubscriptionPlanChannel = {
+  Data_Product: 'Data Product',
+  Postgres: 'Postgres',
+  'REST-API': 'REST-API',
+} as const;
+
+export type SubscriptionPlanType = typeof SubscriptionPlanType[keyof typeof SubscriptionPlanType];
+
+
+export const SubscriptionPlanType = {
+  Recurring_Subscription: 'Recurring Subscription',
+  'One-time_Subscription': 'One-time Subscription',
+} as const;
+
+export interface SubscriptionPlan {
+  id: number;
+  dataProductId: number;
+  name: string;
+  channel: SubscriptionPlanChannel;
+  price: string;
+  validityMonths: number;
+  type: SubscriptionPlanType;
+  /** @nullable */
+  frequency?: string | null;
+  callLimit: number;
+  subscription?: PlanSubscription | null;
+}
+
 export interface Consumer {
   id: number;
   name: string;

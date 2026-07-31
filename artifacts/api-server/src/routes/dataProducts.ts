@@ -7,8 +7,12 @@ import {
   glossaryFieldsTable,
   productRunsTable,
   sampleRowsTable,
+  subscriptionPlansTable,
+  subscriptionsTable,
   type DataProductRow,
   type ProductRunRow,
+  type SubscriptionPlanRow,
+  type SubscriptionRow,
 } from "@workspace/db";
 import {
   ListDataProductsQueryParams,
@@ -291,6 +295,105 @@ router.get("/data-products/:id/consumers", async (req, res) => {
       lastAccessAt: c.lastAccessAt.toISOString(),
     })),
   );
+});
+
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function serializePlan(
+  plan: SubscriptionPlanRow,
+  subscription: SubscriptionRow | null,
+) {
+  return {
+    id: plan.id,
+    dataProductId: plan.dataProductId,
+    name: plan.name,
+    channel: plan.channel,
+    price: plan.price,
+    validityMonths: plan.validityMonths,
+    type: plan.type,
+    frequency: plan.frequency,
+    callLimit: plan.callLimit,
+    subscription: subscription
+      ? {
+          id: subscription.id,
+          subscribedAt: subscription.subscribedAt.toISOString(),
+          expiresAt: addMonths(
+            subscription.subscribedAt,
+            plan.validityMonths,
+          ).toISOString(),
+          autoRenew: subscription.autoRenew,
+        }
+      : null,
+  };
+}
+
+async function latestSubscriptionFor(planId: number) {
+  const subs = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(eq(subscriptionsTable.planId, planId))
+    .orderBy(desc(subscriptionsTable.subscribedAt))
+    .limit(1);
+  return subs[0] ?? null;
+}
+
+router.get("/data-products/:id/subscription-plans", async (req, res) => {
+  const id = parseId(req.params["id"] ?? "");
+  if (!id) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const plans = await db
+    .select()
+    .from(subscriptionPlansTable)
+    .where(eq(subscriptionPlansTable.dataProductId, id))
+    .orderBy(subscriptionPlansTable.id);
+  const result = [];
+  for (const plan of plans) {
+    result.push(serializePlan(plan, await latestSubscriptionFor(plan.id)));
+  }
+  res.json(result);
+});
+
+router.post("/subscription-plans/:planId/subscribe", async (req, res) => {
+  const planId = parseId(req.params["planId"] ?? "");
+  if (!planId) {
+    res.status(400).json({ error: "Invalid plan id" });
+    return;
+  }
+  const [plan] = await db
+    .select()
+    .from(subscriptionPlansTable)
+    .where(eq(subscriptionPlansTable.id, planId));
+  if (!plan) {
+    res.status(404).json({ error: "Subscription plan not found" });
+    return;
+  }
+  const existing = await latestSubscriptionFor(planId);
+  let subscription: SubscriptionRow;
+  if (existing) {
+    // Renew: restart the term from now
+    const [updated] = await db
+      .update(subscriptionsTable)
+      .set({ subscribedAt: new Date() })
+      .where(eq(subscriptionsTable.id, existing.id))
+      .returning();
+    subscription = updated!;
+  } else {
+    const [created] = await db
+      .insert(subscriptionsTable)
+      .values({
+        planId,
+        autoRenew: plan.type === "Recurring Subscription",
+      })
+      .returning();
+    subscription = created!;
+  }
+  res.json(serializePlan(plan, subscription));
 });
 
 export default router;
