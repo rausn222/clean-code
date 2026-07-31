@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { 
   useGetCatalogSummary, 
@@ -9,23 +9,51 @@ import {
 import { 
   Database, 
   Search, 
-  Filter, 
   Activity, 
   CheckCircle2, 
   AlertCircle,
   FileText,
-  Clock,
   ChevronRight,
-  User,
-  MoreVertical
+  Star
 } from "lucide-react";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
+
+// Favourites persistence (per-browser localStorage)
+const FAV_KEY = "dataverse-favourites";
+
+function loadFavourites(): Set<string> {
+  try {
+    const raw = localStorage.getItem(FAV_KEY);
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
 
 export default function Catalog() {
   const [search, setSearch] = useState("");
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
+  const [favouritesOnly, setFavouritesOnly] = useState(false);
+  const [favourites, setFavourites] = useState<Set<string>>(loadFavourites);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FAV_KEY, JSON.stringify([...favourites]));
+    } catch {
+      /* storage unavailable — favourites just won't persist */
+    }
+  }, [favourites]);
+
+  const toggleFavourite = (id: string) => {
+    setFavourites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const { data: summary, isLoading: loadingSummary } = useGetCatalogSummary({
     query: { queryKey: getGetCatalogSummaryQueryKey() }
@@ -39,6 +67,20 @@ export default function Catalog() {
     },
     { query: { queryKey: getListDataProductsQueryKey({ search: search || undefined, domain: domainFilter || undefined, status: statusFilter || undefined }) } }
   );
+
+  const favouriteCount = useMemo(
+    () => (products ?? []).filter((p) => favourites.has(String(p.id))).length,
+    [products, favourites],
+  );
+
+  const visibleProducts = useMemo(() => {
+    let list = products ?? [];
+    if (favouritesOnly) list = list.filter((p) => favourites.has(String(p.id)));
+    // Favourites float to the top within any view
+    return [...list].sort(
+      (a, b) => Number(favourites.has(String(b.id))) - Number(favourites.has(String(a.id))),
+    );
+  }, [products, favouritesOnly, favourites]);
 
   if (loadingSummary || loadingProducts) return <PageLoader />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
@@ -80,6 +122,23 @@ export default function Catalog() {
             />
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => setFavouritesOnly((v) => !v)}
+              aria-pressed={favouritesOnly}
+              className={`inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-medium border transition-all shadow-sm ${
+                favouritesOnly
+                  ? "bg-amber-500 border-amber-500 text-white"
+                  : "bg-white border-slate-300 text-slate-700 hover:border-amber-300 hover:text-amber-600"
+              }`}
+            >
+              <Star className={`w-4 h-4 ${favouritesOnly ? "text-white fill-white" : "text-amber-500"}`} />
+              Favourites
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                favouritesOnly ? "bg-white/25 text-white" : "bg-slate-100 text-slate-600"
+              }`}>
+                {favouriteCount}
+              </span>
+            </button>
             <select 
               className="h-10 px-3 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm"
               value={domainFilter}
@@ -107,6 +166,7 @@ export default function Catalog() {
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0 z-10">
               <tr>
+                <th className="px-4 py-3.5 font-medium w-12"><span className="sr-only">Favourite</span></th>
                 <th className="px-6 py-3.5 font-medium">Data Product</th>
                 <th className="px-6 py-3.5 font-medium">Domain</th>
                 <th className="px-6 py-3.5 font-medium">Status</th>
@@ -115,17 +175,51 @@ export default function Catalog() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products?.length === 0 ? (
+              {visibleProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                    <Database className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                    <p className="font-medium text-slate-900 mb-1">No products found</p>
-                    <p className="text-sm">Try adjusting your search or filters.</p>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    {favouritesOnly ? (
+                      <>
+                        <Star className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+                        <p className="font-medium text-slate-900 mb-1">No favourites yet</p>
+                        <p className="text-sm">Click the star on any product to pin it here for quick access.</p>
+                      </>
+                    ) : (
+                      <>
+                        <Database className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                        <p className="font-medium text-slate-900 mb-1">No products found</p>
+                        <p className="text-sm">Try adjusting your search or filters.</p>
+                      </>
+                    )}
                   </td>
                 </tr>
               ) : (
-                products?.map(product => (
-                  <tr key={product.id} className="hover:bg-slate-50/50 transition-colors group">
+                visibleProducts.map(product => {
+                  const faved = favourites.has(String(product.id));
+                  return (
+                  <tr
+                    key={product.id}
+                    className={`transition-colors group ${
+                      faved
+                        ? "bg-amber-50/40 hover:bg-amber-50/70 shadow-[inset_2px_0_0_0_#fcd34d]"
+                        : "hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => toggleFavourite(String(product.id))}
+                        title={faved ? "Remove from favourites" : "Add to favourites"}
+                        aria-label={faved ? "Remove from favourites" : "Add to favourites"}
+                        aria-pressed={faved}
+                        className={`inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent transition-all ${
+                          faved
+                            ? "text-amber-500"
+                            : "text-slate-300 hover:text-amber-500 hover:bg-amber-50 hover:border-amber-200"
+                        }`}
+                      >
+                        <Star className={`w-[18px] h-[18px] ${faved ? "fill-amber-500" : ""}`} />
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       <Link href={`/products/${product.id}`} className="block">
                         <div className="font-medium text-indigo-700 group-hover:text-indigo-800 transition-colors mb-0.5 flex items-center gap-2">
@@ -175,7 +269,8 @@ export default function Catalog() {
                       </Link>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
