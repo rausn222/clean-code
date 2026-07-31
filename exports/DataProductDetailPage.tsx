@@ -32,6 +32,7 @@ import {
   Search,
   AlertCircle,
   CreditCard,
+  Bookmark,
   Server,
   Globe,
   CalendarDays,
@@ -369,6 +370,19 @@ const STYLES = `
 .dpd-pulse { animation: dpd-pulse 1.5s ease-in-out infinite; }
 @keyframes dpd-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+/* ---------- Bookmark button (header) ---------- */
+.dpd-bookmark-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  background: #ffffff; color: #475569; border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all .15s ease;
+}
+.dpd-bookmark-btn:hover { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.dpd-bookmark-btn svg { width: 15px; height: 15px; }
+.dpd-bookmark-btn.on { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+.dpd-bookmark-btn.on svg { fill: #f59e0b; color: #f59e0b; }
+
 /* ---------- Subscriptions tab ---------- */
 .dpd-subs-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .dpd-subs-title { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
@@ -692,6 +706,9 @@ export interface DataProductDetailPageProps {
   onSubscribe?: (plan: SubscriptionPlan) => void;
   onManagePlan?: (plan: SubscriptionPlan) => void;
   onAddPlan?: () => void;
+  /** Controlled bookmark state; if omitted, the component manages it locally. */
+  bookmarked?: boolean;
+  onToggleBookmark?: (bookmarked: boolean) => void;
 }
 
 export default function DataProductDetailPage({
@@ -706,8 +723,17 @@ export default function DataProductDetailPage({
   onSubscribe,
   onManagePlan,
   onAddPlan,
+  bookmarked,
+  onToggleBookmark,
 }: DataProductDetailPageProps) {
   const [copied, setCopied] = useState(false);
+  const [localBookmarked, setLocalBookmarked] = useState(false);
+  const isBookmarked = bookmarked ?? localBookmarked;
+  const handleToggleBookmark = () => {
+    const next = !isBookmarked;
+    if (bookmarked === undefined) setLocalBookmarked(next);
+    onToggleBookmark?.(next);
+  };
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [glossaryOpen, setGlossaryOpen] = useState(true);
   const [sampleDataOpen, setSampleDataOpen] = useState(true);
@@ -915,6 +941,15 @@ export default function DataProductDetailPage({
             </div>
 
             <div className="dpd-actions">
+              <button
+                className={`dpd-bookmark-btn${isBookmarked ? " on" : ""}`}
+                onClick={handleToggleBookmark}
+                title={isBookmarked ? "Remove bookmark" : "Bookmark this data product"}
+                aria-pressed={isBookmarked}
+              >
+                <Bookmark />
+                {isBookmarked ? "Bookmarked" : "Bookmark"}
+              </button>
               <button className="dpd-btn dpd-btn-secondary" onClick={onToggleStatus}>
                 <Archive className="dpd-icon-sm" />
                 {product.status === "published" ? "Unpublish" : "Publish"}
