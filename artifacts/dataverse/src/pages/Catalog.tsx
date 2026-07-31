@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Star
 } from "lucide-react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
 
@@ -49,10 +50,11 @@ export default function Catalog() {
 
   const queryClient = useQueryClient();
   const favouritesQueryKey = getListFavouritesQueryKey();
+  const { isAuthenticated, isLoading: loadingAuth, login } = useAuth();
 
-  // Server-side favourites (shared across browsers and devices)
+  // Per-user server-side favourites (only fetched when signed in)
   const { data: favouritesData, isLoading: loadingFavourites } = useListFavourites({
-    query: { queryKey: favouritesQueryKey }
+    query: { queryKey: favouritesQueryKey, enabled: isAuthenticated }
   });
   const favourites = useMemo(
     () => new Set((favouritesData?.productIds ?? []).map(String)),
@@ -81,18 +83,22 @@ export default function Catalog() {
     }
   });
 
-  // One-time migration of legacy localStorage favourites to the server
+  // One-time migration of legacy localStorage favourites to the signed-in user
   const migratedRef = useRef(false);
   useEffect(() => {
-    if (migratedRef.current) return;
+    if (!isAuthenticated || migratedRef.current) return;
     migratedRef.current = true;
     const legacy = loadLegacyFavouriteIds();
     if (legacy.length > 0) {
       syncFavourites.mutate({ data: { productIds: legacy } });
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const toggleFavourite = (id: string) => {
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
     const productId = Number(id);
     const isFaved = favourites.has(id);
     // Optimistic update so the star responds instantly
@@ -139,7 +145,7 @@ export default function Catalog() {
     );
   }, [products, favouritesOnly, favourites]);
 
-  if (loadingSummary || loadingProducts || loadingFavourites) return <PageLoader />;
+  if (loadingSummary || loadingProducts || loadingAuth || (isAuthenticated && loadingFavourites)) return <PageLoader />;
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
 
   return (
@@ -238,8 +244,23 @@ export default function Catalog() {
                     {favouritesOnly ? (
                       <>
                         <Star className="w-8 h-8 text-amber-400 mx-auto mb-3" />
-                        <p className="font-medium text-slate-900 mb-1">No favourites yet</p>
-                        <p className="text-sm">Click the star on any product to pin it here for quick access.</p>
+                        {isAuthenticated ? (
+                          <>
+                            <p className="font-medium text-slate-900 mb-1">No favourites yet</p>
+                            <p className="text-sm">Click the star on any product to pin it here for quick access.</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-medium text-slate-900 mb-1">Sign in to use favourites</p>
+                            <p className="text-sm mb-4">Your favourites are saved to your account and follow you across devices.</p>
+                            <button
+                              onClick={login}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                            >
+                              Log in
+                            </button>
+                          </>
+                        )}
                       </>
                     ) : (
                       <>

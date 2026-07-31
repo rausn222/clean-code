@@ -1,14 +1,15 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, dataProductsTable, favouritesTable } from "@workspace/db";
 import { SyncFavouritesBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-async function listFavouriteIds(): Promise<number[]> {
+async function listFavouriteIds(userId: string): Promise<number[]> {
   const rows = await db
     .select({ dataProductId: favouritesTable.dataProductId })
     .from(favouritesTable)
+    .where(eq(favouritesTable.userId, userId))
     .orderBy(favouritesTable.id);
   return rows.map((r) => r.dataProductId);
 }
@@ -18,11 +19,19 @@ function parseId(raw: string): number | null {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-router.get("/favourites", async (_req, res) => {
-  res.json({ productIds: await listFavouriteIds() });
+router.get("/favourites", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  res.json({ productIds: await listFavouriteIds(req.user.id) });
 });
 
 router.put("/favourites/:productId", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const id = parseId(req.params["productId"] ?? "");
   if (!id) {
     res.status(400).json({ error: "Invalid product id" });
@@ -38,22 +47,37 @@ router.put("/favourites/:productId", async (req, res) => {
   }
   await db
     .insert(favouritesTable)
-    .values({ dataProductId: id })
+    .values({ userId: req.user.id, dataProductId: id })
     .onConflictDoNothing();
-  res.json({ productIds: await listFavouriteIds() });
+  res.json({ productIds: await listFavouriteIds(req.user.id) });
 });
 
 router.delete("/favourites/:productId", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const id = parseId(req.params["productId"] ?? "");
   if (!id) {
     res.status(400).json({ error: "Invalid product id" });
     return;
   }
-  await db.delete(favouritesTable).where(eq(favouritesTable.dataProductId, id));
-  res.json({ productIds: await listFavouriteIds() });
+  await db
+    .delete(favouritesTable)
+    .where(
+      and(
+        eq(favouritesTable.userId, req.user.id),
+        eq(favouritesTable.dataProductId, id),
+      ),
+    );
+  res.json({ productIds: await listFavouriteIds(req.user.id) });
 });
 
 router.post("/favourites/sync", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const parsed = SyncFavouritesBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid body" });
@@ -71,11 +95,11 @@ router.post("/favourites/sync", async (req, res) => {
     if (existing.length > 0) {
       await db
         .insert(favouritesTable)
-        .values(existing.map((p) => ({ dataProductId: p.id })))
+        .values(existing.map((p) => ({ userId: req.user.id, dataProductId: p.id })))
         .onConflictDoNothing();
     }
   }
-  res.json({ productIds: await listFavouriteIds() });
+  res.json({ productIds: await listFavouriteIds(req.user.id) });
 });
 
 export default router;

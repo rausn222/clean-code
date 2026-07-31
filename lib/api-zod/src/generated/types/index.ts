@@ -7,6 +7,10 @@
  */
 
 export * from './apiMessage';
+export * from './authorizationSessionHeaderParameter';
+export * from './authUser';
+export * from './authUserEnvelope';
+export * from './beginBrowserLoginParams';
 export * from './catalogSummary';
 export * from './catalogSummaryDomainsItem';
 export * from './consumer';
@@ -14,11 +18,17 @@ export * from './dataProduct';
 export * from './dataProductStatus';
 export * from './dataProductStatusUpdate';
 export * from './dataProductStatusUpdateStatus';
+export * from './errorEnvelope';
 export * from './favouritesList';
 export * from './favouritesSyncRequest';
 export * from './glossaryField';
+export * from './handleBrowserLoginCallbackParams';
 export * from './healthStatus';
 export * from './listDataProductsParams';
+export * from './logoutBrowserSessionParams';
+export * from './logoutSuccess';
+export * from './mobileTokenExchangeRequest';
+export * from './mobileTokenExchangeSuccess';
 export * from './planSubscription';
 export * from './productRun';
 export * from './productRunStatus';
