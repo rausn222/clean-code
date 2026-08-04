@@ -28,6 +28,7 @@ import {
   HelpCircle,
   AlertTriangle,
   CornerDownRight,
+  Zap,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
@@ -84,6 +85,8 @@ const STYLES = `
 /* Rerun highlighting */
 .rh-row.rerun { border-left-color: #4f46e5; background: #f5f6ff; }
 .rh-row.rerun:hover { background: #eef0ff; }
+.rh-row.rerun.auto { border-left-color: #f59e0b; background: #fffbeb; }
+.rh-row.rerun.auto:hover { background: #fef3c7; }
 .rh-row.failed { border-left-color: #f43f5e; }
 
 /* Flash when jumping to the original run */
@@ -103,6 +106,8 @@ const STYLES = `
 }
 .rh-badge-rerun { background: #4f46e5; color: #ffffff; }
 .rh-badge-rerun svg { width: 10px; height: 10px; }
+.rh-badge-auto { background: #f59e0b; color: #ffffff; }
+.rh-badge-auto svg { width: 10px; height: 10px; fill: currentColor; }
 
 /* "Rerun of ..." reference under the execution id */
 .rh-rerun-of {
@@ -186,6 +191,13 @@ export interface RunEntry {
   qualityRuleCheck: "Pass" | "Fail" | "N/A";
   /** Execution ID of the failed run this entry re-executes (marks it a rerun). */
   rerunOf?: string;
+  /**
+   * How the rerun was triggered:
+   * - "auto"   — system re-executed automatically right after the failure
+   * - "manual" — a user clicked "Rerun this execution"
+   * Only meaningful when `rerunOf` is set. Defaults to "manual".
+   */
+  rerunTrigger?: "auto" | "manual";
   /** Optional error summary shown in the expanded panel for failed runs. */
   errorMessage?: string;
 }
@@ -209,7 +221,29 @@ const SAMPLE_RUNS: RunEntry[] = [
     errors: 0,
     qualityRuleCheck: "Pass",
   },
-  // ---- rerun pair: this entry re-executes the failed run below ----
+  // ---- auto-rerun pair: system retried immediately after the failure ----
+  {
+    executionId: "20250730091203_9c11de40-77aa-4f0b-9e3d-51c88b7f2210",
+    cost: 3.842,
+    startedAt: "2025-07-30T09:12:00",
+    finishedAt: "2025-07-30T09:29:00",
+    runStatus: "Normal",
+    errors: 0,
+    qualityRuleCheck: "Pass",
+    rerunOf: "20250730084500_1a7f4c92-3d6b-48e0-8b1f-c05e9a2d7734",
+    rerunTrigger: "auto",
+  },
+  {
+    executionId: "20250730084500_1a7f4c92-3d6b-48e0-8b1f-c05e9a2d7734",
+    cost: 0.87,
+    startedAt: "2025-07-30T08:45:00",
+    finishedAt: "2025-07-30T08:49:00",
+    runStatus: "Failed",
+    errors: 1,
+    qualityRuleCheck: "N/A",
+    errorMessage: "Step 2/9 (source_extract) timed out after 240s: connection to source system dropped.",
+  },
+  // ---- manual rerun pair: user clicked "Rerun this execution" ----
   {
     executionId: "20250729114512_f81a2c07-5be1-49d3-b6c1-2a90d1e6aa41",
     cost: 4.31,
@@ -219,6 +253,7 @@ const SAMPLE_RUNS: RunEntry[] = [
     errors: 0,
     qualityRuleCheck: "Pass",
     rerunOf: "20250729031520_b4c4f18e-15a1-4353-8c9c-949605e82c07",
+    rerunTrigger: "manual",
   },
   {
     executionId: "20250729031520_b4c4f18e-15a1-4353-8c9c-949605e82c07",
@@ -366,12 +401,14 @@ export default function RunHistoryPage({
             <tbody>
               {runs.map((run) => {
                 const isRerun = Boolean(run.rerunOf);
+                const isAutoRerun = isRerun && run.rerunTrigger === "auto";
                 const isFailed = run.runStatus === "Failed";
                 const isOpen = expanded.has(run.executionId);
                 const reExecutedBy = rerunBy.get(run.executionId);
                 const rowClass = [
                   "rh-row",
                   isRerun ? "rerun" : "",
+                  isAutoRerun ? "auto" : "",
                   isFailed ? "failed" : "",
                   flashId === run.executionId ? "flash" : "",
                 ]
@@ -390,17 +427,23 @@ export default function RunHistoryPage({
                       <td className="rh-exec">
                         <div className="rh-exec-line">
                           <span>{run.executionId}</span>
-                          {isRerun && (
-                            <span className="rh-badge rh-badge-rerun">
-                              <RotateCcw />
-                              Rerun
-                            </span>
-                          )}
+                          {isRerun &&
+                            (isAutoRerun ? (
+                              <span className="rh-badge rh-badge-auto" title="System automatically re-executed this run after the failure">
+                                <Zap />
+                                Auto Rerun
+                              </span>
+                            ) : (
+                              <span className="rh-badge rh-badge-rerun">
+                                <RotateCcw />
+                                Rerun
+                              </span>
+                            ))}
                         </div>
                         {isRerun && run.rerunOf && (
-                          <div className="rh-rerun-of">
+                          <div className="rh-rerun-of" style={isAutoRerun ? { color: "#b45309" } : undefined}>
                             <CornerDownRight />
-                            Rerun of{" "}
+                            {isAutoRerun ? "Auto-triggered after failed run" : "Rerun of"}{" "}
                             <button onClick={() => jumpTo(run.rerunOf!)} title={run.rerunOf}>
                               {shortId(run.rerunOf)}
                             </button>
@@ -408,8 +451,8 @@ export default function RunHistoryPage({
                         )}
                         {reExecutedBy && (
                           <div className="rh-reexecuted">
-                            <RotateCcw />
-                            Re-executed as{" "}
+                            {reExecutedBy.rerunTrigger === "auto" ? <Zap /> : <RotateCcw />}
+                            {reExecutedBy.rerunTrigger === "auto" ? "Auto re-executed as" : "Re-executed as"}{" "}
                             <button
                               onClick={() => jumpTo(reExecutedBy.executionId)}
                               title={reExecutedBy.executionId}
@@ -475,10 +518,18 @@ export default function RunHistoryPage({
                               <div className="rh-detail-value">{run.qualityRuleCheck}</div>
                             </div>
                             {isRerun && run.rerunOf && (
-                              <div>
-                                <div className="rh-detail-label">Rerun of</div>
-                                <div className="rh-detail-value" style={{ wordBreak: "break-all" }}>{run.rerunOf}</div>
-                              </div>
+                              <>
+                                <div>
+                                  <div className="rh-detail-label">Rerun of</div>
+                                  <div className="rh-detail-value" style={{ wordBreak: "break-all" }}>{run.rerunOf}</div>
+                                </div>
+                                <div>
+                                  <div className="rh-detail-label">Rerun trigger</div>
+                                  <div className="rh-detail-value">
+                                    {isAutoRerun ? "Automatic — system retried after failure" : "Manual — user-initiated"}
+                                  </div>
+                                </div>
+                              </>
                             )}
                           </div>
 
@@ -513,7 +564,11 @@ export default function RunHistoryPage({
           <div className="rh-legend">
             <span className="rh-legend-item">
               <span className="rh-legend-swatch" style={{ background: "#4f46e5" }} />
-              Rerun entry (created by re-executing a failed run)
+              Manual rerun (user re-executed a failed run)
+            </span>
+            <span className="rh-legend-item">
+              <span className="rh-legend-swatch" style={{ background: "#f59e0b" }} />
+              Auto rerun (system retried automatically after failure)
             </span>
             <span className="rh-legend-item">
               <span className="rh-legend-swatch" style={{ background: "#f43f5e" }} />
