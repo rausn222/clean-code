@@ -20,7 +20,8 @@ import {
   Check,
   Search,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  History
 } from 'lucide-react';
 import {
   useGetDataProduct,
@@ -40,6 +41,7 @@ import {
 } from '@workspace/api-client-react';
 import { PageLoader, ErrorState, LoadingSpinner } from '../components/ui/states';
 import SubscriptionsTab from '../components/SubscriptionsTab';
+import RunHistoryTab from '../components/RunHistoryTab';
 import { formatDateTime, formatDuration } from '../lib/format';
 
 export default function ProductDetail() {
@@ -50,7 +52,7 @@ export default function ProductDetail() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    return tab && ['overview', 'definition', 'operations', 'consumers', 'subscriptions'].includes(tab)
+    return tab && ['overview', 'definition', 'operations', 'run-history', 'consumers', 'subscriptions'].includes(tab)
       ? tab
       : 'overview';
   });
@@ -120,6 +122,7 @@ export default function ProductDetail() {
     { id: 'overview', label: 'Overview', icon: Info },
     { id: 'definition', label: 'Definition & Lineage', icon: GitBranch },
     { id: 'operations', label: 'Runs & Health', icon: Activity },
+    { id: 'run-history', label: 'Run History', icon: History },
     { id: 'consumers', label: 'Consumers', icon: Users },
     { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
   ];
@@ -493,6 +496,8 @@ export default function ProductDetail() {
               )}
             </section>
           )}
+
+          {activeTab === 'run-history' && <RunHistoryTab productId={id} />}
 
           {activeTab === 'subscriptions' && <SubscriptionsTab productId={id} />}
 

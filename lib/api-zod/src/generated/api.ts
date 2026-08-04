@@ -63,7 +63,14 @@ export const ListDataProductsResponseItem = zod.object({
   "startedAt": zod.string(),
   "endedAt": zod.string().nullish(),
   "durationSeconds": zod.number().nullish(),
-  "rowsProcessed": zod.number().nullish()
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -99,7 +106,14 @@ export const GetDataProductResponse = zod.object({
   "startedAt": zod.string(),
   "endedAt": zod.string().nullish(),
   "durationSeconds": zod.number().nullish(),
-  "rowsProcessed": zod.number().nullish()
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -138,7 +152,14 @@ export const UpdateDataProductStatusResponse = zod.object({
   "startedAt": zod.string(),
   "endedAt": zod.string().nullish(),
   "durationSeconds": zod.number().nullish(),
-  "rowsProcessed": zod.number().nullish()
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
 }),zod.null()]).optional(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -192,7 +213,14 @@ export const ListRunsResponseItem = zod.object({
   "startedAt": zod.string(),
   "endedAt": zod.string().nullish(),
   "durationSeconds": zod.number().nullish(),
-  "rowsProcessed": zod.number().nullish()
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
 })
 export const ListRunsResponse = zod.array(ListRunsResponseItem)
 
@@ -212,7 +240,41 @@ export const TriggerRunResponse = zod.object({
   "startedAt": zod.string(),
   "endedAt": zod.string().nullish(),
   "durationSeconds": zod.number().nullish(),
-  "rowsProcessed": zod.number().nullish()
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
+})
+
+
+/**
+ * @summary Re-execute a failed run (creates a new linked run entry)
+ */
+export const RerunRunParams = zod.object({
+  "id": zod.coerce.number(),
+  "runId": zod.coerce.number()
+})
+
+export const RerunRunResponse = zod.object({
+  "id": zod.number(),
+  "dataProductId": zod.number(),
+  "status": zod.enum(['running', 'success', 'failed']),
+  "message": zod.string().nullish(),
+  "startedAt": zod.string(),
+  "endedAt": zod.string().nullish(),
+  "durationSeconds": zod.number().nullish(),
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
 })
 
 

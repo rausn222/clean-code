@@ -198,6 +198,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiMessage"
+  /data-products/{id}/runs/{runId}/rerun:
+    post:
+      operationId: rerunRun
+      tags: [dataProducts]
+      summary: Re-execute a failed run (creates a new linked run entry)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: runId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "201":
+          description: The created rerun entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductRun"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
+        "409":
+          description: Run is not failed or already re-executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /data-products/{id}/consumers:
     get:
       operationId: listConsumers
@@ -639,7 +672,7 @@ components:
             additionalProperties: { type: string }
     ProductRun:
       type: object
-      required: [id, dataProductId, status, startedAt]
+      required: [id, dataProductId, status, startedAt, errors]
       properties:
         id: { type: integer }
         dataProductId: { type: integer }
@@ -651,6 +684,17 @@ components:
         endedAt: { type: ["string", "null"] }
         durationSeconds: { type: ["integer", "null"] }
         rowsProcessed: { type: ["integer", "null"] }
+        executionId: { type: ["string", "null"] }
+        cost: { type: ["string", "null"] }
+        errors: { type: integer }
+        qualityCheck:
+          type: ["string", "null"]
+          enum: [Pass, Fail, N/A, null]
+        rerunOfId: { type: ["integer", "null"] }
+        rerunOfExecutionId: { type: ["string", "null"] }
+        rerunTrigger:
+          type: ["string", "null"]
+          enum: [auto, manual, null]
     PlanSubscription:
       type: object
       required: [id, subscribedAt, expiresAt, autoRenew]

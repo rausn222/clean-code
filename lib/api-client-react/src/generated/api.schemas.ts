@@ -94,6 +94,29 @@ export const ProductRunStatus = {
   failed: 'failed',
 } as const;
 
+/**
+ * @nullable
+ */
+export type ProductRunQualityCheck = typeof ProductRunQualityCheck[keyof typeof ProductRunQualityCheck] | null;
+
+
+export const ProductRunQualityCheck = {
+  Pass: 'Pass',
+  Fail: 'Fail',
+  'N/A': 'N/A',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ProductRunRerunTrigger = typeof ProductRunRerunTrigger[keyof typeof ProductRunRerunTrigger] | null;
+
+
+export const ProductRunRerunTrigger = {
+  auto: 'auto',
+  manual: 'manual',
+} as const;
+
 export interface ProductRun {
   id: number;
   dataProductId: number;
@@ -107,6 +130,19 @@ export interface ProductRun {
   durationSeconds?: number | null;
   /** @nullable */
   rowsProcessed?: number | null;
+  /** @nullable */
+  executionId?: string | null;
+  /** @nullable */
+  cost?: string | null;
+  errors: number;
+  /** @nullable */
+  qualityCheck?: ProductRunQualityCheck;
+  /** @nullable */
+  rerunOfId?: number | null;
+  /** @nullable */
+  rerunOfExecutionId?: string | null;
+  /** @nullable */
+  rerunTrigger?: ProductRunRerunTrigger;
 }
 
 export interface DataProduct {

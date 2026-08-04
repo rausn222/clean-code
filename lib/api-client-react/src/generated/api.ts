@@ -760,6 +760,79 @@ export const useTriggerRun = <TError = ErrorType<ApiMessage>,
       return useMutation(getTriggerRunMutationOptions(options));
     }
 
+export const getRerunRunUrl = (id: number,
+    runId: number,) => {
+
+
+
+
+  return `/api/data-products/${id}/runs/${runId}/rerun`
+}
+
+/**
+ * @summary Re-execute a failed run (creates a new linked run entry)
+ */
+export const rerunRun = async (id: number,
+    runId: number, options?: RequestInit): Promise<ProductRun> => {
+
+  return customFetch<ProductRun>(getRerunRunUrl(id,runId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getRerunRunMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rerunRun>>, TError,{id: number;runId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rerunRun>>, TError,{id: number;runId: number}, TContext> => {
+
+const mutationKey = ['rerunRun'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rerunRun>>, {id: number;runId: number}> = (props) => {
+          const {id,runId} = props ?? {};
+
+          return  rerunRun(id,runId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RerunRunMutationResult = NonNullable<Awaited<ReturnType<typeof rerunRun>>>
+
+    export type RerunRunMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Re-execute a failed run (creates a new linked run entry)
+ */
+export const useRerunRun = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rerunRun>>, TError,{id: number;runId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof rerunRun>>,
+        TError,
+        {id: number;runId: number},
+        TContext
+      > => {
+      return useMutation(getRerunRunMutationOptions(options));
+    }
+
 export const getListConsumersUrl = (id: number,) => {
 
 

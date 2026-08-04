@@ -31,6 +31,8 @@ export * from './mobileTokenExchangeRequest';
 export * from './mobileTokenExchangeSuccess';
 export * from './planSubscription';
 export * from './productRun';
+export * from './productRunQualityCheck';
+export * from './productRunRerunTrigger';
 export * from './productRunStatus';
 export * from './sampleData';
 export * from './sampleDataRowsItem';

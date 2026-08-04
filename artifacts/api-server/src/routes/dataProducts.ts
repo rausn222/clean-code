@@ -22,7 +22,10 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-function serializeRun(run: ProductRunRow) {
+function serializeRun(
+  run: ProductRunRow,
+  executionIdById?: Map<number, string | null>,
+) {
   return {
     id: run.id,
     dataProductId: run.dataProductId,
@@ -32,7 +35,86 @@ function serializeRun(run: ProductRunRow) {
     endedAt: run.endedAt ? run.endedAt.toISOString() : null,
     durationSeconds: run.durationSeconds,
     rowsProcessed: run.rowsProcessed,
+    executionId: run.executionId,
+    cost: run.cost,
+    errors: run.errors,
+    qualityCheck: run.qualityCheck,
+    rerunOfId: run.rerunOfId,
+    rerunOfExecutionId:
+      run.rerunOfId != null
+        ? (executionIdById?.get(run.rerunOfId) ?? null)
+        : null,
+    rerunTrigger: run.rerunTrigger,
   };
+}
+
+function newExecutionId(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  const hex = () => Math.floor(Math.random() * 0xffff).toString(16).padStart(4, "0");
+  return `${stamp}_${hex()}${hex()}-${hex()}-${hex()}-${hex()}-${hex()}${hex()}${hex()}`;
+}
+
+/** Finalize a simulated run; on failure, auto-trigger a linked rerun entry. */
+async function finalizeSimulatedRun(runId: number, delayMs: number) {
+  const shouldFail = Math.random() < 0.25;
+  if (shouldFail) {
+    await db
+      .update(productRunsTable)
+      .set({
+        status: "failed",
+        message:
+          "Step 2/9 (source_extract) timed out: connection to source system dropped.",
+        endedAt: new Date(),
+        durationSeconds: Math.round(delayMs / 1000) + 34,
+        rowsProcessed: null,
+        errors: 1 + Math.floor(Math.random() * 3),
+        qualityCheck: "N/A",
+        cost: (0.5 + Math.random() * 1.5).toFixed(3),
+      })
+      .where(eq(productRunsTable.id, runId));
+
+    // Automatic rerun right after the failure
+    const [failedRun] = await db
+      .select()
+      .from(productRunsTable)
+      .where(eq(productRunsTable.id, runId));
+    if (!failedRun) return;
+    const [autoRerun] = await db
+      .insert(productRunsTable)
+      .values({
+        dataProductId: failedRun.dataProductId,
+        status: "running",
+        executionId: newExecutionId(),
+        rerunOfId: runId,
+        rerunTrigger: "auto",
+      })
+      .returning();
+    const rerunDelay = 4000 + Math.floor(Math.random() * 4000);
+    setTimeout(() => {
+      void completeRunSuccessfully(autoRerun!.id, rerunDelay).catch((err) =>
+        logger.error({ err, runId: autoRerun!.id }, "Failed to finalize auto rerun"),
+      );
+    }, rerunDelay);
+    return;
+  }
+  await completeRunSuccessfully(runId, delayMs);
+}
+
+async function completeRunSuccessfully(runId: number, delayMs: number) {
+  await db
+    .update(productRunsTable)
+    .set({
+      status: "success",
+      message: "Pipeline completed successfully",
+      endedAt: new Date(),
+      durationSeconds: Math.round(delayMs / 1000) + 178,
+      rowsProcessed: 12000 + Math.floor(Math.random() * 60000),
+      errors: 0,
+      qualityCheck: "Pass",
+      cost: (2.5 + Math.random() * 2.5).toFixed(3),
+    })
+    .where(eq(productRunsTable.id, runId));
 }
 
 async function latestRunFor(productId: number) {
@@ -227,7 +309,8 @@ router.get("/data-products/:id/runs", async (req, res) => {
     .from(productRunsTable)
     .where(eq(productRunsTable.dataProductId, id))
     .orderBy(desc(productRunsTable.startedAt));
-  res.json(runs.map(serializeRun));
+  const executionIdById = new Map(runs.map((r) => [r.id, r.executionId]));
+  res.json(runs.map((r) => serializeRun(r, executionIdById)));
 });
 
 router.post("/data-products/:id/runs", async (req, res) => {
@@ -246,33 +329,75 @@ router.post("/data-products/:id/runs", async (req, res) => {
   }
   const [run] = await db
     .insert(productRunsTable)
-    .values({ dataProductId: id, status: "running" })
+    .values({ dataProductId: id, status: "running", executionId: newExecutionId() })
     .returning();
 
-  // Simulate pipeline completion after a short delay
+  // Simulate pipeline completion after a short delay (may fail + auto rerun)
   const runId = run!.id;
   const delayMs = 4000 + Math.floor(Math.random() * 4000);
   setTimeout(() => {
-    void (async () => {
-      try {
-        const durationSeconds = Math.round(delayMs / 1000) + 178;
-        await db
-          .update(productRunsTable)
-          .set({
-            status: "success",
-            message: "Pipeline completed successfully",
-            endedAt: new Date(),
-            durationSeconds,
-            rowsProcessed: 12000 + Math.floor(Math.random() * 60000),
-          })
-          .where(eq(productRunsTable.id, runId));
-      } catch (err) {
-        logger.error({ err, runId }, "Failed to finalize simulated run");
-      }
-    })();
+    void finalizeSimulatedRun(runId, delayMs).catch((err) =>
+      logger.error({ err, runId }, "Failed to finalize simulated run"),
+    );
   }, delayMs);
 
   res.status(201).json(serializeRun(run!));
+});
+
+router.post("/data-products/:id/runs/:runId/rerun", async (req, res) => {
+  const id = parseId(req.params["id"] ?? "");
+  const runId = parseId(req.params["runId"] ?? "");
+  if (!id || !runId) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const [original] = await db
+    .select()
+    .from(productRunsTable)
+    .where(
+      and(eq(productRunsTable.id, runId), eq(productRunsTable.dataProductId, id)),
+    );
+  if (!original) {
+    res.status(404).json({ error: "Run not found" });
+    return;
+  }
+  if (original.status !== "failed") {
+    res.status(409).json({ error: "Only failed runs can be re-executed" });
+    return;
+  }
+  let rerun: ProductRunRow | undefined;
+  try {
+    // Unique index on rerun_of_id enforces one rerun per original run,
+    // even under concurrent requests.
+    [rerun] = await db
+      .insert(productRunsTable)
+      .values({
+        dataProductId: id,
+        status: "running",
+        executionId: newExecutionId(),
+        rerunOfId: runId,
+        rerunTrigger: "manual",
+      })
+      .returning();
+  } catch (err) {
+    const pgCode = (err as { cause?: { code?: string }; code?: string });
+    if (pgCode.code === "23505" || pgCode.cause?.code === "23505") {
+      res.status(409).json({ error: "This run has already been re-executed" });
+      return;
+    }
+    throw err;
+  }
+  const delayMs = 4000 + Math.floor(Math.random() * 4000);
+  setTimeout(() => {
+    void completeRunSuccessfully(rerun!.id, delayMs).catch((err) =>
+      logger.error({ err, runId: rerun!.id }, "Failed to finalize manual rerun"),
+    );
+  }, delayMs);
+  res
+    .status(201)
+    .json(
+      serializeRun(rerun!, new Map([[original.id, original.executionId]])),
+    );
 });
 
 router.get("/data-products/:id/consumers", async (req, res) => {

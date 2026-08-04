@@ -6,6 +6,8 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -66,7 +68,20 @@ export const productRunsTable = pgTable("product_runs", {
   endedAt: timestamp("ended_at", { withTimezone: true }),
   durationSeconds: integer("duration_seconds"),
   rowsProcessed: integer("rows_processed"),
-});
+  executionId: text("execution_id"),
+  cost: text("cost"),
+  errors: integer("errors").notNull().default(0),
+  qualityCheck: text("quality_check"),
+  // Rerun linkage: set when this run re-executes a failed run
+  rerunOfId: integer("rerun_of_id").references(
+    (): AnyPgColumn => productRunsTable.id,
+    { onDelete: "set null" },
+  ),
+  rerunTrigger: text("rerun_trigger"), // "auto" | "manual" (null when not a rerun)
+}, (table) => [
+  // At most one rerun per original run (Postgres unique indexes ignore NULLs)
+  uniqueIndex("product_runs_rerun_of_unique").on(table.rerunOfId),
+]);
 
 export const consumersTable = pgTable("consumers", {
   id: serial("id").primaryKey(),

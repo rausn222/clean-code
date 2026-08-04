@@ -5,6 +5,8 @@
  * DataVerse data product catalog API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductRunQualityCheck } from './productRunQualityCheck';
+import type { ProductRunRerunTrigger } from './productRunRerunTrigger';
 import type { ProductRunStatus } from './productRunStatus';
 
 export interface ProductRun {
@@ -20,4 +22,17 @@ export interface ProductRun {
   durationSeconds?: number | null;
   /** @nullable */
   rowsProcessed?: number | null;
+  /** @nullable */
+  executionId?: string | null;
+  /** @nullable */
+  cost?: string | null;
+  errors: number;
+  /** @nullable */
+  qualityCheck?: ProductRunQualityCheck;
+  /** @nullable */
+  rerunOfId?: number | null;
+  /** @nullable */
+  rerunOfExecutionId?: string | null;
+  /** @nullable */
+  rerunTrigger?: ProductRunRerunTrigger;
 }
