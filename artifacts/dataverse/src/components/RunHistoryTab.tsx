@@ -107,7 +107,7 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                {['Execution ID', 'Cost', 'Start Date/Time', 'Finish Date/Time', 'Run Status', 'Errors', 'Quality Rule Check', '', ''].map((h, i) => (
+                {['Execution ID', 'Run Type', 'Cost', 'Start Date/Time', 'Finish Date/Time', 'Run Status', 'Errors', 'Quality Rule Check', '', ''].map((h, i) => (
                   <th key={i} className="text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 px-4 py-3 whitespace-nowrap">
                     {h}
                   </th>
@@ -185,6 +185,31 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
                           </div>
                         )}
                       </td>
+                      <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                        {isRerun ? (
+                          isAuto ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300"
+                              title="System automatically re-executed this run after the failure"
+                            >
+                              <Zap className="w-3 h-3 fill-current" />
+                              Auto Rerun
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300"
+                              title="A user manually re-executed this failed run"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Manual Rerun
+                            </span>
+                          )
+                        ) : (
+                          <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                            Run
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3.5 align-top whitespace-nowrap">{formatCost(run.cost)}</td>
                       <td className="px-4 py-3.5 align-top whitespace-nowrap">{formatDateTime(run.startedAt)}</td>
                       <td className="px-4 py-3.5 align-top whitespace-nowrap">{run.endedAt ? formatDateTime(run.endedAt) : '—'}</td>
@@ -227,7 +252,7 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
                     </tr>
                     {isOpen && (
                       <tr className="border-b border-slate-200">
-                        <td colSpan={9} className="bg-slate-50 px-6 py-4">
+                        <td colSpan={10} className="bg-slate-50 px-6 py-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3 mb-3">
                             <div>
                               <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Duration</div>
