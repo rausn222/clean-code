@@ -124,11 +124,9 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
                 const reExecutedBy = rerunBy.get(run.id);
                 const rowBg = isAuto
                   ? 'bg-amber-50 hover:bg-amber-100/70 border-l-amber-500'
-                  : isRerun
-                    ? 'bg-indigo-50/60 hover:bg-indigo-50 border-l-indigo-600'
-                    : isFailed
-                      ? 'hover:bg-slate-50 border-l-rose-500'
-                      : 'hover:bg-slate-50 border-l-transparent';
+                  : isFailed
+                    ? 'hover:bg-slate-50 border-l-rose-500'
+                    : 'hover:bg-slate-50 border-l-transparent';
                 return (
                   <React.Fragment key={run.id}>
                     <tr
@@ -142,24 +140,18 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
                       <td className="px-4 py-3.5 align-top max-w-[280px]">
                         <div className="flex flex-wrap items-start gap-2 font-mono text-xs text-slate-700 break-all">
                           <span>{run.executionId ?? `run-${run.id}`}</span>
-                          {isRerun &&
-                            (isAuto ? (
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500 text-white font-sans"
-                                title="System automatically re-executed this run after the failure"
-                              >
-                                <Zap className="w-2.5 h-2.5 fill-current" />
-                                Auto Rerun
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-indigo-600 text-white font-sans">
-                                <RotateCcw className="w-2.5 h-2.5" />
-                                Rerun
-                              </span>
-                            ))}
+                          {isAuto && (
+                            <span
+                              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500 text-white font-sans"
+                              title="System automatically re-executed this run after the failure"
+                            >
+                              <Zap className="w-2.5 h-2.5 fill-current" />
+                              Auto Rerun
+                            </span>
+                          )}
                         </div>
                         {isRerun && run.rerunOfId != null && (
-                          <div className={`flex items-center gap-1 mt-1 text-[11px] font-semibold font-sans ${isAuto ? 'text-amber-700' : 'text-indigo-600'}`}>
+                          <div className={`flex items-center gap-1 mt-1 text-[11px] font-semibold font-sans ${isAuto ? 'text-amber-700' : 'text-slate-500'}`}>
                             <CornerDownRight className="w-3 h-3 flex-none" />
                             {isAuto ? 'Auto-triggered after failed run' : 'Rerun of'}{' '}
                             <button
@@ -186,24 +178,14 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
                         )}
                       </td>
                       <td className="px-4 py-3.5 align-top whitespace-nowrap">
-                        {isRerun ? (
-                          isAuto ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300"
-                              title="System automatically re-executed this run after the failure"
-                            >
-                              <Zap className="w-3 h-3 fill-current" />
-                              Auto Rerun
-                            </span>
-                          ) : (
-                            <span
-                              className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-300"
-                              title="A user manually re-executed this failed run"
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                              Manual Rerun
-                            </span>
-                          )
+                        {isAuto ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300"
+                            title="System automatically re-executed this run after the failure"
+                          >
+                            <Zap className="w-3 h-3 fill-current" />
+                            Auto Rerun
+                          </span>
                         ) : (
                           <span className="inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                             Run
@@ -314,7 +296,6 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
       )}
 
       <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-6 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500">
-        <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-[3px] bg-indigo-600" />Manual rerun (user re-executed a failed run)</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-[3px] bg-amber-500" />Auto rerun (system retried automatically after failure)</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-[3px] bg-rose-500" />Failed run</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Healthy execution</span>
