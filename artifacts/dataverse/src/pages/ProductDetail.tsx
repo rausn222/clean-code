@@ -21,7 +21,9 @@ import {
   Search,
   AlertCircle,
   CreditCard,
-  History
+  History,
+  Zap,
+  RotateCcw
 } from 'lucide-react';
 import {
   useGetDataProduct,
@@ -438,6 +440,7 @@ export default function ProductDetail() {
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
                       <tr>
                         <th className="px-6 py-3 font-semibold">Status</th>
+                        <th className="px-6 py-3 font-semibold">Run Type</th>
                         <th className="px-6 py-3 font-semibold">Started At</th>
                         <th className="px-6 py-3 font-semibold">Duration</th>
                         <th className="px-6 py-3 font-semibold">Rows Processed</th>
@@ -451,6 +454,29 @@ export default function ProductDetail() {
                             {run.status === 'success' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 className="w-3.5 h-3.5" /> Success</span>}
                             {run.status === 'failed' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200"><AlertCircle className="w-3.5 h-3.5" /> Failed</span>}
                             {run.status === 'running' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"><Activity className="w-3.5 h-3.5 animate-pulse" /> Running</span>}
+                          </td>
+                          <td className="px-6 py-3">
+                            {run.rerunOfId != null ? (
+                              run.rerunTrigger === 'auto' ? (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300"
+                                  title="System automatically re-executed this run after the failure"
+                                >
+                                  <Zap className="w-3 h-3 fill-current" /> Auto Rerun
+                                </span>
+                              ) : (
+                                <span
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300"
+                                  title="A user manually re-executed this failed run"
+                                >
+                                  <RotateCcw className="w-3 h-3" /> Manual Rerun
+                                </span>
+                              )
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                Run
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-3 text-slate-900 font-medium">{formatDateTime(run.startedAt)}</td>
                           <td className="px-6 py-3 text-slate-600 font-mono">{formatDuration(run.durationSeconds)}</td>
