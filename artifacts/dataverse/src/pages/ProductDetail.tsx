@@ -53,7 +53,7 @@ export default function ProductDetail() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState(() => {
     const tab = new URLSearchParams(window.location.search).get('tab');
-    return tab && ['overview', 'definition', 'operations', 'run-history', 'consumers', 'subscriptions'].includes(tab)
+    return tab && ['overview', 'definition', 'run-history', 'consumers', 'subscriptions'].includes(tab)
       ? tab
       : 'overview';
   });
@@ -122,7 +122,6 @@ export default function ProductDetail() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Info },
     { id: 'definition', label: 'Definition & Lineage', icon: GitBranch },
-    { id: 'operations', label: 'Runs & Health', icon: Activity },
     { id: 'run-history', label: 'Run History', icon: History },
     { id: 'consumers', label: 'Consumers', icon: Users },
     { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
@@ -415,72 +414,6 @@ export default function ProductDetail() {
             </>
           )}
 
-          {activeTab === 'operations' && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-slate-900">Run History</h2>
-                <button 
-                  onClick={handleRunNow}
-                  disabled={isRunning}
-                  className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-md text-sm font-medium hover:bg-indigo-100 transition-colors border border-indigo-200 disabled:opacity-50"
-                >
-                  Trigger Run
-                </button>
-              </div>
-
-              {!runs || runs.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-lg">
-                  <Activity className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                  <p>No runs recorded yet.</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left whitespace-nowrap">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-y border-slate-200">
-                      <tr>
-                        <th className="px-6 py-3 font-semibold">Status</th>
-                        <th className="px-6 py-3 font-semibold">Run Type</th>
-                        <th className="px-6 py-3 font-semibold">Started At</th>
-                        <th className="px-6 py-3 font-semibold">Duration</th>
-                        <th className="px-6 py-3 font-semibold">Rows Processed</th>
-                        <th className="px-6 py-3 font-semibold">Message</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {runs.map(run => (
-                        <tr key={run.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-3">
-                            {run.status === 'success' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><CheckCircle2 className="w-3.5 h-3.5" /> Success</span>}
-                            {run.status === 'failed' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200"><AlertCircle className="w-3.5 h-3.5" /> Failed</span>}
-                            {run.status === 'running' && <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200"><Activity className="w-3.5 h-3.5 animate-pulse" /> Running</span>}
-                          </td>
-                          <td className="px-6 py-3">
-                            {run.rerunOfId != null && run.rerunTrigger === 'auto' ? (
-                              <span
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300"
-                                title="System automatically re-executed this run after the failure"
-                              >
-                                <Zap className="w-3 h-3 fill-current" /> Auto Rerun
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                                Run
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-3 text-slate-900 font-medium">{formatDateTime(run.startedAt)}</td>
-                          <td className="px-6 py-3 text-slate-600 font-mono">{formatDuration(run.durationSeconds)}</td>
-                          <td className="px-6 py-3 text-slate-600 font-mono">{run.rowsProcessed != null ? run.rowsProcessed.toLocaleString() : '-'}</td>
-                          <td className="px-6 py-3 text-slate-500 text-xs truncate max-w-[200px]" title={run.message || ""}>{run.message || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          )}
-
           {activeTab === 'consumers' && (
             <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-6">Known Consumers</h2>
@@ -542,7 +475,7 @@ export default function ProductDetail() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">Latest Run Health</h3>
-              <button onClick={() => setActiveTab('operations')} className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">View history</button>
+              <button onClick={() => setActiveTab('run-history')} className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">View history</button>
             </div>
             
             <div className="p-5">
