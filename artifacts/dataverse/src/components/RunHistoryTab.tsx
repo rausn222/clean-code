@@ -8,6 +8,8 @@ import {
   AlertTriangle,
   CornerDownRight,
   HelpCircle,
+  Lightbulb,
+  X,
 } from 'lucide-react';
 import {
   useListRuns,
@@ -29,8 +31,25 @@ function formatCost(cost: string | null | undefined): string {
   return Number.isFinite(n) ? `$${n.toFixed(3).replace(/\.?0+$/, '')}` : cost;
 }
 
+const INFO_DISMISS_KEY = 'dataverse-run-history-info-dismissed';
+
 export default function RunHistoryTab({ productId }: { productId: number }) {
   const queryClient = useQueryClient();
+  const [showInfo, setShowInfo] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(INFO_DISMISS_KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
+  const dismissInfo = () => {
+    setShowInfo(false);
+    try {
+      localStorage.setItem(INFO_DISMISS_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [flashId, setFlashId] = useState<number | null>(null);
   const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
@@ -89,7 +108,14 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
       <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-slate-200">
         <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
           Run History
-          <HelpCircle className="w-4 h-4 text-slate-400" />
+          <button
+            onClick={() => (showInfo ? dismissInfo() : setShowInfo(true))}
+            aria-label={showInfo ? 'Hide help for this view' : 'Show help for this view'}
+            title="What am I looking at?"
+            className="text-slate-400 hover:text-indigo-600 transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+          </button>
         </h2>
         <button
           onClick={() => refetch()}
@@ -99,6 +125,48 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
           Refresh
         </button>
       </div>
+
+      {showInfo && (
+        <div className="relative mx-6 mt-5 mb-1 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-slate-50 px-5 py-4">
+          <button
+            onClick={dismissInfo}
+            aria-label="Dismiss this tip"
+            className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-start gap-3">
+            <span className="flex-none inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600 text-white">
+              <Lightbulb className="w-4 h-4" />
+            </span>
+            <div className="text-[13px] text-slate-700 leading-relaxed pr-6">
+              <div className="font-bold text-slate-900 mb-1">New here? How to read this view</div>
+              <ul className="space-y-1 list-none">
+                <li>
+                  • Every pipeline execution appears as a row — newest first. The{' '}
+                  <span className="font-semibold">Run Type</span> column tells you how it started:{' '}
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Run</span>{' '}
+                  is a normal scheduled/triggered execution, while{' '}
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300"><Zap className="w-2.5 h-2.5 fill-current" />Auto Rerun</span>{' '}
+                  means the system automatically retried after a failure.
+                </li>
+                <li>
+                  • Failed runs show a rose <span className="font-semibold">Failed</span> status. If they were re-executed, an underlined execution ID link appears beneath them — click it to jump to the retry.
+                </li>
+                <li>
+                  • Click the <ChevronDown className="inline w-3.5 h-3.5 -mt-0.5" /> arrow on any row to see duration, rows processed, and the error message — failed runs that were never retried can be re-executed from there.
+                </li>
+                <li>
+                  • <span className="font-semibold">Quality Rule Check</span> shows whether the data passed validation rules after the run — a run can succeed but still <span className="text-rose-700 font-semibold">Fail</span> quality checks.
+                </li>
+              </ul>
+              <div className="mt-2 text-[11px] text-slate-500">
+                You can reopen this anytime with the <HelpCircle className="inline w-3 h-3 -mt-0.5" /> icon next to the title.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!runs || runs.length === 0 ? (
         <div className="p-10 text-center text-slate-500 text-sm">No runs recorded yet.</div>
