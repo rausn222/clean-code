@@ -188,7 +188,7 @@ export default function ProductDetail() {
     <div className="flex-1 flex flex-col bg-slate-50 font-sans text-slate-900">
       {/* Header Section */}
       <header className="bg-white border-b border-slate-200 sticky top-16 z-10 shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
@@ -248,7 +248,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 self-start">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 self-start">
               <button 
                 onClick={handleToggleStatus}
                 disabled={updateStatusMutation.isPending}
@@ -283,7 +283,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-[1600px] mx-auto px-6 mt-4">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 mt-4">
           <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto no-scrollbar">
             <div data-tour="tabs" className="flex gap-1">
             {tabs.map(tab => {
@@ -319,7 +319,7 @@ export default function ProductDetail() {
       {tourOpen && <GuidedTour steps={TOUR_STEPS} onClose={closeTour} onTabChange={setActiveTab} />}
 
       {/* Main Layout */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 flex flex-col lg:flex-row items-start gap-6">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 flex flex-col lg:flex-row items-start gap-4 sm:gap-6">
         
         {/* Center Content */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
@@ -327,13 +327,13 @@ export default function ProductDetail() {
           {activeTab === 'overview' && (
             <>
               {/* About Section */}
-              <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">About</h2>
                 <p className="text-slate-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">
                   {product.description || "No description provided."}
                 </p>
                 
-                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100 shadow-sm">
+                <div className="flex items-start gap-2 sm:gap-4 p-3 sm:p-4 bg-slate-50 rounded-lg border border-slate-100 shadow-sm">
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">URN (Universal Resource Name)</div>
                     <div className="text-sm font-mono text-slate-800 break-all bg-white p-2 rounded border border-slate-200">
@@ -484,7 +484,7 @@ export default function ProductDetail() {
           )}
 
           {activeTab === 'consumers' && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-6">Known Consumers</h2>
               {!consumers || consumers.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 border border-dashed border-slate-200 rounded-lg">
@@ -520,7 +520,7 @@ export default function ProductDetail() {
           {activeTab === 'subscriptions' && <div data-tour="subscriptions"><SubscriptionsTab productId={id} /></div>}
 
           {activeTab === 'definition' && (
-            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <div className="text-center py-16 text-slate-500">
                 <GitBranch className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">Lineage Graph</h3>

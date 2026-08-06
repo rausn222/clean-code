@@ -105,7 +105,7 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
       <style>{`@keyframes rh-flash { 0% { background-color: #fef3c7; } 100% { background-color: transparent; } }`}</style>
-      <div className="flex items-center justify-between gap-4 px-6 py-5 border-b border-slate-200">
+      <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200">
         <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
           Run History
           <button
@@ -127,7 +127,7 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
       </div>
 
       {showInfo && (
-        <div className="relative mx-6 mt-5 mb-1 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-slate-50 px-5 py-4">
+        <div className="relative mx-4 sm:mx-6 mt-5 mb-1 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-slate-50 px-4 sm:px-5 py-4">
           <button
             onClick={dismissInfo}
             aria-label="Dismiss this tip"
@@ -363,7 +363,7 @@ export default function RunHistoryTab({ productId }: { productId: number }) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-6 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500">
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500">
         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-[3px] bg-amber-500" />Auto rerun (system retried automatically after failure)</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-[3px] bg-rose-500" />Failed run</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" />Healthy execution</span>

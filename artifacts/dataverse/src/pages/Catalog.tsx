@@ -200,11 +200,11 @@ export default function Catalog() {
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
 
   return (
-    <div className="flex-1 flex flex-col w-full max-w-[1600px] mx-auto p-6 gap-8">
+    <div className="flex-1 flex flex-col w-full max-w-[1600px] mx-auto p-4 sm:p-6 gap-6 sm:gap-8">
       
       {/* Overview Stats */}
       <section>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Catalog</h1>
           <div className="flex items-center gap-2">
             <button
@@ -220,7 +220,7 @@ export default function Catalog() {
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <StatCard title="Total Products" value={summary?.totalProducts} icon={Database} />
           <StatCard title="Published" value={summary?.publishedCount} icon={CheckCircle2} iconColor="text-emerald-500" />
           <StatCard title="Drafts" value={summary?.draftCount} icon={FileText} iconColor="text-slate-400" />
@@ -233,8 +233,8 @@ export default function Catalog() {
       <section className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         
         {/* Filters */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full sm:max-w-md" data-tour="catalog-search">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between lg:items-center">
+          <div className="relative w-full lg:max-w-md" data-tour="catalog-search">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
@@ -244,7 +244,7 @@ export default function Catalog() {
               className="w-full h-10 pl-9 pr-4 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
             />
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto" data-tour="catalog-filters">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto" data-tour="catalog-filters">
             <button
               onClick={() => setFavouritesOnly((v) => !v)}
               aria-pressed={favouritesOnly}
@@ -290,11 +290,11 @@ export default function Catalog() {
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3.5 font-medium w-12"><span className="sr-only">Favourite</span></th>
-                <th className="px-6 py-3.5 font-medium">Data Product</th>
-                <th className="px-6 py-3.5 font-medium">Domain</th>
-                <th className="px-6 py-3.5 font-medium">Status</th>
-                <th className="px-6 py-3.5 font-medium">Latest Run</th>
-                <th className="px-6 py-3.5 font-medium text-right">Actions</th>
+                <th className="px-4 sm:px-6 py-3.5 font-medium">Data Product</th>
+                <th className="px-6 py-3.5 font-medium hidden md:table-cell">Domain</th>
+                <th className="px-4 sm:px-6 py-3.5 font-medium">Status</th>
+                <th className="px-6 py-3.5 font-medium hidden lg:table-cell">Latest Run</th>
+                <th className="px-4 sm:px-6 py-3.5 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -359,22 +359,27 @@ export default function Catalog() {
                         <Star className={`w-[18px] h-[18px] ${faved ? "fill-amber-500" : ""}`} />
                       </button>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4">
                       <Link href={`/products/${product.id}`} className="block">
-                        <div className="font-medium text-indigo-700 group-hover:text-indigo-800 transition-colors mb-0.5 flex items-center gap-2">
+                        <div className="font-medium text-indigo-700 group-hover:text-indigo-800 transition-colors mb-0.5 flex items-center gap-2 whitespace-normal break-words">
                           {product.name}
                         </div>
-                        <div className="text-xs text-slate-500 truncate max-w-sm">
+                        <div className="text-xs text-slate-500 truncate max-w-[160px] sm:max-w-sm">
                           {product.description || product.urn}
+                        </div>
+                        <div className="md:hidden mt-1">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            {product.domain}
+                          </span>
                         </div>
                       </Link>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 hidden md:table-cell">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
                         {product.domain}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4">
                       {product.status === 'published' ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -387,7 +392,7 @@ export default function Catalog() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 hidden lg:table-cell">
                       {product.latestRun ? (
                         <div className="flex items-center gap-2">
                           {product.latestRun.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
@@ -399,7 +404,7 @@ export default function Catalog() {
                         <span className="text-slate-400 text-xs italic">No runs yet</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 sm:px-6 py-4 text-right">
                       <Link 
                         href={`/products/${product.id}`}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
