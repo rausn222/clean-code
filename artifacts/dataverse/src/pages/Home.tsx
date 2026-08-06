@@ -30,6 +30,9 @@ import {
   useListDataProducts,
   getListDataProductsQueryKey,
 } from '@workspace/api-client-react';
+import GuidedTour, { TourStep } from '../components/GuidedTour';
+
+const HOME_TOUR_KEY = 'dataverse-home-tour-done';
 
 /* ------------------------------------------------------------------ */
 /* Fuzzy search                                                        */
@@ -198,15 +201,67 @@ function HeroSearch() {
 /* Navbar                                                              */
 /* ------------------------------------------------------------------ */
 
-const NAV_ITEMS: { label: string; to?: string }[] = [
-  { label: 'HOME', to: '/' },
-  { label: 'APPLICATIONS' },
-  { label: 'MARKETPLACE' },
-  { label: 'MY PRODUCTS', to: '/my-products' },
-  { label: 'CONNECTIONS & DATA SETS' },
-  { label: 'DATA CATALOG' },
-  { label: 'DEVELOPER WORKBENCH' },
-  { label: 'ADMIN' },
+const NAV_ITEMS: { label: string; to?: string; slug: string }[] = [
+  { label: 'HOME', to: '/', slug: 'nav-home' },
+  { label: 'APPLICATIONS', slug: 'nav-applications' },
+  { label: 'MARKETPLACE', slug: 'nav-marketplace' },
+  { label: 'MY PRODUCTS', to: '/my-products', slug: 'nav-my-products' },
+  { label: 'CONNECTIONS & DATA SETS', slug: 'nav-connections' },
+  { label: 'DATA CATALOG', slug: 'nav-data-catalog' },
+  { label: 'DEVELOPER WORKBENCH', slug: 'nav-workbench' },
+  { label: 'ADMIN', slug: 'nav-admin' },
+];
+
+const HOME_TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome to MSIL DataVerse',
+    body: 'This quick tour walks you through the navigation bar so you know where everything lives. Use Next / Back or the arrow keys.',
+  },
+  {
+    target: 'nav-home',
+    title: 'Home',
+    body: 'Brings you back to this landing page anytime — with search, featured products, domains, and getting-started guides.',
+  },
+  {
+    target: 'nav-applications',
+    title: 'Applications',
+    body: 'Browse analytical applications and dashboards built on top of DataVerse data products. (Coming soon in this demo.)',
+  },
+  {
+    target: 'nav-marketplace',
+    title: 'Marketplace',
+    body: 'Discover and request published data products from across the organisation — like an internal app store for data. (Coming soon.)',
+  },
+  {
+    target: 'nav-my-products',
+    title: 'My Products',
+    body: 'Your personal catalog: every data product you own or subscribe to, with health, runs, favourites, and subscriptions. This one is fully live — click it after the tour!',
+  },
+  {
+    target: 'nav-connections',
+    title: 'Connections & Data Sets',
+    body: 'Manage source system connections and the raw data sets that feed your data products. (Coming soon.)',
+  },
+  {
+    target: 'nav-data-catalog',
+    title: 'Data Catalog',
+    body: 'The organisation-wide catalog of governed data assets, with lineage, definitions, and ownership. (Coming soon.)',
+  },
+  {
+    target: 'nav-workbench',
+    title: 'Developer Workbench',
+    body: 'Tools for developers to build, test, and publish new data products and pipelines. (Coming soon.)',
+  },
+  {
+    target: 'nav-admin',
+    title: 'Admin',
+    body: 'Administer domains, owners, personas, and platform settings. (Coming soon.)',
+  },
+  {
+    target: 'nav-user',
+    title: 'Your profile',
+    body: "You're signed in as Chandan Das (Admin). That's the end of the tour — start exploring, or replay it anytime with the “Take a tour” button.",
+  },
 ];
 
 function HomeNavbar() {
@@ -233,6 +288,7 @@ function HomeNavbar() {
               <Link
                 key={item.label}
                 href={item.to}
+                data-tour={item.slug}
                 className="px-2.5 py-1.5 text-[11px] font-semibold tracking-wide text-white hover:text-amber-300 transition-colors whitespace-nowrap"
               >
                 {item.label}
@@ -241,6 +297,7 @@ function HomeNavbar() {
               <button
                 key={item.label}
                 title="Coming soon"
+                data-tour={item.slug}
                 onClick={(e) => e.preventDefault()}
                 className="px-2.5 py-1.5 text-[11px] font-semibold tracking-wide text-slate-300 hover:text-white transition-colors whitespace-nowrap cursor-default"
               >
@@ -250,7 +307,7 @@ function HomeNavbar() {
           )}
         </nav>
 
-        <div className="flex items-center gap-2 text-white flex-none">
+        <div className="flex items-center gap-2 text-white flex-none" data-tour="nav-user">
           <div className="text-right leading-tight hidden sm:block">
             <div className="text-xs font-semibold">Chandan Das</div>
             <div className="text-[10px] text-slate-300">Admin</div>
@@ -596,6 +653,13 @@ export default function Home() {
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
   const [active, setActive] = useState(0);
   const goCatalog = () => navigate('/my-products');
+  const [tourOpen, setTourOpen] = useState(
+    () => localStorage.getItem(HOME_TOUR_KEY) !== '1',
+  );
+  const closeTour = () => {
+    localStorage.setItem(HOME_TOUR_KEY, '1');
+    setTourOpen(false);
+  };
 
   // Deep-link support: /?slide=2 jumps straight to a section
   useEffect(() => {
@@ -635,13 +699,22 @@ export default function Home() {
           <br />
           DATA
         </h1>
-        <button
-          onClick={() => scrollTo(3)}
-          className="mt-8 inline-flex items-center gap-2 bg-white text-[#0b1230] hover:bg-indigo-100 text-sm font-bold px-6 py-3 rounded-full shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5"
-        >
-          Let's Explore
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => scrollTo(3)}
+            className="inline-flex items-center gap-2 bg-white text-[#0b1230] hover:bg-indigo-100 text-sm font-bold px-6 py-3 rounded-full shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Let's Explore
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setTourOpen(true)}
+            className="inline-flex items-center gap-2 border border-white/40 text-white hover:bg-white/10 text-sm font-semibold px-6 py-3 rounded-full transition-colors"
+          >
+            <BadgeCheck className="w-4 h-4" />
+            Take a tour
+          </button>
+        </div>
       </div>
       <div className="flex flex-col gap-6">
         <p className="text-slate-100 text-lg sm:text-xl leading-relaxed">
@@ -692,6 +765,8 @@ export default function Home() {
           </section>
         ))}
       </div>
+
+      {tourOpen && <GuidedTour steps={HOME_TOUR_STEPS} onClose={closeTour} />}
     </div>
   );
 }
