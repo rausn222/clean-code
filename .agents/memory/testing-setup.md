@@ -7,4 +7,5 @@ description: How automated tests are wired in this monorepo and quirks hit while
 - **Why:** no isolated test DB exists yet (see project task about isolating test data).
 - React-query cache updates are batched asynchronously — in UI tests, never assert optimistic state synchronously after `fireEvent.click`; use `waitFor` and re-query DOM nodes (rows re-render/re-sort, so held element refs go stale). Delay failing fetch stubs slightly or the optimistic state flashes before `waitFor` samples it.
 - After tasks merge into the working tree, run `pnpm install` and `pnpm --filter @workspace/db run push` — merged tasks may add deps/schema the local env lacks, breaking typecheck and runtime ("relation does not exist").
+- UI test fetch stubs must handle `/api/auth/user` returning `{ user: {...} }` (not the bare user), or auth-gated features silently no-op (clicks redirect to login). Also seed the page's tour-done localStorage key so the guided-tour overlay doesn't swallow clicks.
 - Optimistic favourites rollback must restore the pre-mutation cache snapshot locally (not just invalidate) so state recovers even when the server is fully unreachable.

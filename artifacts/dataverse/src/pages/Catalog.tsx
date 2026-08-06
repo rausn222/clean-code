@@ -21,11 +21,42 @@ import {
   AlertCircle,
   FileText,
   ChevronRight,
-  Star
+  Star,
+  Compass
 } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
+import GuidedTour, { TourStep } from "../components/GuidedTour";
+
+const TOUR_DONE_KEY = "dataverse-catalog-tour-done";
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    title: "Welcome to DataVerse",
+    body: "This is the data product catalog — your home for discovering, tracking, and subscribing to data products. Let\u2019s take a quick look around.",
+  },
+  {
+    target: "catalog-search",
+    title: "Find any data product",
+    body: "Search by name, URN, or description. Results update as you type.",
+  },
+  {
+    target: "catalog-filters",
+    title: "Filter the catalog",
+    body: "Narrow the list by domain or publication status, or toggle Favourites to see only the products you\u2019ve starred.",
+  },
+  {
+    target: "catalog-table",
+    title: "Browse data products",
+    body: "Each row shows a product\u2019s domain, status, and latest run health. Click a product to open its detail page — there\u2019s a tour waiting there too.",
+  },
+  {
+    target: "catalog-favourite",
+    title: "Bookmark your favourites",
+    body: "Click the star to pin a product. Favourites float to the top of the list and follow your account across devices. Replay this tour anytime with the \u201cTake a tour\u201d button above.",
+  },
+];
 
 // Legacy per-browser favourites (migrated to the server on first load)
 const FAV_KEY = "dataverse-favourites";
@@ -47,6 +78,21 @@ export default function Catalog() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [favouritesOnly, setFavouritesOnly] = useState(false);
+  const [tourOpen, setTourOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(TOUR_DONE_KEY) !== "1";
+    } catch {
+      return false;
+    }
+  });
+  const closeTour = () => {
+    setTourOpen(false);
+    try {
+      localStorage.setItem(TOUR_DONE_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  };
 
   const queryClient = useQueryClient();
   const favouritesQueryKey = getListFavouritesQueryKey();
@@ -160,9 +206,18 @@ export default function Catalog() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Catalog</h1>
-          <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
-            + New Product
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setTourOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Take a tour
+            </button>
+            <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+              + New Product
+            </button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -179,7 +234,7 @@ export default function Catalog() {
         
         {/* Filters */}
         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full sm:max-w-md">
+          <div className="relative w-full sm:max-w-md" data-tour="catalog-search">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text"
@@ -189,7 +244,7 @@ export default function Catalog() {
               className="w-full h-10 pl-9 pr-4 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
             />
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3 w-full sm:w-auto" data-tour="catalog-filters">
             <button
               onClick={() => setFavouritesOnly((v) => !v)}
               aria-pressed={favouritesOnly}
@@ -230,7 +285,7 @@ export default function Catalog() {
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" data-tour="catalog-table">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0 z-10">
               <tr>
@@ -277,7 +332,7 @@ export default function Catalog() {
                   </td>
                 </tr>
               ) : (
-                visibleProducts.map(product => {
+                visibleProducts.map((product, rowIndex) => {
                   const faved = favourites.has(String(product.id));
                   return (
                   <tr
@@ -290,6 +345,7 @@ export default function Catalog() {
                   >
                     <td className="px-4 py-4">
                       <button
+                        {...(rowIndex === 0 ? { "data-tour": "catalog-favourite" } : {})}
                         onClick={() => toggleFavourite(String(product.id))}
                         title={faved ? "Remove from favourites" : "Add to favourites"}
                         aria-label={faved ? "Remove from favourites" : "Add to favourites"}
@@ -359,6 +415,8 @@ export default function Catalog() {
           </table>
         </div>
       </section>
+
+      {tourOpen && <GuidedTour steps={TOUR_STEPS} onClose={closeTour} />}
     </div>
   );
 }

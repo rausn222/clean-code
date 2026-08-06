@@ -49,6 +49,8 @@ beforeEach(() => {
   mode.failMutations = false;
   mode.fullOutage = false;
   localStorage.clear();
+  // Keep the guided tour closed so its overlay doesn't block interactions
+  localStorage.setItem("dataverse-catalog-tour-done", "1");
 
   vi.stubGlobal(
     "fetch",
@@ -61,6 +63,9 @@ beforeEach(() => {
             : input.url;
       const method = (init?.method ?? "GET").toUpperCase();
 
+      if (url.includes("/api/auth/user")) {
+        return jsonResponse({ user: { id: "test-user", email: "test@example.com" } });
+      }
       if (url.includes("/api/catalog/summary")) return jsonResponse(summary);
       if (url.includes("/api/data-products")) return jsonResponse(products);
       if (url.includes("/api/favourites")) {
