@@ -26,6 +26,7 @@ import type {
   CatalogSummary,
   Consumer,
   DataProduct,
+  DataProductCreate,
   DataProductStatusUpdate,
   ErrorEnvelope,
   ExpiringSubscription,
@@ -309,6 +310,77 @@ export function useListDataProducts<TData = Awaited<ReturnType<typeof listDataPr
 
 
 
+
+export const getCreateDataProductUrl = () => {
+
+
+
+
+  return `/api/data-products`
+}
+
+/**
+ * @summary Create a data product (default subscription plans are provisioned automatically)
+ */
+export const createDataProduct = async (dataProductCreate: DataProductCreate, options?: RequestInit): Promise<DataProduct> => {
+
+  return customFetch<DataProduct>(getCreateDataProductUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(dataProductCreate)
+  }
+);}
+
+
+
+
+
+export const getCreateDataProductMutationOptions = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDataProduct>>, TError,{data: BodyType<DataProductCreate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createDataProduct>>, TError,{data: BodyType<DataProductCreate>}, TContext> => {
+
+const mutationKey = ['createDataProduct'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDataProduct>>, {data: BodyType<DataProductCreate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createDataProduct(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateDataProductMutationResult = NonNullable<Awaited<ReturnType<typeof createDataProduct>>>
+    export type CreateDataProductMutationBody = BodyType<DataProductCreate>
+    export type CreateDataProductMutationError = ErrorType<ApiMessage>
+
+    /**
+ * @summary Create a data product (default subscription plans are provisioned automatically)
+ */
+export const useCreateDataProduct = <TError = ErrorType<ApiMessage>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createDataProduct>>, TError,{data: BodyType<DataProductCreate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createDataProduct>>,
+        TError,
+        {data: BodyType<DataProductCreate>},
+        TContext
+      > => {
+      return useMutation(getCreateDataProductMutationOptions(options));
+    }
 
 export const getGetDataProductUrl = (id: number,) => {
 

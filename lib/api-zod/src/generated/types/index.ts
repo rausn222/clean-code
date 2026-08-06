@@ -15,6 +15,7 @@ export * from './catalogSummary';
 export * from './catalogSummaryDomainsItem';
 export * from './consumer';
 export * from './dataProduct';
+export * from './dataProductCreate';
 export * from './dataProductStatus';
 export * from './dataProductStatusUpdate';
 export * from './dataProductStatusUpdateStatus';

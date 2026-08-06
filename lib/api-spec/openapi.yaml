@@ -69,6 +69,29 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DataProduct"
+    post:
+      operationId: createDataProduct
+      tags: [dataProducts]
+      summary: Create a data product (default subscription plans are provisioned automatically)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataProductCreate"
+      responses:
+        "201":
+          description: Created data product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataProduct"
+        "400":
+          description: Invalid body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiMessage"
   /data-products/{id}:
     get:
       operationId: getDataProduct
@@ -654,6 +677,20 @@ components:
             - type: "null"
         createdAt: { type: string }
         updatedAt: { type: string }
+    DataProductCreate:
+      type: object
+      required: [name, description, domain, owner]
+      properties:
+        name: { type: string, minLength: 1 }
+        description: { type: string, minLength: 1 }
+        domain: { type: string, minLength: 1 }
+        owner: { type: string, minLength: 1 }
+        urn: { type: string }
+        project: { type: ["string", "null"] }
+        sourceAlignment: { type: ["string", "null"] }
+        tags:
+          type: array
+          items: { type: string }
     DataProductStatusUpdate:
       type: object
       required: [status]

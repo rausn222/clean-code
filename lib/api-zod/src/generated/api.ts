@@ -79,6 +79,61 @@ export const ListDataProductsResponse = zod.array(ListDataProductsResponseItem)
 
 
 /**
+ * @summary Create a data product (default subscription plans are provisioned automatically)
+ */
+
+
+
+
+
+
+export const CreateDataProductBody = zod.object({
+  "name": zod.string().min(1),
+  "description": zod.string().min(1),
+  "domain": zod.string().min(1),
+  "owner": zod.string().min(1),
+  "urn": zod.string().optional(),
+  "project": zod.string().nullish(),
+  "sourceAlignment": zod.string().nullish(),
+  "tags": zod.array(zod.string()).optional()
+})
+
+export const CreateDataProductResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "urn": zod.string(),
+  "description": zod.string(),
+  "domain": zod.string(),
+  "owner": zod.string(),
+  "status": zod.enum(['published', 'draft']),
+  "version": zod.string(),
+  "schedule": zod.string(),
+  "project": zod.string().nullish(),
+  "sourceAlignment": zod.string().nullish(),
+  "tags": zod.array(zod.string()),
+  "latestRun": zod.union([zod.object({
+  "id": zod.number(),
+  "dataProductId": zod.number(),
+  "status": zod.enum(['running', 'success', 'failed']),
+  "message": zod.string().nullish(),
+  "startedAt": zod.string(),
+  "endedAt": zod.string().nullish(),
+  "durationSeconds": zod.number().nullish(),
+  "rowsProcessed": zod.number().nullish(),
+  "executionId": zod.string().nullish(),
+  "cost": zod.string().nullish(),
+  "errors": zod.number(),
+  "qualityCheck": zod.union([zod.literal('Pass'),zod.literal('Fail'),zod.literal('N/A'),zod.literal(null)]).nullish(),
+  "rerunOfId": zod.number().nullish(),
+  "rerunOfExecutionId": zod.string().nullish(),
+  "rerunTrigger": zod.union([zod.literal('auto'),zod.literal('manual'),zod.literal(null)]).nullish()
+}),zod.null()]).optional(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
  * @summary Get a data product
  */
 export const GetDataProductParams = zod.object({

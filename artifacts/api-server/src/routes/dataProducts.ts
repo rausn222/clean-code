@@ -15,10 +15,12 @@ import {
   type SubscriptionRow,
 } from "@workspace/db";
 import {
+  CreateDataProductBody,
   ListDataProductsQueryParams,
   UpdateDataProductStatusBody,
 } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
+import { provisionDefaultPlans } from "../lib/defaultSubscriptionPlans";
 
 const router: IRouter = Router();
 
@@ -208,6 +210,48 @@ router.get("/data-products", async (req, res) => {
     result.push(serializeProduct(p, await latestRunFor(p.id)));
   }
   res.json(result);
+});
+
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+router.post("/data-products", async (req, res) => {
+  const parsed = CreateDataProductBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid body" });
+    return;
+  }
+  const { name, description, domain, owner, urn, project, sourceAlignment, tags } =
+    parsed.data;
+  // Product creation and default-plan provisioning are atomic: a new data
+  // product must never exist without its default subscription plans.
+  const { product, planCount } = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(dataProductsTable)
+      .values({
+        name,
+        description,
+        domain,
+        owner,
+        urn: urn ?? `urn:li:dataProduct:${slugify(domain)}:${slugify(name)}`,
+        project: project ?? null,
+        sourceAlignment: sourceAlignment ?? null,
+        tags: tags ?? [],
+      })
+      .returning();
+    const plans = await provisionDefaultPlans(tx, created!.id);
+    return { product: created!, planCount: plans.length };
+  });
+  logger.info(
+    { dataProductId: product.id, planCount },
+    "Provisioned default subscription plans for new data product",
+  );
+
+  res.status(201).json(serializeProduct(product, null));
 });
 
 router.get("/data-products/:id", async (req, res) => {

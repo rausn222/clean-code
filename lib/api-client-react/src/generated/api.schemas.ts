@@ -165,6 +165,23 @@ export interface DataProduct {
   updatedAt: string;
 }
 
+export interface DataProductCreate {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  description: string;
+  /** @minLength 1 */
+  domain: string;
+  /** @minLength 1 */
+  owner: string;
+  urn?: string;
+  /** @nullable */
+  project?: string | null;
+  /** @nullable */
+  sourceAlignment?: string | null;
+  tags?: string[];
+}
+
 export type DataProductStatusUpdateStatus = typeof DataProductStatusUpdateStatus[keyof typeof DataProductStatusUpdateStatus];
 
 
