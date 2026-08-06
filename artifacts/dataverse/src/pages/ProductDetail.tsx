@@ -65,6 +65,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     target: 'health-card',
+    tab: 'overview',
     title: 'Check the latest run health',
     body: 'This card always shows the outcome of the most recent execution — status, timing, and duration — so you can spot problems at a glance without digging into the history.',
   },
@@ -537,7 +538,8 @@ export default function ProductDetail() {
 
         </div>
 
-        {/* Right Rail */}
+        {/* Right Rail — only on the Overview tab */}
+        {activeTab === 'overview' && (
         <aside className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-6">
           
           {/* Run Health Card */}
@@ -640,6 +642,7 @@ export default function ProductDetail() {
           </div>
 
         </aside>
+        )}
       </main>
     </div>
   );
