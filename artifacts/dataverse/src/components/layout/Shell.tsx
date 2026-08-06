@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
-import { Database, Search, LogIn, LogOut } from "lucide-react";
+import { Search, LogIn, LogOut } from "lucide-react";
+import marutiLogo from "../../assets/maruti-suzuki-logo.png";
 import { useAuth } from "@workspace/replit-auth-web";
 import { ExpiryNotifications } from "./ExpiryNotifications";
 
@@ -61,9 +62,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center group-hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200">
-                <Database className="w-4 h-4 text-white" />
-              </div>
+              <img src={marutiLogo} alt="Maruti Suzuki" className="h-5 w-auto" />
+              <span className="hidden sm:block h-6 w-px bg-slate-200" />
               <span className="font-bold text-lg tracking-tight text-slate-900">DataVerse</span>
             </Link>
             

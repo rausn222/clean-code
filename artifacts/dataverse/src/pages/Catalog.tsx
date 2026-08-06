@@ -33,10 +33,6 @@ const TOUR_DONE_KEY = "dataverse-catalog-tour-done";
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Welcome to DataVerse",
-    body: "This is the data product catalog — your home for discovering, tracking, and subscribing to data products. Let\u2019s take a quick look around.",
-  },
-  {
     target: "catalog-search",
     title: "Find any data product",
     body: "Search by name, URN, or description. Results update as you type.",
@@ -49,7 +45,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "catalog-table",
     title: "Browse data products",
-    body: "Each row shows a product\u2019s domain, status, and latest run health. Click a product to open its detail page — there\u2019s a tour waiting there too.",
+    body: "Each tile shows a product\u2019s domain, status, and latest run health. Click a tile to open its detail page — there\u2019s a tour waiting there too.",
   },
   {
     target: "catalog-favourite",
@@ -284,73 +280,65 @@ export default function Catalog() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="flex-1 overflow-auto" data-tour="catalog-table">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 sticky top-0 z-10">
-              <tr>
-                <th className="px-4 py-3.5 font-medium w-12"><span className="sr-only">Favourite</span></th>
-                <th className="px-4 sm:px-6 py-3.5 font-medium">Data Product</th>
-                <th className="px-6 py-3.5 font-medium hidden md:table-cell">Domain</th>
-                <th className="px-4 sm:px-6 py-3.5 font-medium">Status</th>
-                <th className="px-6 py-3.5 font-medium hidden lg:table-cell">Latest Run</th>
-                <th className="px-4 sm:px-6 py-3.5 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {visibleProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                    {favouritesOnly ? (
-                      <>
-                        <Star className="w-8 h-8 text-amber-400 mx-auto mb-3" />
-                        {isAuthenticated ? (
-                          <>
-                            <p className="font-medium text-slate-900 mb-1">No favourites yet</p>
-                            <p className="text-sm">Click the star on any product to pin it here for quick access.</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="font-medium text-slate-900 mb-1">Sign in to use favourites</p>
-                            <p className="text-sm mb-4">Your favourites are saved to your account and follow you across devices.</p>
-                            <button
-                              onClick={login}
-                              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
-                            >
-                              Log in
-                            </button>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Database className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                        <p className="font-medium text-slate-900 mb-1">No products found</p>
-                        <p className="text-sm">Try adjusting your search or filters.</p>
-                      </>
-                    )}
-                  </td>
-                </tr>
+        {/* Tile grid */}
+        <div className="flex-1 overflow-auto p-4 sm:p-6" data-tour="catalog-table">
+          {visibleProducts.length === 0 ? (
+            <div className="px-6 py-12 text-center text-slate-500">
+              {favouritesOnly ? (
+                <>
+                  <Star className="w-8 h-8 text-amber-400 mx-auto mb-3" />
+                  {isAuthenticated ? (
+                    <>
+                      <p className="font-medium text-slate-900 mb-1">No favourites yet</p>
+                      <p className="text-sm">Click the star on any product to pin it here for quick access.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium text-slate-900 mb-1">Sign in to use favourites</p>
+                      <p className="text-sm mb-4">Your favourites are saved to your account and follow you across devices.</p>
+                      <button
+                        onClick={login}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                      >
+                        Log in
+                      </button>
+                    </>
+                  )}
+                </>
               ) : (
-                visibleProducts.map((product, rowIndex) => {
-                  const faved = favourites.has(String(product.id));
-                  return (
-                  <tr
+                <>
+                  <Database className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                  <p className="font-medium text-slate-900 mb-1">No products found</p>
+                  <p className="text-sm">Try adjusting your search or filters.</p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {visibleProducts.map((product, tileIndex) => {
+                const faved = favourites.has(String(product.id));
+                return (
+                  <div
                     key={product.id}
-                    className={`transition-colors group ${
+                    className={`relative group flex flex-col rounded-xl border shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 ${
                       faved
-                        ? "bg-amber-50/40 hover:bg-amber-50/70 shadow-[inset_2px_0_0_0_#fcd34d]"
-                        : "hover:bg-slate-50/50"
+                        ? "bg-amber-50/40 border-amber-200"
+                        : "bg-white border-slate-200 hover:border-indigo-200"
                     }`}
                   >
-                    <td className="px-4 py-4">
+                    <div className="flex items-start justify-between gap-2 p-4 pb-2">
+                      <Link href={`/products/${product.id}`} className="min-w-0 block">
+                        <div className="font-semibold text-indigo-700 group-hover:text-indigo-800 transition-colors break-words leading-snug">
+                          {product.name}
+                        </div>
+                      </Link>
                       <button
-                        {...(rowIndex === 0 ? { "data-tour": "catalog-favourite" } : {})}
+                        {...(tileIndex === 0 ? { "data-tour": "catalog-favourite" } : {})}
                         onClick={() => toggleFavourite(String(product.id))}
                         title={faved ? "Remove from favourites" : "Add to favourites"}
                         aria-label={faved ? "Remove from favourites" : "Add to favourites"}
                         aria-pressed={faved}
-                        className={`inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent transition-all ${
+                        className={`flex-none inline-flex items-center justify-center w-8 h-8 rounded-md border border-transparent transition-all ${
                           faved
                             ? "text-amber-500"
                             : "text-slate-300 hover:text-amber-500 hover:bg-amber-50 hover:border-amber-200"
@@ -358,28 +346,16 @@ export default function Catalog() {
                       >
                         <Star className={`w-[18px] h-[18px] ${faved ? "fill-amber-500" : ""}`} />
                       </button>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4">
-                      <Link href={`/products/${product.id}`} className="block">
-                        <div className="font-medium text-indigo-700 group-hover:text-indigo-800 transition-colors mb-0.5 flex items-center gap-2 whitespace-normal break-words">
-                          {product.name}
-                        </div>
-                        <div className="text-xs text-slate-500 truncate max-w-[160px] sm:max-w-sm">
-                          {product.description || product.urn}
-                        </div>
-                        <div className="md:hidden mt-1">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            {product.domain}
-                          </span>
-                        </div>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 hidden md:table-cell">
+                    </div>
+
+                    <p className="px-4 text-xs text-slate-500 line-clamp-2 min-h-[2rem]">
+                      {product.description || product.urn}
+                    </p>
+
+                    <div className="px-4 pt-3 flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
                         {product.domain}
                       </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4">
                       {product.status === 'published' ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -391,33 +367,32 @@ export default function Catalog() {
                           Draft
                         </span>
                       )}
-                    </td>
-                    <td className="px-6 py-4 hidden lg:table-cell">
+                    </div>
+
+                    <div className="mt-3 px-4 py-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       {product.latestRun ? (
-                        <div className="flex items-center gap-2">
-                          {product.latestRun.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                          {product.latestRun.status === 'failed' && <AlertCircle className="w-4 h-4 text-rose-500" />}
-                          {product.latestRun.status === 'running' && <Activity className="w-4 h-4 text-indigo-500 animate-pulse" />}
-                          <span className="text-slate-600">{formatDateTime(product.latestRun.startedAt)}</span>
+                        <div className="flex items-center gap-2 text-xs min-w-0">
+                          {product.latestRun.status === 'success' && <CheckCircle2 className="w-4 h-4 flex-none text-emerald-500" />}
+                          {product.latestRun.status === 'failed' && <AlertCircle className="w-4 h-4 flex-none text-rose-500" />}
+                          {product.latestRun.status === 'running' && <Activity className="w-4 h-4 flex-none text-indigo-500 animate-pulse" />}
+                          <span className="text-slate-600 truncate">{formatDateTime(product.latestRun.startedAt)}</span>
                         </div>
                       ) : (
                         <span className="text-slate-400 text-xs italic">No runs yet</span>
                       )}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 text-right">
-                      <Link 
+                      <Link
                         href={`/products/${product.id}`}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-md text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors whitespace-nowrap"
                       >
-                        <ChevronRight className="w-5 h-5" />
+                        View Details
+                        <ChevronRight className="w-4 h-4" />
                       </Link>
-                    </td>
-                  </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

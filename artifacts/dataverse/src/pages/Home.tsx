@@ -31,6 +31,7 @@ import {
   getListDataProductsQueryKey,
 } from '@workspace/api-client-react';
 import GuidedTour, { TourStep } from '../components/GuidedTour';
+import marutiLogo from '../assets/maruti-suzuki-logo.png';
 
 const HOME_TOUR_KEY = 'dataverse-home-tour-done';
 
@@ -127,7 +128,10 @@ function HeroSearch() {
 
   return (
     <div ref={boxRef} className="relative w-full max-w-xl">
-      <div className="flex items-center bg-white rounded-full shadow-lg pl-4 pr-1.5 py-1.5">
+      <div
+        className="flex items-center bg-white rounded-full shadow-lg pl-4 pr-1.5 py-1.5"
+        data-tour="hero-search"
+      >
         <Search className="w-4 h-4 text-slate-400 flex-none" />
         <input
           value={query}
@@ -145,7 +149,10 @@ function HeroSearch() {
             open && suggestions.length > 0 ? `hero-suggestion-${suggestions[highlight]?.product.id}` : undefined
           }
         />
-        <button className="flex-none inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors">
+        <button
+          data-tour="ai-mode"
+          className="flex-none inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors"
+        >
           <Sparkles className="w-3.5 h-3.5" />
           AI Mode
         </button>
@@ -260,7 +267,27 @@ const HOME_TOUR_STEPS: TourStep[] = [
   {
     target: 'nav-user',
     title: 'Your profile',
-    body: "You're signed in as Chandan Das (Admin). That's the end of the tour — start exploring, or replay it anytime with the “Take a tour” button.",
+    body: "You're signed in as Chandan Das (Admin).",
+  },
+  {
+    target: 'hero-search',
+    title: 'Search the world of data',
+    body: 'Type 3 or more characters to get instant fuzzy suggestions across product names, domains, and descriptions. Pick a suggestion to jump straight to that product.',
+  },
+  {
+    target: 'ai-mode',
+    title: 'AI Mode',
+    body: 'Switch to AI Mode to ask questions in natural language instead of keywords. (Coming soon in this demo.)',
+  },
+  {
+    target: 'lets-explore',
+    title: "Let's Explore",
+    body: 'In a hurry? This button takes you straight to the Getting Started section at the bottom of the page.',
+  },
+  {
+    target: 'take-tour',
+    title: 'Replay this tour',
+    body: "That's the end of the tour — you can replay it anytime with this button. Happy exploring!",
   },
 ];
 
@@ -270,9 +297,13 @@ function HomeNavbar() {
     <header className="absolute top-0 left-0 right-0 z-30 bg-[#0b1230]/95 border-b border-white/10">
       <div className="max-w-[1500px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-3 flex-none">
-          <span className="text-white font-black italic tracking-tight text-sm leading-none">
-            <span className="block">MARUTI SUZUKI</span>
-            <span className="block text-[8px] font-medium not-italic tracking-widest text-slate-300">
+          <span className="flex flex-col items-start leading-none">
+            <img
+              src={marutiLogo}
+              alt="Maruti Suzuki"
+              className="h-4 w-auto brightness-0 invert"
+            />
+            <span className="mt-1 text-[8px] font-medium tracking-widest text-slate-300">
               Powered by DE
             </span>
           </span>
@@ -702,6 +733,7 @@ export default function Home() {
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <button
             onClick={() => scrollTo(3)}
+            data-tour="lets-explore"
             className="inline-flex items-center gap-2 bg-white text-[#0b1230] hover:bg-indigo-100 text-sm font-bold px-6 py-3 rounded-full shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5"
           >
             Let's Explore
@@ -709,6 +741,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => setTourOpen(true)}
+            data-tour="take-tour"
             className="inline-flex items-center gap-2 border border-white/40 text-white hover:bg-white/10 text-sm font-semibold px-6 py-3 rounded-full transition-colors"
           >
             <BadgeCheck className="w-4 h-4" />

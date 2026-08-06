@@ -50,10 +50,6 @@ const TOUR_DONE_KEY = 'dataverse-product-tour-done';
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: 'Welcome to your data product page',
-    body: 'This quick tour walks you through everything on this page — from the product\u2019s health to its run history and subscriptions. Use Next / Back or the arrow keys.',
-  },
-  {
     target: 'tabs',
     title: 'Navigate with tabs',
     body: 'Each tab covers one aspect of the product: Overview for the description and glossary, Definition & Lineage for where the data comes from, Run History for pipeline executions, Consumers for who uses it, and Subscriptions for access plans.',
