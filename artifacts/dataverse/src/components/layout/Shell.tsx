@@ -72,6 +72,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 href="/" 
                 className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
               >
+                Home
+              </Link>
+              <Link 
+                href="/my-products" 
+                className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
+              >
                 Catalog
               </Link>
               <a 

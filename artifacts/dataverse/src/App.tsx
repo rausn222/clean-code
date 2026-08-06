@@ -6,6 +6,7 @@ import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Shell } from './components/layout/Shell';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
+import Home from './pages/Home';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,13 +19,24 @@ const queryClient = new QueryClient({
 
 function Router() {
   return (
-    <Shell>
-      <Switch>
-        <Route path="/" component={Catalog} />
-        <Route path="/products/:id" component={ProductDetail} />
-        <Route component={NotFound} />
-      </Switch>
-    </Shell>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/my-products">
+        <Shell>
+          <Catalog />
+        </Shell>
+      </Route>
+      <Route path="/products/:id">
+        <Shell>
+          <ProductDetail />
+        </Shell>
+      </Route>
+      <Route>
+        <Shell>
+          <NotFound />
+        </Shell>
+      </Route>
+    </Switch>
   );
 }
 

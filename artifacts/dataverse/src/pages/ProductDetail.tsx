@@ -192,7 +192,7 @@ export default function ProductDetail() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                <Link href="/" className="hover:text-slate-900 cursor-pointer">DataVerse</Link>
+                <Link href="/my-products" className="hover:text-slate-900 cursor-pointer">DataVerse</Link>
                 <span>/</span>
                 <span className="hover:text-slate-900 cursor-pointer">{product.domain}</span>
                 <span>/</span>
