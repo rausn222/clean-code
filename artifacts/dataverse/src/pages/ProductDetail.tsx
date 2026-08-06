@@ -22,7 +22,8 @@ import {
   AlertCircle,
   CreditCard,
   History,
-  Zap
+  Zap,
+  Compass
 } from 'lucide-react';
 import {
   useGetDataProduct,
@@ -43,6 +44,47 @@ import {
 import { PageLoader, ErrorState, LoadingSpinner } from '../components/ui/states';
 import SubscriptionsTab from '../components/SubscriptionsTab';
 import RunHistoryTab from '../components/RunHistoryTab';
+import GuidedTour, { TourStep } from '../components/GuidedTour';
+
+const TOUR_DONE_KEY = 'dataverse-product-tour-done';
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome to your data product page',
+    body: 'This quick tour walks you through everything on this page — from the product\u2019s health to its run history and subscriptions. Use Next / Back or the arrow keys.',
+  },
+  {
+    target: 'tabs',
+    title: 'Navigate with tabs',
+    body: 'Each tab covers one aspect of the product: Overview for the description and glossary, Definition & Lineage for where the data comes from, Run History for pipeline executions, Consumers for who uses it, and Subscriptions for access plans.',
+  },
+  {
+    target: 'run-now',
+    title: 'Trigger a pipeline run',
+    body: 'Run Now starts the data pipeline immediately, outside its normal schedule. If a run fails, the system automatically retries it for you.',
+  },
+  {
+    target: 'health-card',
+    title: 'Check the latest run health',
+    body: 'This card always shows the outcome of the most recent execution — status, timing, and duration — so you can spot problems at a glance without digging into the history.',
+  },
+  {
+    target: 'run-history',
+    tab: 'run-history',
+    title: 'Dig into Run History',
+    body: 'Every execution is listed here, newest first. The Run Type column flags amber \u26a1 Auto Rerun entries — runs the system retried automatically after a failure. Expand any row for error details, and re-execute failed runs from there.',
+  },
+  {
+    target: 'subscriptions',
+    tab: 'subscriptions',
+    title: 'Manage subscriptions',
+    body: 'Consumers subscribe to this data product through plans listed here. This is where access is requested, approved, and tracked.',
+  },
+  {
+    title: 'You\u2019re all set!',
+    body: 'That\u2019s the full journey — check health, review runs, and manage access. You can replay this tour anytime with the "Take a tour" button next to the tabs.',
+  },
+];
 import { formatDateTime, formatDuration } from '../lib/format';
 
 export default function ProductDetail() {
@@ -57,6 +99,21 @@ export default function ProductDetail() {
       ? tab
       : 'overview';
   });
+  const [tourOpen, setTourOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(TOUR_DONE_KEY) !== '1';
+    } catch {
+      return false;
+    }
+  });
+  const closeTour = () => {
+    setTourOpen(false);
+    try {
+      localStorage.setItem(TOUR_DONE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
   const [glossaryOpen, setGlossaryOpen] = useState(true);
   const [sampleDataOpen, setSampleDataOpen] = useState(true);
 
@@ -201,6 +258,7 @@ export default function ProductDetail() {
                 {product.status === 'published' ? 'Unpublish' : 'Publish'}
               </button>
               <button 
+                data-tour="run-now"
                 onClick={handleRunNow}
                 disabled={isRunning}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
@@ -226,7 +284,8 @@ export default function ProductDetail() {
 
         {/* Tab Navigation */}
         <div className="max-w-[1600px] mx-auto px-6 mt-4">
-          <div className="flex gap-1 border-b border-slate-200 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto no-scrollbar">
+            <div data-tour="tabs" className="flex gap-1">
             {tabs.map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -245,9 +304,19 @@ export default function ProductDetail() {
                 </button>
               );
             })}
+            </div>
+            <button
+              onClick={() => setTourOpen(true)}
+              className="ml-auto flex-none inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              Take a tour
+            </button>
           </div>
         </div>
       </header>
+
+      {tourOpen && <GuidedTour steps={TOUR_STEPS} onClose={closeTour} onTabChange={setActiveTab} />}
 
       {/* Main Layout */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-6 flex flex-col lg:flex-row items-start gap-6">
@@ -446,9 +515,9 @@ export default function ProductDetail() {
             </section>
           )}
 
-          {activeTab === 'run-history' && <RunHistoryTab productId={id} />}
+          {activeTab === 'run-history' && <div data-tour="run-history"><RunHistoryTab productId={id} /></div>}
 
-          {activeTab === 'subscriptions' && <SubscriptionsTab productId={id} />}
+          {activeTab === 'subscriptions' && <div data-tour="subscriptions"><SubscriptionsTab productId={id} /></div>}
 
           {activeTab === 'definition' && (
             <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -472,7 +541,7 @@ export default function ProductDetail() {
         <aside className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-6">
           
           {/* Run Health Card */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div data-tour="health-card" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">Latest Run Health</h3>
               <button onClick={() => setActiveTab('run-history')} className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">View history</button>
