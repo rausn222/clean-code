@@ -635,6 +635,13 @@ export default function Home() {
           <br />
           DATA
         </h1>
+        <button
+          onClick={() => scrollTo(3)}
+          className="mt-8 inline-flex items-center gap-2 bg-white text-[#0b1230] hover:bg-indigo-100 text-sm font-bold px-6 py-3 rounded-full shadow-lg transition-all hover:shadow-xl hover:-translate-y-0.5"
+        >
+          Let's Explore
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
       <div className="flex flex-col gap-6">
         <p className="text-slate-100 text-lg sm:text-xl leading-relaxed">
