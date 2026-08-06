@@ -9,6 +9,15 @@ export function formatDateTime(isoString?: string | null) {
   }
 }
 
+export function formatDate(isoString?: string | null) {
+  if (!isoString) return "-";
+  try {
+    return format(new Date(isoString), "dd MMM yyyy");
+  } catch (e) {
+    return "-";
+  }
+}
+
 export function formatDuration(seconds?: number | null) {
   if (seconds == null) return "-";
   if (seconds < 60) return `${seconds}s`;

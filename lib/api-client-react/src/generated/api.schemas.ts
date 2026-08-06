@@ -233,6 +233,18 @@ export interface SubscriptionPlan {
   subscription?: PlanSubscription | null;
 }
 
+export interface ExpiringSubscription {
+  subscriptionId: number;
+  planId: number;
+  planName: string;
+  dataProductId: number;
+  productName: string;
+  subscribedAt: string;
+  expiresAt: string;
+  autoRenew: boolean;
+  daysLeft: number;
+}
+
 export interface Consumer {
   id: number;
   name: string;

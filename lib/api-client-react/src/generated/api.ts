@@ -28,6 +28,7 @@ import type {
   DataProduct,
   DataProductStatusUpdate,
   ErrorEnvelope,
+  ExpiringSubscription,
   FavouritesList,
   FavouritesSyncRequest,
   GlossaryField,
@@ -1057,6 +1058,83 @@ export const useSubscribeToPlan = <TError = ErrorType<ApiMessage>,
       > => {
       return useMutation(getSubscribeToPlanMutationOptions(options));
     }
+
+export const getListExpiringSubscriptionsUrl = () => {
+
+
+
+
+  return `/api/subscriptions/expiring`
+}
+
+/**
+ * @summary Subscriptions expiring within the next 30 days
+ */
+export const listExpiringSubscriptions = async ( options?: RequestInit): Promise<ExpiringSubscription[]> => {
+
+  return customFetch<ExpiringSubscription[]>(getListExpiringSubscriptionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListExpiringSubscriptionsQueryKey = () => {
+    return [
+    `/api/subscriptions/expiring`
+    ] as const;
+    }
+
+
+export const getListExpiringSubscriptionsQueryOptions = <TData = Awaited<ReturnType<typeof listExpiringSubscriptions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExpiringSubscriptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListExpiringSubscriptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listExpiringSubscriptions>>> = ({ signal }) => listExpiringSubscriptions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listExpiringSubscriptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListExpiringSubscriptionsQueryResult = NonNullable<Awaited<ReturnType<typeof listExpiringSubscriptions>>>
+export type ListExpiringSubscriptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Subscriptions expiring within the next 30 days
+ */
+
+export function useListExpiringSubscriptions<TData = Awaited<ReturnType<typeof listExpiringSubscriptions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listExpiringSubscriptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListExpiringSubscriptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListFavouritesUrl = () => {
 

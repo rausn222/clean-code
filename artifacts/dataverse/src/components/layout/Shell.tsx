@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { Database, Search, LogIn, LogOut } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
+import { ExpiryNotifications } from "./ExpiryNotifications";
 
 function UserMenu() {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
@@ -97,6 +98,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 className="w-64 h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
               />
             </div>
+            <ExpiryNotifications />
             <UserMenu />
           </div>
         </div>

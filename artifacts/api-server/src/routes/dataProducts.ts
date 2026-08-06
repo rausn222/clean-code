@@ -466,6 +466,51 @@ async function latestSubscriptionFor(planId: number) {
   return subs[0] ?? null;
 }
 
+router.get("/subscriptions/expiring", async (_req, res) => {
+  const rows = await db
+    .select({
+      subscription: subscriptionsTable,
+      plan: subscriptionPlansTable,
+      product: dataProductsTable,
+    })
+    .from(subscriptionsTable)
+    .innerJoin(
+      subscriptionPlansTable,
+      eq(subscriptionsTable.planId, subscriptionPlansTable.id),
+    )
+    .innerJoin(
+      dataProductsTable,
+      eq(subscriptionPlansTable.dataProductId, dataProductsTable.id),
+    );
+
+  const now = new Date();
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const expiring = rows
+    .map(({ subscription, plan, product }) => {
+      const expiresAt = addMonths(subscription.subscribedAt, plan.validityMonths);
+      const msLeft = expiresAt.getTime() - now.getTime();
+      const daysLeft = Math.max(0, Math.ceil(msLeft / msPerDay));
+      return {
+        msLeft,
+        subscriptionId: subscription.id,
+        planId: plan.id,
+        planName: plan.name,
+        dataProductId: product.id,
+        productName: product.name,
+        subscribedAt: subscription.subscribedAt.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        autoRenew: subscription.autoRenew,
+        daysLeft,
+      };
+    })
+    // Not yet expired, and expiring within the next 30 days
+    .filter((s) => s.msLeft > 0 && s.daysLeft <= 30)
+    .sort((a, b) => a.msLeft - b.msLeft)
+    .map(({ msLeft: _msLeft, ...s }) => s);
+
+  res.json(expiring);
+});
+
 router.get("/data-products/:id/subscription-plans", async (req, res) => {
   const id = parseId(req.params["id"] ?? "");
   if (!id) {

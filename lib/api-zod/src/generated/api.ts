@@ -349,6 +349,23 @@ export const SubscribeToPlanResponse = zod.object({
 
 
 /**
+ * @summary Subscriptions expiring within the next 30 days
+ */
+export const ListExpiringSubscriptionsResponseItem = zod.object({
+  "subscriptionId": zod.number(),
+  "planId": zod.number(),
+  "planName": zod.string(),
+  "dataProductId": zod.number(),
+  "productName": zod.string(),
+  "subscribedAt": zod.string(),
+  "expiresAt": zod.string(),
+  "autoRenew": zod.boolean(),
+  "daysLeft": zod.number()
+})
+export const ListExpiringSubscriptionsResponse = zod.array(ListExpiringSubscriptionsResponseItem)
+
+
+/**
  * @summary List favourited data product ids
  */
 export const ListFavouritesResponse = zod.object({

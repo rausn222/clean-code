@@ -19,6 +19,7 @@ export * from './dataProductStatus';
 export * from './dataProductStatusUpdate';
 export * from './dataProductStatusUpdateStatus';
 export * from './errorEnvelope';
+export * from './expiringSubscription';
 export * from './favouritesList';
 export * from './favouritesSyncRequest';
 export * from './glossaryField';
