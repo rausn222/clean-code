@@ -170,13 +170,28 @@ export default function Catalog() {
     query: { queryKey: getGetCatalogSummaryQueryKey() }
   });
 
+  // Debounce the search text so we don't hit the server on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const listParams = {
+    search: debouncedSearch || undefined,
+    domain: domainFilter || undefined,
+    status: statusFilter || undefined,
+  };
   const { data: products, isLoading: loadingProducts, error, refetch } = useListDataProducts(
-    { 
-      search: search || undefined, 
-      domain: domainFilter || undefined, 
-      status: statusFilter || undefined 
-    },
-    { query: { queryKey: getListDataProductsQueryKey({ search: search || undefined, domain: domainFilter || undefined, status: statusFilter || undefined }) } }
+    listParams,
+    {
+      query: {
+        queryKey: getListDataProductsQueryKey(listParams),
+        // Keep showing the previous list while the filtered list loads,
+        // instead of blanking the page on every search/filter change
+        placeholderData: (prev) => prev,
+      },
+    }
   );
 
   const favouriteCount = useMemo(
