@@ -85,6 +85,14 @@ export const DataProductStatus = {
   draft: 'draft',
 } as const;
 
+export type DataProductProductType = typeof DataProductProductType[keyof typeof DataProductProductType];
+
+
+export const DataProductProductType = {
+  internal: 'internal',
+  external: 'external',
+} as const;
+
 export type ProductRunStatus = typeof ProductRunStatus[keyof typeof ProductRunStatus];
 
 
@@ -155,6 +163,9 @@ export interface DataProduct {
   status: DataProductStatus;
   version: string;
   schedule: string;
+  productType: DataProductProductType;
+  /** @nullable */
+  provider?: string | null;
   /** @nullable */
   project?: string | null;
   /** @nullable */
@@ -164,6 +175,14 @@ export interface DataProduct {
   createdAt: string;
   updatedAt: string;
 }
+
+export type DataProductCreateProductType = typeof DataProductCreateProductType[keyof typeof DataProductCreateProductType];
+
+
+export const DataProductCreateProductType = {
+  internal: 'internal',
+  external: 'external',
+} as const;
 
 export interface DataProductCreate {
   /** @minLength 1 */
@@ -175,6 +194,9 @@ export interface DataProductCreate {
   /** @minLength 1 */
   owner: string;
   urn?: string;
+  productType?: DataProductCreateProductType;
+  /** @nullable */
+  provider?: string | null;
   /** @nullable */
   project?: string | null;
   /** @nullable */

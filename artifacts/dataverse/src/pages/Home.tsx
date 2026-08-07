@@ -216,8 +216,15 @@ function HeroSearch() {
                           <Database className="w-3.5 h-3.5" />
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-slate-900 truncate">
-                            {p.name}
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span className="block text-sm font-semibold text-slate-900 truncate">
+                              {p.name}
+                            </span>
+                            {p.productType === 'external' && (
+                              <span className="flex-none inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200">
+                                External
+                              </span>
+                            )}
                           </span>
                           <span className="block text-xs text-slate-500 truncate">
                             {p.domain} · {p.description}

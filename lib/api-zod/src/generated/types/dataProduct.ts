@@ -5,6 +5,7 @@
  * DataVerse data product catalog API
  * OpenAPI spec version: 0.1.0
  */
+import type { DataProductProductType } from './dataProductProductType';
 import type { DataProductStatus } from './dataProductStatus';
 import type { ProductRun } from './productRun';
 
@@ -18,6 +19,9 @@ export interface DataProduct {
   status: DataProductStatus;
   version: string;
   schedule: string;
+  productType: DataProductProductType;
+  /** @nullable */
+  provider?: string | null;
   /** @nullable */
   project?: string | null;
   /** @nullable */

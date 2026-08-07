@@ -23,7 +23,8 @@ import {
   CreditCard,
   History,
   Zap,
-  Compass
+  Compass,
+  Globe
 } from 'lucide-react';
 import {
   useGetDataProduct,
@@ -212,6 +213,12 @@ export default function ProductDetail() {
                     Draft
                   </span>
                 )}
+                {product.productType === 'external' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 shadow-sm">
+                    <Globe className="w-3.5 h-3.5" />
+                    External
+                  </span>
+                )}
                 <span className="text-sm text-slate-500 border border-slate-200 px-2 py-0.5 rounded-md bg-slate-50 shadow-sm font-mono">
                   v{product.version}
                 </span>
@@ -239,6 +246,15 @@ export default function ProductDetail() {
                     <span>{product.schedule}</span>
                   </div>
                 </div>
+                {product.productType === 'external' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">Provider:</span>
+                    <div className="flex items-center gap-1.5 text-violet-700 font-medium">
+                      <Globe className="w-4 h-4 text-violet-400" />
+                      <span>{product.provider ?? 'External partner'}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400">Last Updated:</span>
                   <span className="text-slate-900 font-medium">{formatDateTime(product.updatedAt)}</span>

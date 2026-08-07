@@ -5,6 +5,7 @@
  * DataVerse data product catalog API
  * OpenAPI spec version: 0.1.0
  */
+import type { DataProductCreateProductType } from './dataProductCreateProductType';
 
 export interface DataProductCreate {
   /** @minLength 1 */
@@ -16,6 +17,9 @@ export interface DataProductCreate {
   /** @minLength 1 */
   owner: string;
   urn?: string;
+  productType?: DataProductCreateProductType;
+  /** @nullable */
+  provider?: string | null;
   /** @nullable */
   project?: string | null;
   /** @nullable */

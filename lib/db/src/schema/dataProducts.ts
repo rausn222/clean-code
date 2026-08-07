@@ -22,6 +22,8 @@ export const dataProductsTable = pgTable("data_products", {
   status: text("status").notNull().default("draft"),
   version: text("version").notNull().default("1.0.0"),
   schedule: text("schedule").notNull().default("Daily at 02:00 UTC"),
+  productType: text("product_type").notNull().default("internal"), // "internal" | "external"
+  provider: text("provider"), // external provider name (null for internal)
   project: text("project"),
   sourceAlignment: text("source_alignment"),
   tags: text("tags").array().notNull().default([]),

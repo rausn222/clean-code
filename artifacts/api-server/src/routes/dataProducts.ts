@@ -140,6 +140,8 @@ function serializeProduct(p: DataProductRow, latestRun: ProductRunRow | null) {
     status: p.status,
     version: p.version,
     schedule: p.schedule,
+    productType: p.productType,
+    provider: p.provider,
     project: p.project,
     sourceAlignment: p.sourceAlignment,
     tags: p.tags,
@@ -225,7 +227,7 @@ router.post("/data-products", async (req, res) => {
     res.status(400).json({ error: "Invalid body" });
     return;
   }
-  const { name, description, domain, owner, urn, project, sourceAlignment, tags } =
+  const { name, description, domain, owner, urn, project, sourceAlignment, tags, productType, provider } =
     parsed.data;
   // Product creation and default-plan provisioning are atomic: a new data
   // product must never exist without its default subscription plans.
@@ -241,6 +243,9 @@ router.post("/data-products", async (req, res) => {
         project: project ?? null,
         sourceAlignment: sourceAlignment ?? null,
         tags: tags ?? [],
+        productType: productType ?? "internal",
+        // Provider only makes sense for external products
+        provider: productType === "external" ? (provider ?? null) : null,
       })
       .returning();
     const plans = await provisionDefaultPlans(tx, created!.id);

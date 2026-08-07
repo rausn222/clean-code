@@ -651,6 +651,7 @@ components:
         - status
         - version
         - schedule
+        - productType
         - tags
         - createdAt
         - updatedAt
@@ -666,6 +667,10 @@ components:
           enum: [published, draft]
         version: { type: string }
         schedule: { type: string }
+        productType:
+          type: string
+          enum: [internal, external]
+        provider: { type: ["string", "null"] }
         project: { type: ["string", "null"] }
         sourceAlignment: { type: ["string", "null"] }
         tags:
@@ -686,6 +691,10 @@ components:
         domain: { type: string, minLength: 1 }
         owner: { type: string, minLength: 1 }
         urn: { type: string }
+        productType:
+          type: string
+          enum: [internal, external]
+        provider: { type: ["string", "null"] }
         project: { type: ["string", "null"] }
         sourceAlignment: { type: ["string", "null"] }
         tags:
