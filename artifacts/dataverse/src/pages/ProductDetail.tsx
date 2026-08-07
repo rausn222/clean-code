@@ -43,6 +43,7 @@ import {
 } from '@workspace/api-client-react';
 import { PageLoader, ErrorState, LoadingSpinner } from '../components/ui/states';
 import SubscriptionsTab from '../components/SubscriptionsTab';
+import InfoNugget from '../components/InfoNugget';
 import RunHistoryTab from '../components/RunHistoryTab';
 import GuidedTour, { TourStep } from '../components/GuidedTour';
 
@@ -323,6 +324,11 @@ export default function ProductDetail() {
           
           {activeTab === 'overview' && (
             <>
+              <InfoNugget
+                id="product-overview"
+                title="What's in Overview?"
+                body="A snapshot of this data product: its description, key details like domain and owner, sample data, and the latest run health on the right. Start here to judge whether this product fits your use case."
+              />
               {/* About Section */}
               <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">About</h2>
@@ -481,6 +487,12 @@ export default function ProductDetail() {
           )}
 
           {activeTab === 'consumers' && (
+            <>
+            <InfoNugget
+              id="product-consumers"
+              title="What's in Consumers?"
+              body="Every team, application, or service that currently uses this data product, the channel they consume it through, and when they last accessed it. Useful for impact analysis before making changes."
+            />
             <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-6">Known Consumers</h2>
               {!consumers || consumers.length === 0 ? (
@@ -510,13 +522,38 @@ export default function ProductDetail() {
                 </div>
               )}
             </section>
+            </>
           )}
 
-          {activeTab === 'run-history' && <div data-tour="run-history"><RunHistoryTab productId={id} /></div>}
+          {activeTab === 'run-history' && (
+            <div data-tour="run-history" className="flex flex-col gap-6">
+              <InfoNugget
+                id="product-run-history"
+                title="What's in Run History?"
+                body="A log of every pipeline execution for this product: status, duration, rows processed, cost, and errors. Failed runs can be re-run from here, and quality check results tell you if the data passed validation."
+              />
+              <RunHistoryTab productId={id} />
+            </div>
+          )}
 
-          {activeTab === 'subscriptions' && <div data-tour="subscriptions"><SubscriptionsTab productId={id} /></div>}
+          {activeTab === 'subscriptions' && (
+            <div data-tour="subscriptions" className="flex flex-col gap-6">
+              <InfoNugget
+                id="product-subscriptions"
+                title="What's in Subscriptions?"
+                body="The access plans available for this product — channel, price, validity, and call limits. Subscribe to a plan to get access, and manage auto-renewal for plans you already have."
+              />
+              <SubscriptionsTab productId={id} />
+            </div>
+          )}
 
           {activeTab === 'definition' && (
+            <>
+            <InfoNugget
+              id="product-definition"
+              title="What's in Definition & Lineage?"
+              body="The technical contract of this product: where its data comes from (upstream sources), what depends on it downstream, and how it aligns to source systems. Check here to trace any field back to its origin."
+            />
             <section className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
               <div className="text-center py-16 text-slate-500">
                 <GitBranch className="w-12 h-12 text-slate-300 mx-auto mb-4" />
@@ -530,6 +567,7 @@ export default function ProductDetail() {
                 )}
               </div>
             </section>
+            </>
           )}
 
         </div>
