@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "wouter";
+import FuzzySearchBox from "../FuzzySearchBox";
 import { Search, LogIn, LogOut } from "lucide-react";
 import marutiLogo from "../../assets/maruti-suzuki-logo.png";
 import { useAuth } from "@workspace/replit-auth-web";
@@ -96,13 +97,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            <div className="relative hidden lg:block">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text"
-                placeholder="Search resources..."
-                className="w-64 h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
-              />
+            <div className="hidden lg:block">
+              <HeaderSearch />
             </div>
             <ExpiryNotifications />
             <UserMenu />
@@ -114,5 +110,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+function HeaderSearch() {
+  const [query, setQuery] = useState('');
+
+  return (
+    <FuzzySearchBox
+      value={query}
+      onChange={setQuery}
+      placeholder="Search resources..."
+      className="w-64"
+      inputClassName="w-64 h-9 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-400"
+    >
+      <Search className="w-4 h-4 absolute left-3 top-[18px] -translate-y-1/2 text-slate-400 z-10" />
+    </FuzzySearchBox>
   );
 }
