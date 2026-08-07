@@ -4,6 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Shell } from './components/layout/Shell';
+import SearchPage from './pages/SearchPage';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
 import Home from './pages/Home';
@@ -21,6 +22,11 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/search">
+        <Shell>
+          <SearchPage />
+        </Shell>
+      </Route>
       <Route path="/my-products">
         <Shell>
           <Catalog />

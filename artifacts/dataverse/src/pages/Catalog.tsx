@@ -28,6 +28,7 @@ import { useAuth } from "@workspace/replit-auth-web";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
 import GuidedTour, { TourStep } from "../components/GuidedTour";
+import FuzzySearchBox from "../components/FuzzySearchBox";
 
 const TOUR_DONE_KEY = "dataverse-catalog-tour-done";
 
@@ -35,7 +36,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     target: "catalog-search",
     title: "Find any data product",
-    body: "Search by name, URN, or description. Results update as you type.",
+    body: "Search by name, URN, or description. The list filters as you type, and after 3 characters you also get fuzzy suggestions — typos and partial words are fine. Pick a suggestion to jump straight to that product.",
   },
   {
     target: "catalog-filters",
@@ -230,15 +231,16 @@ export default function Catalog() {
         
         {/* Filters */}
         <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between lg:items-center">
-          <div className="relative w-full lg:max-w-md" data-tour="catalog-search">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input 
-              type="text"
+          <div className="w-full lg:max-w-md" data-tour="catalog-search">
+            <FuzzySearchBox
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={setSearch}
               placeholder="Search by name, URN, or description..."
-              className="w-full h-10 pl-9 pr-4 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
-            />
+              className="w-full"
+              inputClassName="w-full h-10 pl-9 pr-4 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
+            >
+              <Search className="w-4 h-4 absolute left-3 top-5 -translate-y-1/2 text-slate-400 z-10" />
+            </FuzzySearchBox>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto" data-tour="catalog-filters">
             <button
