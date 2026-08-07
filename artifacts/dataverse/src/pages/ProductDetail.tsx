@@ -45,6 +45,7 @@ import {
 import { PageLoader, ErrorState, LoadingSpinner } from '../components/ui/states';
 import SubscriptionsTab from '../components/SubscriptionsTab';
 import InfoNugget from '../components/InfoNugget';
+import ProductTypeInfoButton from '../components/ProductTypeInfo';
 import RunHistoryTab from '../components/RunHistoryTab';
 import GuidedTour, { TourStep } from '../components/GuidedTour';
 
@@ -175,12 +176,20 @@ export default function ProductDetail() {
 
   const isRunning = product.latestRun?.status === 'running' || triggerRunMutation.isPending;
 
+  const isExternal = product.productType === 'external';
+
+  // Deep links like ?tab=subscriptions should not land on a hidden tab
+  if (isExternal && activeTab === 'subscriptions') {
+    setActiveTab('overview');
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Info },
     { id: 'definition', label: 'Definition & Lineage', icon: GitBranch },
     { id: 'run-history', label: 'Run History', icon: History },
     { id: 'consumers', label: 'Consumers', icon: Users },
-    { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+    // External products cannot be subscribed to from the portal
+    ...(isExternal ? [] : [{ id: 'subscriptions', label: 'Subscriptions', icon: CreditCard }]),
   ];
 
   return (
@@ -222,6 +231,7 @@ export default function ProductDetail() {
                 <span className="text-sm text-slate-500 border border-slate-200 px-2 py-0.5 rounded-md bg-slate-50 shadow-sm font-mono">
                   v{product.version}
                 </span>
+                <ProductTypeInfoButton />
               </div>
 
               {/* Condensed Metadata Ribbon */}
@@ -271,6 +281,7 @@ export default function ProductDetail() {
                 {updateStatusMutation.isPending ? <LoadingSpinner /> : <Archive className="w-4 h-4" />}
                 {product.status === 'published' ? 'Unpublish' : 'Publish'}
               </button>
+              {!isExternal && (
               <button 
                 data-tour="run-now"
                 onClick={handleRunNow}
@@ -289,6 +300,7 @@ export default function ProductDetail() {
                   </>
                 )}
               </button>
+              )}
               <button className="p-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
                 <MoreVertical className="w-4 h-4" />
               </button>

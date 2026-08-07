@@ -23,69 +23,10 @@ import {
   ChevronRight,
   Star,
   Compass,
-  Globe,
-  Building2,
-  X
+  Globe
 } from "lucide-react";
-
-/**
- * Collapsible explainer teaching new users the difference between
- * internal and external data products. Toggled by the
- * "Internal vs External" button in the page header.
- */
-function ProductTypeExplainer({ onClose }: { onClose: () => void }) {
-  return (
-    <section
-      id="product-type-explainer"
-      role="note"
-      className="relative bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5"
-    >
-      <button
-        aria-label="Close explainer"
-        onClick={onClose}
-        className="absolute top-3 right-3 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-      >
-        <X className="w-4 h-4" />
-      </button>
-      <p className="text-sm font-semibold text-slate-900 mb-3">
-        Two kinds of data products live in this catalog
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50/60 px-3.5 py-3">
-          <span className="flex-none w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5">
-            <Building2 className="w-4 h-4" />
-          </span>
-          <div className="min-w-0 text-sm">
-            <p className="font-semibold text-slate-900">Internal data products</p>
-            <p className="text-slate-600 leading-relaxed">
-              Built and owned by Maruti Suzuki teams from our own systems — sales, service,
-              production, and more. These carry no special tag.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50/50 px-3.5 py-3">
-          <span className="flex-none w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
-            <Globe className="w-4 h-4" />
-          </span>
-          <div className="min-w-0 text-sm">
-            <p className="font-semibold text-slate-900">
-              External data products
-              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200 align-middle">
-                <Globe className="w-3 h-3" />
-                External
-              </span>
-            </p>
-            <p className="text-slate-600 leading-relaxed">
-              Sourced from third-party providers outside Maruti Suzuki. Look for this tag on a
-              tile — the product's detail page shows who provides the data.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 import { useAuth } from "@workspace/replit-auth-web";
+import ProductTypeInfoButton from "../components/ProductTypeInfo";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
 import GuidedTour, { TourStep } from "../components/GuidedTour";
@@ -136,7 +77,6 @@ export default function Catalog() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [favouritesOnly, setFavouritesOnly] = useState(false);
-  const [explainerOpen, setExplainerOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState<boolean>(() => {
     try {
       return localStorage.getItem(TOUR_DONE_KEY) !== "1";
@@ -284,19 +224,7 @@ export default function Catalog() {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Catalog</h1>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setExplainerOpen((v) => !v)}
-              aria-expanded={explainerOpen}
-              aria-controls="product-type-explainer"
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap shadow-sm ${
-                explainerOpen
-                  ? "bg-violet-600 border-violet-600 text-white"
-                  : "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              Internal vs External
-            </button>
+            <ProductTypeInfoButton />
             <button
               onClick={() => setTourOpen(true)}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
@@ -318,8 +246,6 @@ export default function Catalog() {
           <StatCard title="Failed Runs" value={summary?.failedCount} icon={AlertCircle} iconColor="text-rose-500" />
         </div>
       </section>
-
-      {explainerOpen && <ProductTypeExplainer onClose={() => setExplainerOpen(false)} />}
 
       {/* Catalog List */}
       <section className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
