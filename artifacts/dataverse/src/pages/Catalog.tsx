@@ -29,25 +29,20 @@ import {
 } from "lucide-react";
 
 /**
- * Dismissible explainer teaching new users the difference between
- * internal and external data products. Dismissal persists per browser.
+ * Collapsible explainer teaching new users the difference between
+ * internal and external data products. Toggled by the
+ * "Internal vs External" button in the page header.
  */
-function ProductTypeExplainer() {
-  const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem('dataverse-nugget-dismissed:catalog-product-types') === '1',
-  );
-  if (dismissed) return null;
+function ProductTypeExplainer({ onClose }: { onClose: () => void }) {
   return (
     <section
+      id="product-type-explainer"
       role="note"
       className="relative bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5"
     >
       <button
-        aria-label="Dismiss"
-        onClick={() => {
-          localStorage.setItem('dataverse-nugget-dismissed:catalog-product-types', '1');
-          setDismissed(true);
-        }}
+        aria-label="Close explainer"
+        onClick={onClose}
         className="absolute top-3 right-3 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
       >
         <X className="w-4 h-4" />
@@ -141,6 +136,7 @@ export default function Catalog() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [favouritesOnly, setFavouritesOnly] = useState(false);
+  const [explainerOpen, setExplainerOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState<boolean>(() => {
     try {
       return localStorage.getItem(TOUR_DONE_KEY) !== "1";
@@ -289,6 +285,19 @@ export default function Catalog() {
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Data Catalog</h1>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setExplainerOpen((v) => !v)}
+              aria-expanded={explainerOpen}
+              aria-controls="product-type-explainer"
+              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap shadow-sm ${
+                explainerOpen
+                  ? "bg-violet-600 border-violet-600 text-white"
+                  : "bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              Internal vs External
+            </button>
+            <button
               onClick={() => setTourOpen(true)}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors whitespace-nowrap"
             >
@@ -310,7 +319,7 @@ export default function Catalog() {
         </div>
       </section>
 
-      <ProductTypeExplainer />
+      {explainerOpen && <ProductTypeExplainer onClose={() => setExplainerOpen(false)} />}
 
       {/* Catalog List */}
       <section className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
