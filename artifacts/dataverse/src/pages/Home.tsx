@@ -245,6 +245,66 @@ function HeroSearch() {
 }
 
 /* ------------------------------------------------------------------ */
+/* How it works — 3-step guidance for first-time users                 */
+/* ------------------------------------------------------------------ */
+
+function HowItWorks() {
+  const [, navigate] = useLocation();
+  const steps = [
+    {
+      n: 1,
+      icon: Search,
+      title: 'Discover',
+      desc: 'Search or browse data products by domain',
+      go: () => navigate('/search'),
+    },
+    {
+      n: 2,
+      icon: BadgeCheck,
+      title: 'Subscribe',
+      desc: 'Pick a product and choose an access plan',
+      go: () => navigate('/my-products'),
+    },
+    {
+      n: 3,
+      icon: Cpu,
+      title: 'Consume',
+      desc: 'Use the data via API, Postgres, or exports',
+      go: () => navigate('/my-products'),
+    },
+  ];
+
+  return (
+    <div data-tour="how-it-works" className="w-full max-w-xl">
+      <div className="text-slate-300/80 text-[11px] font-bold uppercase tracking-[0.25em] mb-3">
+        How it works
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {steps.map((s) => {
+          const Icon = s.icon;
+          return (
+            <button
+              key={s.n}
+              onClick={s.go}
+              className="group text-left bg-white/[0.06] hover:bg-white/[0.12] border border-white/15 hover:border-white/30 rounded-xl px-4 py-3.5 transition-all hover:-translate-y-0.5"
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="flex-none w-6 h-6 rounded-full bg-indigo-500/90 text-white text-[11px] font-bold flex items-center justify-center">
+                  {s.n}
+                </span>
+                <Icon className="w-4 h-4 text-indigo-300" />
+                <span className="text-white text-sm font-semibold">{s.title}</span>
+              </div>
+              <p className="text-slate-300/90 text-xs leading-snug">{s.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Navbar                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -318,6 +378,11 @@ const HOME_TOUR_STEPS: TourStep[] = [
     target: 'ai-mode',
     title: 'AI Mode',
     body: 'Turn on AI Mode to ask questions in natural language. You get suggested questions to start with, and answers appear right below the search bar as you type.',
+  },
+  {
+    target: 'how-it-works',
+    title: 'Your journey in 3 steps',
+    body: 'New here? This is the whole platform in a nutshell: discover a data product, subscribe to an access plan, then consume the data. Each card takes you to the right place.',
   },
   {
     target: 'lets-explore',
@@ -795,6 +860,7 @@ export default function Home() {
           and analytical products
         </p>
         <HeroSearch />
+        <HowItWorks />
       </div>
     </div>,
     <CardsSlide key="cards" goCatalog={goCatalog} />,
