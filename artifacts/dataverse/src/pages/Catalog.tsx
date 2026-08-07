@@ -23,8 +23,73 @@ import {
   ChevronRight,
   Star,
   Compass,
-  Globe
+  Globe,
+  Building2,
+  X
 } from "lucide-react";
+
+/**
+ * Dismissible explainer teaching new users the difference between
+ * internal and external data products. Dismissal persists per browser.
+ */
+function ProductTypeExplainer() {
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem('dataverse-nugget-dismissed:catalog-product-types') === '1',
+  );
+  if (dismissed) return null;
+  return (
+    <section
+      role="note"
+      className="relative bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-5"
+    >
+      <button
+        aria-label="Dismiss"
+        onClick={() => {
+          localStorage.setItem('dataverse-nugget-dismissed:catalog-product-types', '1');
+          setDismissed(true);
+        }}
+        className="absolute top-3 right-3 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
+      <p className="text-sm font-semibold text-slate-900 mb-3">
+        Two kinds of data products live in this catalog
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50/60 px-3.5 py-3">
+          <span className="flex-none w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5">
+            <Building2 className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 text-sm">
+            <p className="font-semibold text-slate-900">Internal data products</p>
+            <p className="text-slate-600 leading-relaxed">
+              Built and owned by Maruti Suzuki teams from our own systems — sales, service,
+              production, and more. These carry no special tag.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 rounded-lg border border-violet-200 bg-violet-50/50 px-3.5 py-3">
+          <span className="flex-none w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center mt-0.5">
+            <Globe className="w-4 h-4" />
+          </span>
+          <div className="min-w-0 text-sm">
+            <p className="font-semibold text-slate-900">
+              External data products
+              <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200 align-middle">
+                <Globe className="w-3 h-3" />
+                External
+              </span>
+            </p>
+            <p className="text-slate-600 leading-relaxed">
+              Sourced from third-party providers outside Maruti Suzuki. Look for this tag on a
+              tile — the product's detail page shows who provides the data.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 import { useAuth } from "@workspace/replit-auth-web";
 import { PageLoader, ErrorState } from "../components/ui/states";
 import { formatDateTime } from "../lib/format";
@@ -244,6 +309,8 @@ export default function Catalog() {
           <StatCard title="Failed Runs" value={summary?.failedCount} icon={AlertCircle} iconColor="text-rose-500" />
         </div>
       </section>
+
+      <ProductTypeExplainer />
 
       {/* Catalog List */}
       <section className="flex-1 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
