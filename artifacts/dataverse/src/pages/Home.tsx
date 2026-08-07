@@ -31,6 +31,7 @@ import {
   getListDataProductsQueryKey,
 } from '@workspace/api-client-react';
 import GuidedTour, { TourStep } from '../components/GuidedTour';
+import { fuzzyScore } from '../components/FuzzySearchBox';
 import marutiLogo from '../assets/maruti-suzuki-logo.png';
 
 const HOME_TOUR_KEY = 'dataverse-home-tour-done';
@@ -39,37 +40,206 @@ const HOME_TOUR_KEY = 'dataverse-home-tour-done';
 /* Hero search placeholder — opens the dedicated search page           */
 /* ------------------------------------------------------------------ */
 
+const AI_SUGGESTIONS = [
+  'Which data products contain customer PII?',
+  'Show me all Sales domain data products',
+  'Which products had failed runs recently?',
+  'What data is available for spare parts planning?',
+];
+
 function HeroSearch() {
   const [, navigate] = useLocation();
-  const openSearch = () => navigate('/search');
+  const [query, setQuery] = useState('');
+  const [aiMode, setAiMode] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: products } = useListDataProducts(
+    {},
+    { query: { queryKey: getListDataProductsQueryKey({}) } },
+  );
+
+  const aiActive = aiMode && query.trim().length >= 3;
+
+  // AI "answer": match catalog products against the question, keyword by keyword
+  const aiMatches = useMemo(() => {
+    if (!aiActive || !products) return [];
+    const STOPWORDS = new Set([
+      'show', 'me', 'all', 'the', 'a', 'an', 'which', 'what', 'is', 'are', 'do', 'does',
+      'i', 'my', 'for', 'of', 'in', 'on', 'to', 'with', 'and', 'or', 'have', 'had',
+      'data', 'product', 'products', 'contain', 'contains', 'available', 'recently',
+      'any', 'list', 'find', 'get', 'about', 'that', 'this', 'domain',
+    ]);
+    const keywords = query
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3 && !STOPWORDS.has(w));
+    if (keywords.length === 0) return [];
+    return products
+      .map((p) => {
+        // Score each keyword against the product's fields; sum the best hits
+        const score = keywords.reduce((acc, kw) => {
+          return (
+            acc +
+            Math.max(
+              fuzzyScore(kw, p.name),
+              fuzzyScore(kw, p.description ?? '') * 0.6,
+              fuzzyScore(kw, p.domain) * 0.8,
+              ...(p.tags ?? []).map((t: string) => fuzzyScore(kw, t) * 0.7),
+              0,
+            )
+          );
+        }, 0);
+        return { product: p, score };
+      })
+      .filter((s) => s.score > 100) // require at least one solid keyword hit
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4);
+  }, [aiActive, query, products]);
+
+  // Close AI mode when clicking outside the search bar
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setAiMode(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, []);
+
+  const submit = () => {
+    const q = query.trim();
+    if (!q || aiMode) return;
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const toggleAi = () => {
+    setAiMode((v) => !v);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
 
   return (
-    <div className="relative w-full max-w-xl">
+    <div ref={boxRef} className="relative w-full max-w-xl">
       <div
-        className="flex items-center bg-white rounded-full shadow-lg pl-4 pr-1.5 py-1.5 cursor-pointer"
+        className={`flex items-center bg-white rounded-full shadow-lg pl-4 pr-1.5 py-1.5 transition-shadow ${
+          aiMode ? 'ring-2 ring-violet-500/60' : ''
+        }`}
         data-tour="hero-search"
-        onClick={openSearch}
       >
-        <Search className="w-4 h-4 text-slate-400 flex-none" />
-        <button
-          onClick={openSearch}
-          className="flex-1 min-w-0 text-left text-sm text-slate-400 px-3 py-1.5 truncate"
-          aria-label="Open search page"
-        >
-          Search by keywords such as Dealer, Customer, and more...
-        </button>
+        {aiMode ? (
+          <Sparkles className="w-4 h-4 text-violet-500 flex-none" />
+        ) : (
+          <Search className="w-4 h-4 text-slate-400 flex-none" />
+        )}
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submit();
+            if (e.key === 'Escape') setAiMode(false);
+          }}
+          placeholder={
+            aiMode
+              ? 'Ask AI anything about your data products...'
+              : 'Search by keywords such as Dealer, Customer, and more...'
+          }
+          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-sm text-slate-800 placeholder:text-slate-400 px-3 py-1.5"
+          aria-label={aiMode ? 'Ask AI about data products' : 'Search data products'}
+        />
         <button
           data-tour="ai-mode"
-          onClick={(e) => {
-            e.stopPropagation();
-            openSearch();
-          }}
-          className="flex-none inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition-colors"
+          onClick={toggleAi}
+          aria-pressed={aiMode}
+          className={`flex-none inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-full transition-colors ${
+            aiMode
+              ? 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+              : 'bg-violet-600 hover:bg-violet-700 text-white'
+          }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          AI Mode
+          {aiMode ? 'AI Mode: On' : 'AI Mode'}
         </button>
       </div>
+
+      {/* AI suggestions dropdown (AI mode on, nothing typed yet) */}
+      {aiMode && !aiActive && (
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-violet-200 overflow-hidden z-40 text-left">
+          <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-violet-500 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" /> Try asking
+          </div>
+          <ul>
+            {AI_SUGGESTIONS.map((s) => (
+              <li key={s}>
+                <button
+                  onClick={() => {
+                    setQuery(s);
+                    inputRef.current?.focus();
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-violet-50 transition-colors"
+                >
+                  {s}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="px-4 py-2.5 border-t border-slate-100 text-xs text-slate-400">
+            Or type your own question — results appear as you type.
+          </div>
+        </div>
+      )}
+
+      {/* AI result popup (AI mode on + text entered) */}
+      {aiActive && (
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-violet-200 overflow-hidden z-40 text-left">
+          <div className="px-4 py-3 bg-violet-50/70 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-violet-600 text-white flex items-center justify-center flex-none">
+              <Sparkles className="w-3.5 h-3.5" />
+            </span>
+            <span className="text-xs font-semibold text-violet-800">DataVerse AI</span>
+          </div>
+          <div className="px-4 py-3 text-sm text-slate-700">
+            {aiMatches.length > 0 ? (
+              <>
+                <p>
+                  Based on your question, I found{' '}
+                  <span className="font-semibold">{aiMatches.length}</span> relevant data{' '}
+                  {aiMatches.length === 1 ? 'product' : 'products'} in the catalog:
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {aiMatches.map(({ product: p }) => (
+                    <li key={p.id}>
+                      <button
+                        onClick={() => navigate(`/products/${p.id}`)}
+                        className="w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 hover:bg-violet-50 transition-colors text-left"
+                      >
+                        <span className="flex-none w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center mt-0.5">
+                          <Database className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-slate-900 truncate">
+                            {p.name}
+                          </span>
+                          <span className="block text-xs text-slate-500 truncate">
+                            {p.domain} · {p.description}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p>
+                I couldn't find a data product matching that question yet. Try mentioning a
+                domain (Sales, Supply Chain…) or a keyword like dealer, customer, or parts.
+              </p>
+            )}
+          </div>
+          <div className="px-4 py-2 border-t border-slate-100 text-[11px] text-slate-400">
+            AI answers are generated from catalog metadata in this demo.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -142,12 +312,12 @@ const HOME_TOUR_STEPS: TourStep[] = [
   {
     target: 'hero-search',
     title: 'Search the world of data',
-    body: 'Click here to open the search page, where you can look up any data product. Tip: the search on My Products also gives instant suggestions as you type.',
+    body: 'Type a keyword and press Enter to open the search page with your results. Tip: the search on My Products also gives instant suggestions as you type.',
   },
   {
     target: 'ai-mode',
     title: 'AI Mode',
-    body: 'AI Mode will let you ask questions in natural language instead of keywords. For now it opens the search page too. (Coming soon in this demo.)',
+    body: 'Turn on AI Mode to ask questions in natural language. You get suggested questions to start with, and answers appear right below the search bar as you type.',
   },
   {
     target: 'lets-explore',

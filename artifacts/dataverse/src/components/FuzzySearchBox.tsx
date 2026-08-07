@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Database } from 'lucide-react';
 import {
@@ -61,6 +61,7 @@ export default function FuzzySearchBox({
   inputClassName = '',
 }: Props) {
   const [, navigate] = useLocation();
+  const listboxId = useId();
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -138,10 +139,10 @@ export default function FuzzySearchBox({
         aria-expanded={open}
         role="combobox"
         aria-autocomplete="list"
-        aria-controls="fuzzy-search-listbox"
+        aria-controls={listboxId}
         aria-activedescendant={
           open && suggestions.length > 0
-            ? `fuzzy-suggestion-${suggestions[highlight]?.product.id}`
+            ? `${listboxId}-option-${suggestions[highlight]?.product.id}`
             : undefined
         }
       />
@@ -151,11 +152,11 @@ export default function FuzzySearchBox({
           <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Suggested data products
           </div>
-          <ul role="listbox" id="fuzzy-search-listbox">
+          <ul role="listbox" id={listboxId}>
             {suggestions.map((s, i) => (
               <li
                 key={s.product.id}
-                id={`fuzzy-suggestion-${s.product.id}`}
+                id={`${listboxId}-option-${s.product.id}`}
                 role="option"
                 aria-selected={i === highlight}
               >

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearch } from 'wouter';
 import { Search } from 'lucide-react';
 import FuzzySearchBox from '../components/FuzzySearchBox';
 
@@ -6,7 +7,16 @@ import FuzzySearchBox from '../components/FuzzySearchBox';
  * Dedicated search page, opened from the home hero search placeholder.
  */
 export default function SearchPage() {
-  const [query, setQuery] = useState('');
+  const searchString = useSearch();
+  const urlQuery = new URLSearchParams(searchString).get('q') ?? '';
+  const [query, setQuery] = useState(urlQuery);
+
+  // Keep the input in sync if the URL query changes while mounted
+  // (back/forward navigation, header search, in-app links)
+  useEffect(() => {
+    setQuery(urlQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchString]);
 
   return (
     <div className="flex-1 w-full max-w-3xl mx-auto p-4 sm:p-6 flex flex-col gap-6">

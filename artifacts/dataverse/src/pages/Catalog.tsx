@@ -182,7 +182,7 @@ export default function Catalog() {
     domain: domainFilter || undefined,
     status: statusFilter || undefined,
   };
-  const { data: products, isLoading: loadingProducts, error, refetch } = useListDataProducts(
+  const { data: products, isLoading: loadingProducts, isFetching: fetchingProducts, error, refetch } = useListDataProducts(
     listParams,
     {
       query: {
@@ -193,6 +193,9 @@ export default function Catalog() {
       },
     }
   );
+
+  // True while a search/filter change is pending (debounce window or request in flight)
+  const listUpdating = search !== debouncedSearch || fetchingProducts;
 
   const favouriteCount = useMemo(
     () => (products ?? []).filter((p) => favourites.has(String(p.id))).length,
@@ -298,7 +301,11 @@ export default function Catalog() {
         </div>
 
         {/* Tile grid */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6" data-tour="catalog-table">
+        <div
+          className={`flex-1 overflow-auto p-4 sm:p-6 transition-opacity ${listUpdating ? 'opacity-60' : ''}`}
+          data-tour="catalog-table"
+          aria-busy={listUpdating}
+        >
           {visibleProducts.length === 0 ? (
             <div className="px-6 py-12 text-center text-slate-500">
               {favouritesOnly ? (
