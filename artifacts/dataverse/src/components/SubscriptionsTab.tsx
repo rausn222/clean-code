@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Clock,
@@ -11,6 +11,10 @@ import {
   Gauge,
   BadgeCheck,
   AlertTriangle,
+  ChevronDown,
+  Copy,
+  Check,
+  BookOpen,
 } from 'lucide-react';
 import {
   useListSubscriptionPlans,
@@ -27,6 +31,122 @@ const CHANNEL_ICONS: Record<string, React.ElementType> = {
   Postgres: Server,
   'REST-API': Globe,
 };
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="min-w-0">
+      <div className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold mb-1">{label}</div>
+      <div className="flex items-center gap-1.5">
+        <code className="min-w-0 truncate text-xs bg-white border border-slate-200 rounded-md px-2 py-1.5 text-slate-700">
+          {value}
+        </code>
+        <button
+          aria-label={`Copy ${label}`}
+          onClick={() => {
+            navigator.clipboard?.writeText(value);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          className="flex-none p-1.5 rounded-md text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Connection details + consumption steps per channel (demo values). */
+function channelConsumption(channel: string, productName: string, productUrn: string) {
+  switch (channel) {
+    case 'Postgres':
+      return {
+        blurb: 'Postgres connection can be used with BI tools (e.g. Power BI) and database tools (e.g. DBeaver).',
+        fields: [
+          { label: 'Host', value: 'msil-dataverse.postgres.marutisuzuki.in' },
+          { label: 'Port', value: '5432' },
+          { label: 'Username', value: 'your.name@maruti.co.in' },
+          { label: 'Table Name', value: `msil_dataverse.${productName}` },
+        ],
+        steps: [
+          'Use a Postgres client such as Power BI, DBeaver or equivalent. Select Database as "Postgres".',
+          'Your personal access token can be found in Settings > Access Token.',
+          'Establish a connection using the parameters above (host, port, username and access token).',
+          "Close the connection when you're finished.",
+        ],
+      };
+    case 'REST-API':
+      return {
+        blurb: 'The REST API is best for applications that need the data on demand.',
+        fields: [
+          { label: 'Base URL', value: `https://api.dataverse.marutisuzuki.in/v1/products/${productName}` },
+          { label: 'Auth Header', value: 'Authorization: Bearer <access-token>' },
+        ],
+        steps: [
+          'Generate an access token from Settings > Access Token.',
+          'Call the base URL above with the Authorization header set.',
+          'Use ?limit and ?offset query parameters to page through records.',
+          'Stay within your plan\u2019s call limit — usage is visible on this page.',
+        ],
+      };
+    default: // Data Product
+      return {
+        blurb: 'Data Product as a channel is used when it needs to be consumed in another data product.',
+        fields: [{ label: 'URN', value: productUrn }],
+        steps: [
+          'Open Developer Workbench and create (or edit) your data product pipeline.',
+          'Add this URN as an input source of your pipeline.',
+          'The platform resolves access through your active subscription automatically.',
+        ],
+      };
+  }
+}
+
+function HowToConsume({
+  channel,
+  productName,
+  productUrn,
+  defaultOpen,
+}: {
+  channel: string;
+  productName: string;
+  productUrn: string;
+  defaultOpen: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const info = channelConsumption(channel, productName, productUrn);
+  return (
+    <div className="mt-3 border border-slate-200 rounded-xl bg-slate-50/70 overflow-hidden">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-slate-100/70 transition-colors"
+      >
+        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <BookOpen className="w-4 h-4 text-indigo-500" />
+          How to consume via {channel}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 flex flex-col gap-3">
+          <p className="text-xs text-slate-500">{info.blurb}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {info.fields.map((f) => (
+              <CopyField key={f.label} label={f.label} value={f.value} />
+            ))}
+          </div>
+          <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-600">
+            {info.steps.map((s, i) => (
+              <li key={i}>{s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function daysBetween(a: Date, b: Date): number {
   return Math.ceil((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
@@ -186,7 +306,15 @@ function PlanCard({
   );
 }
 
-export default function SubscriptionsTab({ productId }: { productId: number }) {
+export default function SubscriptionsTab({
+  productId,
+  productName,
+  productUrn,
+}: {
+  productId: number;
+  productName: string;
+  productUrn: string;
+}) {
   const queryClient = useQueryClient();
   const { data: plans, isLoading } = useListSubscriptionPlans(productId, {
     query: { enabled: !!productId, queryKey: getListSubscriptionPlansQueryKey(productId) },
@@ -217,7 +345,8 @@ export default function SubscriptionsTab({ productId }: { productId: number }) {
       <div>
         <h2 className="text-lg font-semibold text-slate-900">Subscriptions</h2>
         <p className="text-sm text-slate-500 mt-1">
-          To get access, subscribe to a plan from any channel. Active subscriptions show remaining validity below.
+          To get access, subscribe to a plan from any channel. Active subscriptions show remaining validity below, and
+          each channel explains how to consume the data once you're subscribed.
         </p>
       </div>
 
@@ -254,6 +383,12 @@ export default function SubscriptionsTab({ productId }: { productId: number }) {
                   />
                 ))}
               </div>
+              <HowToConsume
+                channel={channel}
+                productName={productName}
+                productUrn={productUrn}
+                defaultOpen={channelPlans.some((p) => !!p.subscription)}
+              />
             </div>
           );
         })

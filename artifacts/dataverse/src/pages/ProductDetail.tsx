@@ -571,7 +571,7 @@ export default function ProductDetail() {
                 title="What's in Subscriptions?"
                 body="The access plans available for this product — channel, price, validity, and call limits. Subscribe to a plan to get access, and manage auto-renewal for plans you already have."
               />
-              <SubscriptionsTab productId={id} />
+              <SubscriptionsTab productId={id} productName={product.name} productUrn={product.urn} />
             </div>
           )}
 
