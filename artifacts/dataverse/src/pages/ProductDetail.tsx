@@ -179,14 +179,15 @@ export default function ProductDetail() {
   const isExternal = product.productType === 'external';
 
   // Deep links like ?tab=subscriptions should not land on a hidden tab
-  if (isExternal && activeTab === 'subscriptions') {
+  if (isExternal && (activeTab === 'subscriptions' || activeTab === 'run-history')) {
     setActiveTab('overview');
   }
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Info },
     { id: 'definition', label: 'Definition & Lineage', icon: GitBranch },
-    { id: 'run-history', label: 'Run History', icon: History },
+    // External products are not run on the portal, so they have no run history
+    ...(isExternal ? [] : [{ id: 'run-history', label: 'Run History', icon: History }]),
     { id: 'consumers', label: 'Consumers', icon: Users },
     // External products cannot be subscribed to from the portal
     ...(isExternal ? [] : [{ id: 'subscriptions', label: 'Subscriptions', icon: CreditCard }]),
@@ -608,12 +609,18 @@ export default function ProductDetail() {
           <div data-tour="health-card" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <h3 className="font-semibold text-slate-900">Latest Run Health</h3>
-              <button onClick={() => setActiveTab('run-history')} className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">View history</button>
+              {!isExternal && (
+                <button onClick={() => setActiveTab('run-history')} className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">View history</button>
+              )}
             </div>
             
             <div className="p-5">
               {!product.latestRun ? (
-                <div className="text-slate-500 text-sm text-center py-4 italic">No runs yet</div>
+                <div className="text-slate-500 text-sm text-center py-4 italic">
+                  {isExternal
+                    ? 'External data product — pipelines run at the provider, so there is no run history here.'
+                    : 'No runs yet'}
+                </div>
               ) : (
                 <>
                   <div className="flex items-center gap-3 mb-6">

@@ -11,10 +11,10 @@ import {
   Gauge,
   BadgeCheck,
   AlertTriangle,
-  ChevronDown,
   Copy,
   Check,
   BookOpen,
+  X,
 } from 'lucide-react';
 import {
   useListSubscriptionPlans,
@@ -107,44 +107,71 @@ function HowToConsume({
   channel,
   productName,
   productUrn,
-  defaultOpen,
 }: {
   channel: string;
   productName: string;
   productUrn: string;
-  defaultOpen: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
   const info = channelConsumption(channel, productName, productUrn);
   return (
-    <div className="mt-3 border border-slate-200 rounded-xl bg-slate-50/70 overflow-hidden">
+    <>
       <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-slate-100/70 transition-colors"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors whitespace-nowrap"
       >
-        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <BookOpen className="w-4 h-4 text-indigo-500" />
-          How to consume via {channel}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <BookOpen className="w-3.5 h-3.5" />
+        How to consume
       </button>
       {open && (
-        <div className="px-4 pb-4 flex flex-col gap-3">
-          <p className="text-xs text-slate-500">{info.blurb}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {info.fields.map((f) => (
-              <CopyField key={f.label} label={f.label} value={f.value} />
-            ))}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`How to consume via ${channel}`}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+          >
+            <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900 inline-flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-indigo-500" />
+                  How to consume via {channel}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">{info.blurb}</p>
+              </div>
+              <button
+                aria-label="Close"
+                onClick={() => setOpen(false)}
+                className="flex-none p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {info.fields.map((f) => (
+                  <CopyField key={f.label} label={f.label} value={f.value} />
+                ))}
+              </div>
+              <div>
+                <div className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold mb-1.5">
+                  Connectivity steps
+                </div>
+                <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-600">
+                  {info.steps.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ol>
+              </div>
+            </div>
           </div>
-          <ol className="list-decimal pl-5 space-y-1 text-sm text-slate-600">
-            {info.steps.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ol>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -369,8 +396,9 @@ export default function SubscriptionsTab({
                 <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
                   {channelPlans.length} {channelPlans.length === 1 ? 'plan' : 'plans'}
                 </span>
+                <HowToConsume channel={channel} productName={productName} productUrn={productUrn} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {channelPlans.map((plan) => (
                   <PlanCard
                     key={plan.id}
@@ -383,12 +411,6 @@ export default function SubscriptionsTab({
                   />
                 ))}
               </div>
-              <HowToConsume
-                channel={channel}
-                productName={productName}
-                productUrn={productUrn}
-                defaultOpen={channelPlans.some((p) => !!p.subscription)}
-              />
             </div>
           );
         })
