@@ -42,6 +42,7 @@ import type {
   MobileTokenExchangeSuccess,
   ProductRun,
   SampleData,
+  SubscribeToPlanBody,
   SubscriptionPlan
 } from './api.schemas';
 
@@ -1071,14 +1072,15 @@ export const getSubscribeToPlanUrl = (planId: number,) => {
 /**
  * @summary Subscribe to a plan, or renew an existing subscription
  */
-export const subscribeToPlan = async (planId: number, options?: RequestInit): Promise<SubscriptionPlan> => {
+export const subscribeToPlan = async (planId: number,
+    subscribeToPlanBody?: SubscribeToPlanBody, options?: RequestInit): Promise<SubscriptionPlan> => {
 
   return customFetch<SubscriptionPlan>(getSubscribeToPlanUrl(planId),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(subscribeToPlanBody)
   }
 );}
 
@@ -1087,8 +1089,8 @@ export const subscribeToPlan = async (planId: number, options?: RequestInit): Pr
 
 
 export const getSubscribeToPlanMutationOptions = <TError = ErrorType<ApiMessage>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number;data?: BodyType<SubscribeToPlanBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number;data?: BodyType<SubscribeToPlanBody>}, TContext> => {
 
 const mutationKey = ['subscribeToPlan'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1100,10 +1102,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeToPlan>>, {planId: number}> = (props) => {
-          const {planId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof subscribeToPlan>>, {planId: number;data?: BodyType<SubscribeToPlanBody>}> = (props) => {
+          const {planId,data} = props ?? {};
 
-          return  subscribeToPlan(planId,requestOptions)
+          return  subscribeToPlan(planId,data,requestOptions)
         }
 
 
@@ -1114,18 +1116,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SubscribeToPlanMutationResult = NonNullable<Awaited<ReturnType<typeof subscribeToPlan>>>
-
+    export type SubscribeToPlanMutationBody = BodyType<SubscribeToPlanBody> | undefined
     export type SubscribeToPlanMutationError = ErrorType<ApiMessage>
 
     /**
  * @summary Subscribe to a plan, or renew an existing subscription
  */
 export const useSubscribeToPlan = <TError = ErrorType<ApiMessage>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof subscribeToPlan>>, TError,{planId: number;data?: BodyType<SubscribeToPlanBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof subscribeToPlan>>,
         TError,
-        {planId: number},
+        {planId: number;data?: BodyType<SubscribeToPlanBody>},
         TContext
       > => {
       return useMutation(getSubscribeToPlanMutationOptions(options));

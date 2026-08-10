@@ -500,6 +500,7 @@ function serializePlan(
             plan.validityMonths,
           ).toISOString(),
           autoRenew: subscription.autoRenew,
+          selectedColumns: subscription.selectedColumns ?? null,
         }
       : null,
   };
@@ -592,13 +593,46 @@ router.post("/subscription-plans/:planId/subscribe", async (req, res) => {
     res.status(404).json({ error: "Subscription plan not found" });
     return;
   }
+  const rawColumns = (req.body as { selectedColumns?: unknown } | undefined)
+    ?.selectedColumns;
+  let selectedColumns: string[] | null = null;
+  if (rawColumns !== undefined) {
+    if (
+      !Array.isArray(rawColumns) ||
+      !rawColumns.every((c): c is string => typeof c === "string")
+    ) {
+      res.status(400).json({ error: "selectedColumns must be an array of strings" });
+      return;
+    }
+    const deduped = [...new Set(rawColumns.map((c) => c.trim()).filter(Boolean))];
+    if (deduped.length > 0) {
+      // Validate against the product's glossary columns
+      const glossary = await db
+        .select({ fieldName: glossaryFieldsTable.fieldName })
+        .from(glossaryFieldsTable)
+        .where(eq(glossaryFieldsTable.dataProductId, plan.dataProductId));
+      const valid = new Set(glossary.map((g) => g.fieldName));
+      const unknown = deduped.filter((c) => !valid.has(c));
+      if (unknown.length > 0) {
+        res.status(400).json({
+          error: `Unknown columns for this data product: ${unknown.join(", ")}`,
+        });
+        return;
+      }
+      selectedColumns = deduped;
+    }
+  }
+
   const existing = await latestSubscriptionFor(planId);
   let subscription: SubscriptionRow;
   if (existing) {
-    // Renew: restart the term from now
+    // Renew: restart the term from now; keep prior column selection unless a new one was sent
     const [updated] = await db
       .update(subscriptionsTable)
-      .set({ subscribedAt: new Date() })
+      .set({
+        subscribedAt: new Date(),
+        ...(selectedColumns ? { selectedColumns } : {}),
+      })
       .where(eq(subscriptionsTable.id, existing.id))
       .returning();
     subscription = updated!;
@@ -608,6 +642,7 @@ router.post("/subscription-plans/:planId/subscribe", async (req, res) => {
       .values({
         planId,
         autoRenew: plan.type === "Recurring Subscription",
+        selectedColumns,
       })
       .returning();
     subscription = created!;

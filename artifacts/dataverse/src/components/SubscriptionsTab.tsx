@@ -57,8 +57,18 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** Connection details + consumption steps per channel (demo values). */
-function channelConsumption(channel: string, productName: string, productUrn: string) {
+/**
+ * Connection details + consumption steps per channel (demo values).
+ * When `selectedColumns` is set (columns picked at subscription time), the
+ * details are scoped to that subscription's columns.
+ */
+function channelConsumption(
+  channel: string,
+  productName: string,
+  productUrn: string,
+  selectedColumns?: string[] | null,
+) {
+  const cols = selectedColumns && selectedColumns.length > 0 ? selectedColumns : null;
   switch (channel) {
     case 'Postgres':
       return {
@@ -68,11 +78,17 @@ function channelConsumption(channel: string, productName: string, productUrn: st
           { label: 'Port', value: '5432' },
           { label: 'Username', value: 'your.name@maruti.co.in' },
           { label: 'Table Name', value: `msil_dataverse.${productName}` },
+          ...(cols
+            ? [{ label: 'Sample Query', value: `SELECT ${cols.join(', ')} FROM msil_dataverse.${productName};` }]
+            : []),
         ],
         steps: [
           'Use a Postgres client such as Power BI, DBeaver or equivalent. Select Database as "Postgres".',
           'Your personal access token can be found in Settings > Access Token.',
           'Establish a connection using the parameters above (host, port, username and access token).',
+          ...(cols
+            ? [`Your subscription grants access to ${cols.length} column${cols.length === 1 ? '' : 's'} only — query them with the sample query above.`]
+            : []),
           "Close the connection when you're finished.",
         ],
       };
@@ -82,10 +98,14 @@ function channelConsumption(channel: string, productName: string, productUrn: st
         fields: [
           { label: 'Base URL', value: `https://api.dataverse.marutisuzuki.in/v1/products/${productName}` },
           { label: 'Auth Header', value: 'Authorization: Bearer <access-token>' },
+          ...(cols ? [{ label: 'Fields Parameter', value: `?fields=${cols.join(',')}` }] : []),
         ],
         steps: [
           'Generate an access token from Settings > Access Token.',
           'Call the base URL above with the Authorization header set.',
+          ...(cols
+            ? ['Responses only include the columns of your subscription — use the fields parameter above.']
+            : []),
           'Use ?limit and ?offset query parameters to page through records.',
           'Stay within your plan\u2019s call limit — usage is visible on this page.',
         ],
@@ -97,6 +117,9 @@ function channelConsumption(channel: string, productName: string, productUrn: st
         steps: [
           'Open Developer Workbench and create (or edit) your data product pipeline.',
           'Add this URN as an input source of your pipeline.',
+          ...(cols
+            ? [`Only your subscribed columns (${cols.join(', ')}) are exposed to your pipeline.`]
+            : []),
           'The platform resolves access through your active subscription automatically.',
         ],
       };
@@ -107,18 +130,28 @@ function HowToConsume({
   channel,
   productName,
   productUrn,
+  selectedColumns,
+  planName,
+  compact,
 }: {
   channel: string;
   productName: string;
   productUrn: string;
+  selectedColumns?: string[] | null;
+  planName?: string;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const info = channelConsumption(channel, productName, productUrn);
+  const info = channelConsumption(channel, productName, productUrn, selectedColumns);
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition-colors whitespace-nowrap"
+        className={`inline-flex items-center gap-1.5 font-semibold rounded-full border transition-colors whitespace-nowrap ${
+          compact
+            ? 'text-[11px] px-2 py-0.5 bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50'
+            : 'text-xs px-2.5 py-1 bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'
+        }`}
       >
         <BookOpen className="w-3.5 h-3.5" />
         How to consume
@@ -140,6 +173,11 @@ function HowToConsume({
                 <h3 className="text-base font-semibold text-slate-900 inline-flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-indigo-500" />
                   How to consume via {channel}
+                  {planName && (
+                    <span className="text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                      {planName}
+                    </span>
+                  )}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">{info.blurb}</p>
               </div>
@@ -152,6 +190,20 @@ function HowToConsume({
               </button>
             </div>
             <div className="px-5 py-4 flex flex-col gap-4">
+              {selectedColumns && selectedColumns.length > 0 && (
+                <div>
+                  <div className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold mb-1.5">
+                    Your subscribed columns
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedColumns.map((c) => (
+                      <span key={c} className="text-[11px] font-mono bg-indigo-50 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {info.fields.map((f) => (
                   <CopyField key={f.label} label={f.label} value={f.value} />
@@ -185,11 +237,15 @@ function formatDate(d: Date): string {
 
 function PlanCard({
   plan,
+  productName,
+  productUrn,
   onSubscribe,
   isPending,
 }: {
   plan: SubscriptionPlan;
-  onSubscribe: (planId: number) => void;
+  productName: string;
+  productUrn: string;
+  onSubscribe: (plan: SubscriptionPlan) => void;
   isPending: boolean;
 }) {
   const now = new Date();
@@ -209,7 +265,7 @@ function PlanCard({
 
   return (
     <div
-      className={`bg-white border rounded-xl shadow-sm p-5 flex flex-col gap-4 transition-colors ${
+      className={`bg-white border rounded-xl shadow-sm p-4 flex flex-col gap-3.5 transition-colors ${
         sub
           ? expiringSoon
             ? 'border-amber-300 bg-gradient-to-b from-amber-50 to-white'
@@ -219,7 +275,7 @@ function PlanCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-[17px] font-semibold text-slate-900">{plan.name}</div>
+          <div className="text-[15px] font-semibold text-slate-900">{plan.name}</div>
           <div className="text-sm text-slate-500 mt-0.5">
             <b className="text-slate-900">{plan.price}</b>
           </div>
@@ -309,21 +365,32 @@ function PlanCard({
 
       {/* Actions */}
       {sub ? (
-        expiringSoon && (
-          <button
-            onClick={() => onSubscribe(plan.id)}
-            disabled={isPending}
-            className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
-          >
-            {isPending ? <LoadingSpinner /> : <RefreshCw className="w-3.5 h-3.5" />}
-            Renew now
-          </button>
-        )
+        <div className="flex items-center gap-2 mt-auto">
+          {/* Subscription-specific consumption guide (reflects the columns picked while subscribing) */}
+          <HowToConsume
+            channel={plan.channel}
+            productName={productName}
+            productUrn={productUrn}
+            selectedColumns={sub.selectedColumns}
+            planName={plan.name}
+            compact
+          />
+          {expiringSoon && (
+            <button
+              onClick={() => onSubscribe(plan)}
+              disabled={isPending}
+              className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold text-center bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+            >
+              {isPending ? <LoadingSpinner /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Renew now
+            </button>
+          )}
+        </div>
       ) : (
         <button
-          onClick={() => onSubscribe(plan.id)}
+          onClick={() => onSubscribe(plan)}
           disabled={isPending}
-          className="w-full px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          className="w-full mt-auto px-4 py-2.5 rounded-lg text-sm font-semibold text-center bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60 inline-flex items-center justify-center gap-2"
         >
           {isPending ? <LoadingSpinner /> : <Zap className="w-3.5 h-3.5" />}
           Subscribe
@@ -333,30 +400,138 @@ function PlanCard({
   );
 }
 
+/** Modal shown before a new subscription: pick the columns you need. */
+function ColumnPicker({
+  plan,
+  columns,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  plan: SubscriptionPlan;
+  columns: string[];
+  onConfirm: (selected: string[]) => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(columns));
+  const toggle = (c: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  };
+  const allSelected = selected.size === columns.length;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Select columns for ${plan.name}`}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
+      >
+        <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Select columns you need</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Your <b>{plan.name}</b> subscription will only include the columns you pick — this keeps your access
+              scoped to what you actually use.
+            </p>
+          </div>
+          <button
+            aria-label="Close"
+            onClick={onClose}
+            className="flex-none p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[11px] text-slate-400 uppercase tracking-wide font-semibold">
+              {selected.size} of {columns.length} columns selected
+            </div>
+            <button
+              onClick={() => setSelected(allSelected ? new Set() : new Set(columns))}
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              {allSelected ? 'Clear all' : 'Select all'}
+            </button>
+          </div>
+          <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
+            {columns.map((c) => (
+              <label key={c} className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selected.has(c)}
+                  onChange={() => toggle(c)}
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="font-mono text-xs">{c}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="px-5 py-4 border-t border-slate-200 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(Array.from(selected))}
+            disabled={selected.size === 0 || isPending}
+            className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+          >
+            {isPending ? <LoadingSpinner /> : <Zap className="w-3.5 h-3.5" />}
+            Subscribe
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SubscriptionsTab({
   productId,
   productName,
   productUrn,
+  columns,
 }: {
   productId: number;
   productName: string;
   productUrn: string;
+  columns: string[];
 }) {
   const queryClient = useQueryClient();
   const { data: plans, isLoading } = useListSubscriptionPlans(productId, {
     query: { enabled: !!productId, queryKey: getListSubscriptionPlansQueryKey(productId) },
   });
   const subscribeMutation = useSubscribeToPlan();
+  const [pickerPlan, setPickerPlan] = useState<SubscriptionPlan | null>(null);
 
-  const handleSubscribe = (planId: number) => {
+  const doSubscribe = (planId: number, selectedColumns?: string[]) => {
     subscribeMutation.mutate(
-      { planId },
+      { planId, data: selectedColumns ? { selectedColumns } : {} },
       {
         onSuccess: () => {
+          setPickerPlan(null);
           queryClient.invalidateQueries({ queryKey: getListSubscriptionPlansQueryKey(productId) });
         },
       },
     );
+  };
+
+  const handleSubscribe = (plan: SubscriptionPlan) => {
+    if (plan.subscription) {
+      // Renewal keeps the existing column selection
+      doSubscribe(plan.id);
+    } else if (columns.length > 0) {
+      setPickerPlan(plan);
+    } else {
+      doSubscribe(plan.id);
+    }
   };
 
   if (isLoading) {
@@ -398,11 +573,13 @@ export default function SubscriptionsTab({
                 </span>
                 <HowToConsume channel={channel} productName={productName} productUrn={productUrn} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
                 {channelPlans.map((plan) => (
                   <PlanCard
                     key={plan.id}
                     plan={plan}
+                    productName={productName}
+                    productUrn={productUrn}
                     onSubscribe={handleSubscribe}
                     isPending={
                       subscribeMutation.isPending &&
@@ -414,6 +591,16 @@ export default function SubscriptionsTab({
             </div>
           );
         })
+      )}
+
+      {pickerPlan && (
+        <ColumnPicker
+          plan={pickerPlan}
+          columns={columns}
+          onConfirm={(selected) => doSubscribe(pickerPlan.id, selected)}
+          onClose={() => setPickerPlan(null)}
+          isPending={subscribeMutation.isPending}
+        />
       )}
     </section>
   );

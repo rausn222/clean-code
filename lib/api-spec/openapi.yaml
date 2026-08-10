@@ -302,6 +302,16 @@ paths:
           in: path
           required: true
           schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                selectedColumns:
+                  type: array
+                  items: { type: string }
       responses:
         "200":
           description: The plan with its updated subscription
@@ -763,6 +773,11 @@ components:
         subscribedAt: { type: string }
         expiresAt: { type: string }
         autoRenew: { type: boolean }
+        selectedColumns:
+          oneOf:
+            - type: array
+              items: { type: string }
+            - type: "null"
     SubscriptionPlan:
       type: object
       required:

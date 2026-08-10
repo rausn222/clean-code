@@ -381,7 +381,8 @@ export const ListSubscriptionPlansResponseItem = zod.object({
   "id": zod.number(),
   "subscribedAt": zod.string(),
   "expiresAt": zod.string(),
-  "autoRenew": zod.boolean()
+  "autoRenew": zod.boolean(),
+  "selectedColumns": zod.union([zod.array(zod.string()),zod.null()]).optional()
 }),zod.null()]).optional()
 })
 export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResponseItem)
@@ -392,6 +393,10 @@ export const ListSubscriptionPlansResponse = zod.array(ListSubscriptionPlansResp
  */
 export const SubscribeToPlanParams = zod.object({
   "planId": zod.coerce.number()
+})
+
+export const SubscribeToPlanBody = zod.object({
+  "selectedColumns": zod.array(zod.string()).optional()
 })
 
 export const SubscribeToPlanResponse = zod.object({
@@ -408,7 +413,8 @@ export const SubscribeToPlanResponse = zod.object({
   "id": zod.number(),
   "subscribedAt": zod.string(),
   "expiresAt": zod.string(),
-  "autoRenew": zod.boolean()
+  "autoRenew": zod.boolean(),
+  "selectedColumns": zod.union([zod.array(zod.string()),zod.null()]).optional()
 }),zod.null()]).optional()
 })
 

@@ -239,6 +239,7 @@ export interface PlanSubscription {
   subscribedAt: string;
   expiresAt: string;
   autoRenew: boolean;
+  selectedColumns?: string[] | null;
 }
 
 export type SubscriptionPlanChannel = typeof SubscriptionPlanChannel[keyof typeof SubscriptionPlanChannel];
@@ -301,6 +302,10 @@ export type ListDataProductsParams = {
 search?: string;
 domain?: string;
 status?: string;
+};
+
+export type SubscribeToPlanBody = {
+  selectedColumns?: string[];
 };
 
 export type BeginBrowserLoginParams = {

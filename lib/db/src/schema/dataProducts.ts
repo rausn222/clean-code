@@ -121,6 +121,8 @@ export const subscriptionsTable = pgTable("subscriptions", {
     .notNull()
     .defaultNow(),
   autoRenew: boolean("auto_renew").notNull().default(false),
+  // Columns the consumer picked while subscribing (null = all columns)
+  selectedColumns: text("selected_columns").array(),
 });
 
 export const insertDataProductSchema = createInsertSchema(

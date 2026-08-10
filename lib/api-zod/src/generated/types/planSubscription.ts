@@ -11,4 +11,5 @@ export interface PlanSubscription {
   subscribedAt: string;
   expiresAt: string;
   autoRenew: boolean;
+  selectedColumns?: string[] | null;
 }

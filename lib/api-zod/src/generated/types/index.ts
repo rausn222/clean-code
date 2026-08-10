@@ -40,6 +40,7 @@ export * from './productRunRerunTrigger';
 export * from './productRunStatus';
 export * from './sampleData';
 export * from './sampleDataRowsItem';
+export * from './subscribeToPlanBody';
 export * from './subscriptionPlan';
 export * from './subscriptionPlanChannel';
 export * from './subscriptionPlanType';
