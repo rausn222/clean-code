@@ -7,7 +7,7 @@ const NAV_ITEMS = ["HOME", "ORGANIZATION", "MONITORING", "USER MANAGEMENT", "COS
 
 export function RetryConfiguration() {
   const [editing, setEditing] = useState(true);
-  const [retries, setRetries] = useState(3);
+  const [retries, setRetries] = useState(2);
   const [delay, setDelay] = useState(5);
   const [unit, setUnit] = useState("Minutes");
 
