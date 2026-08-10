@@ -13,7 +13,6 @@ export function RetryConfiguration() {
 
   return (
     <div className="min-h-screen bg-[#f5f6fa] font-sans flex flex-col">
-
       {/* ── Top nav (matches MSIL Dataverse) ── */}
       <header className="flex items-stretch" style={{ backgroundColor: NAVY, minHeight: 48 }}>
         {/* Logo block */}
@@ -58,7 +57,6 @@ export function RetryConfiguration() {
           </div>
         </div>
       </header>
-
       {/* ── Page content ── */}
       <div className="flex-1 px-8 pt-6 pb-8">
 
@@ -91,7 +89,7 @@ export function RetryConfiguration() {
         {/* ── Retry Configuration card ── */}
         <div className="bg-white rounded-md shadow-sm border border-gray-100 mb-4">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 className="text-[15px] font-bold text-gray-900">Retry Configuration</h2>
+            <h2 className="text-[15px] font-bold text-gray-900">DP Rerun Configuration</h2>
             {editing ? (
               <div className="flex gap-2">
                 <button
