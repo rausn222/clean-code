@@ -8,8 +8,22 @@ const NAV_ITEMS = ["HOME", "ORGANIZATION", "MONITORING", "USER MANAGEMENT", "COS
 export function RetryConfiguration() {
   const [editing, setEditing] = useState(true);
   const [retries, setRetries] = useState(2);
-  const [delay, setDelay] = useState(5);
-  const [unit, setUnit] = useState("Minutes");
+  const [delays, setDelays] = useState<number[]>([5, 10]);
+  const [units, setUnits] = useState<string[]>(["Minutes", "Minutes"]);
+
+  // Keep delay/unit arrays in sync with retry count
+  const syncDelays = (count: number) => {
+    setDelays((prev) => {
+      const next = [...prev];
+      while (next.length < count) next.push(next[next.length - 1] ?? 5);
+      return next.slice(0, count);
+    });
+    setUnits((prev) => {
+      const next = [...prev];
+      while (next.length < count) next.push(next[next.length - 1] ?? "Minutes");
+      return next.slice(0, count);
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f6fa] font-sans flex flex-col">
@@ -132,14 +146,14 @@ export function RetryConfiguration() {
               {editing ? (
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setRetries(Math.max(0, retries - 1))}
+                    onClick={() => { const v = Math.max(0, retries - 1); setRetries(v); syncDelays(v); }}
                     className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
                   <span className="w-12 text-center text-[15px] font-bold text-gray-900 border border-gray-200 rounded py-1">{retries}</span>
                   <button
-                    onClick={() => setRetries(Math.min(10, retries + 1))}
+                    onClick={() => { const v = Math.min(10, retries + 1); setRetries(v); syncDelays(v); }}
                     className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -159,31 +173,54 @@ export function RetryConfiguration() {
                 </span>
                 <div>
                   <div className="text-[13px] font-semibold text-gray-800">Delay Between Retries</div>
-                  <div className="text-[11px] text-gray-400">Waiting time before the next retry attempt</div>
+                  <div className="text-[11px] text-gray-400">
+                    Waiting time before each retry attempt ({retries} {retries === 1 ? "input" : "inputs"} for {retries} {retries === 1 ? "retry" : "retries"})
+                  </div>
                 </div>
               </div>
-              {editing ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    value={delay}
-                    onChange={(e) => setDelay(Number(e.target.value))}
-                    className="w-20 text-[14px] font-bold text-gray-900 border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1"
-                    style={{ "--tw-ring-color": NAVY } as React.CSSProperties}
-                  />
-                  <select
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="text-[13px] text-gray-700 border border-gray-300 rounded px-2 py-1.5 bg-white"
-                  >
-                    <option>Seconds</option>
-                    <option>Minutes</option>
-                    <option>Hours</option>
-                  </select>
+              {retries === 0 ? (
+                <div className="text-[12px] text-gray-400 italic">No retries configured — no delay needed.</div>
+              ) : editing ? (
+                <div className="flex flex-col gap-2">
+                  {delays.map((d, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-[11px] text-gray-500 w-16 shrink-0">Retry {i + 1}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={d}
+                        onChange={(e) => {
+                          const next = [...delays];
+                          next[i] = Number(e.target.value);
+                          setDelays(next);
+                        }}
+                        className="w-20 text-[13px] font-bold text-gray-900 border border-gray-300 rounded px-2 py-1.5 focus:outline-none focus:ring-1"
+                      />
+                      <select
+                        value={units[i]}
+                        onChange={(e) => {
+                          const next = [...units];
+                          next[i] = e.target.value;
+                          setUnits(next);
+                        }}
+                        className="text-[12px] text-gray-700 border border-gray-300 rounded px-2 py-1.5 bg-white"
+                      >
+                        <option>Seconds</option>
+                        <option>Minutes</option>
+                        <option>Hours</option>
+                      </select>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <div className="text-[15px] font-bold text-gray-900">{delay} {unit}</div>
+                <div className="flex flex-col gap-1.5">
+                  {delays.map((d, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[13px]">
+                      <span className="text-gray-400 w-16 shrink-0">Retry {i + 1}</span>
+                      <span className="font-bold text-gray-900">{d} {units[i]}</span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
