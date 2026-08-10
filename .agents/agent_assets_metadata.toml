@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "FIcc1VZoRb_O9ryVDZDb3"
+uri = "file://attached_assets/retry-configuration-mockup.jpg"
+type = "image"
+title = "Retry Configuration mockup"
+description = "Retry mechanism settings — number of retries and delay between retries, styled like the MSIL Advance Configurations page."
