@@ -126,6 +126,27 @@ export default function GlobalSearchPage() {
       results.connections.length
     : 0;
 
+  type TabId = 'all' | 'products' | 'catalog' | 'dataSets' | 'applications' | 'connections';
+  const [activeTab, setActiveTab] = useState<TabId>('all');
+
+  // Back to "All" whenever a new search is run
+  useEffect(() => {
+    setActiveTab('all');
+  }, [q]);
+
+  const tabs: { id: TabId; label: string; icon: React.ElementType; count: number }[] = results
+    ? [
+        { id: 'all', label: 'All', icon: Globe, count: total },
+        { id: 'products', label: 'Data Products', icon: Database, count: results.products.length },
+        { id: 'catalog', label: 'Data Catalog', icon: Table2, count: results.catalog.length },
+        { id: 'dataSets', label: 'Data Sets', icon: Layers, count: results.dataSets.length },
+        { id: 'applications', label: 'Applications', icon: AppWindow, count: results.applications.length },
+        { id: 'connections', label: 'Connections', icon: Plug, count: results.connections.length },
+      ]
+    : [];
+
+  const show = (id: Exclude<TabId, 'all'>) => activeTab === 'all' || activeTab === id;
+
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 flex flex-col gap-6">
       <div className="mt-6 text-center">
@@ -160,13 +181,44 @@ export default function GlobalSearchPage() {
             <b className="text-slate-900">“{q}”</b>
           </div>
 
+          {total > 0 && (
+            <div className="flex flex-wrap gap-2 -mt-2" role="tablist" aria-label="Result categories">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  role="tab"
+                  aria-selected={activeTab === t.id}
+                  onClick={() => setActiveTab(t.id)}
+                  disabled={t.id !== 'all' && t.count === 0}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    activeTab === t.id
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : t.id !== 'all' && t.count === 0
+                        ? 'bg-slate-50 text-slate-300 border-slate-200 cursor-not-allowed'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <t.icon className="w-3.5 h-3.5" />
+                  {t.label}
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] leading-none ${
+                      activeTab === t.id ? 'bg-white/20' : 'bg-slate-100'
+                    }`}
+                  >
+                    {t.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {total === 0 && (
             <div className="text-sm text-slate-500 px-4 py-6 bg-slate-100 border border-slate-200 rounded-lg text-center">
               Nothing matched anywhere in the project. Try a shorter or different keyword.
             </div>
           )}
 
-          {results && results.products.length > 0 && (
+          {results && show('products') && results.products.length > 0 && (
             <section>
               <SectionHeader icon={Database} title="Data Products" count={results.products.length} />
               <div className="flex flex-col gap-2">
@@ -184,7 +236,7 @@ export default function GlobalSearchPage() {
             </section>
           )}
 
-          {results && results.catalog.length > 0 && (
+          {results && show('catalog') && results.catalog.length > 0 && (
             <section>
               <SectionHeader icon={Table2} title="Data Catalog" count={results.catalog.length} />
               <div className="flex flex-col gap-2">
@@ -200,7 +252,7 @@ export default function GlobalSearchPage() {
             </section>
           )}
 
-          {results && results.dataSets.length > 0 && (
+          {results && show('dataSets') && results.dataSets.length > 0 && (
             <section>
               <SectionHeader icon={Layers} title="Data Sets" count={results.dataSets.length} />
               <div className="flex flex-col gap-2">
@@ -215,7 +267,7 @@ export default function GlobalSearchPage() {
             </section>
           )}
 
-          {results && results.applications.length > 0 && (
+          {results && show('applications') && results.applications.length > 0 && (
             <section>
               <SectionHeader icon={AppWindow} title="Applications" count={results.applications.length} />
               <div className="flex flex-col gap-2">
@@ -232,7 +284,7 @@ export default function GlobalSearchPage() {
             </section>
           )}
 
-          {results && results.connections.length > 0 && (
+          {results && show('connections') && results.connections.length > 0 && (
             <section>
               <SectionHeader icon={Plug} title="Connections" count={results.connections.length} />
               <div className="flex flex-col gap-2">
