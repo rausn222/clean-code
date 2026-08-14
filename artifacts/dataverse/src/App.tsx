@@ -5,6 +5,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Shell } from './components/layout/Shell';
 import SearchPage from './pages/SearchPage';
+import GlobalSearchPage from './pages/GlobalSearchPage';
 import Catalog from './pages/Catalog';
 import ProductDetail from './pages/ProductDetail';
 import Home from './pages/Home';
@@ -25,6 +26,11 @@ function Router() {
       <Route path="/search">
         <Shell>
           <SearchPage />
+        </Shell>
+      </Route>
+      <Route path="/global-search">
+        <Shell>
+          <GlobalSearchPage />
         </Shell>
       </Route>
       <Route path="/my-products">
