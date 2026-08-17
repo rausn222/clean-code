@@ -1,398 +1,325 @@
 import { useState } from 'react';
 import {
-  ArrowRight,
-  CheckCircle2,
-  AlertTriangle,
-  Truck,
-  ShoppingCart,
-  BarChart3,
-  Star,
-  CheckCheck,
-  Wifi,
-  WifiOff,
+  ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
+  BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers, Trophy,
+  SlidersHorizontal, LayoutGrid,
 } from 'lucide-react';
 
-/* ──────────────────────── DATA ──────────────────────── */
+/* ───────────────────────────── DATA ───────────────────────────── */
 
 const OPTIONS = [
   {
     id: 1,
     label: 'Option 1',
-    badge: 'Recommended',
     isRecommended: true,
     route: 'UTR → U535',
-    businessWaste: { utr: '₹2,852', u535: '₹2,689', saving: '↓ ₹2,689' },
-    totalProcurementCost: '₹10,80,000',
-    fgProducible: { utr: 56311, u535: 70214 },
-    prodPlanQty: { utr: '58,900 EA', u535: '2,35,294 EA' },
-    stopDate: { utr: '15 Jun 2026', u535: '22 Jun 2026' },
-    planChangeRequired: { utr: true, u535: true },
-    iut: {
-      materialCode: 'RM 10045872',
-      from: 'UTR',
-      to: 'U535',
-      qty: '12,589 EA',
-      leadTime: '3 days',
-      initiation: '22 May 2026',
-      lane: 'Available',
-      costPerTrip: '₹300',
+    score: 'excellent' as const,
+    overview: {
+      fgUTR: 56311, fgU535: 70214,
+      wasteUTR: 2852, wasteU535: 2689,
+      wasteUTRSaving: '₹2,689',
+      prodPlanUTR: '58,900 EA', prodPlanU535: '2,35,294 EA',
+      stopUTR: '15 Jun 2026', stopU535: '22 Jun 2026',
+      planChangeUTR: true, planChangeU535: true,
     },
-    procurement: [
-      {
-        plant: 'U535',
-        materialCode: 'PM 64330490',
-        supplier: 'Reliance Ind.',
-        orderQty: '15,000 units',
-        moq: '5,000 units',
-        pricePerUnit: '₹42',
-        total: '₹6,30,000',
-        belowMoq: false,
-      },
-      {
-        plant: 'UTR',
-        materialCode: 'RM 10045872',
-        supplier: 'BASF India',
-        orderQty: '10,000 units',
-        moq: '4,000 units',
-        pricePerUnit: '₹45',
-        total: '₹4,50,000',
-        belowMoq: false,
-      },
-    ],
-    score: 'excellent',
+    iut: {
+      materialCode: 'RM 10045872', from: 'UTR', to: 'U535',
+      qty: '12,589 EA', qtyNum: 12589,
+      leadTime: '3 days', leadDays: 3,
+      initiation: '22 May 2026',
+      lane: 'Available' as 'Available' | 'Not set',
+      costPerTrip: '₹300', costNum: 300,
+    },
+    procurement: {
+      u535: { supplier: 'Reliance Ind.', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '5,000 units', priceUnit: 42, total: 630000 },
+      utr:  { supplier: 'BASF India',    materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '4,000 units', priceUnit: 45, total: 450000 },
+    },
+    totalCost: 1080000,
   },
   {
     id: 2,
     label: 'Option 2',
-    badge: 'Alternate',
     isRecommended: false,
     route: 'U535 → UTR',
-    businessWaste: { utr: '₹3,104', u535: '₹2,437', saving: '↓ ₹2,437' },
-    totalProcurementCost: '₹10,70,000',
-    fgProducible: { utr: 81489, u535: 237705 },
-    prodPlanQty: { utr: '58,900 EA', u535: '2,35,294 EA' },
-    stopDate: { utr: '18 Jun 2026', u535: '22 Jun 2026' },
-    planChangeRequired: { utr: true, u535: true },
-    iut: {
-      materialCode: 'PM 20018734',
-      from: 'U535',
-      to: 'UTR',
-      qty: '12,589 EA',
-      leadTime: '2 days',
-      initiation: '27 May 2026',
-      lane: 'Available',
-      costPerTrip: '₹300',
+    score: 'moderate' as const,
+    overview: {
+      fgUTR: 81489, fgU535: 237705,
+      wasteUTR: 3104, wasteU535: 2437,
+      wasteUTRSaving: '₹2,437',
+      prodPlanUTR: '58,900 EA', prodPlanU535: '2,35,294 EA',
+      stopUTR: '18 Jun 2026', stopU535: '22 Jun 2026',
+      planChangeUTR: true, planChangeU535: true,
     },
-    procurement: [
-      {
-        plant: 'U535',
-        materialCode: 'PM 64330490',
-        supplier: 'Tata Chemicals',
-        orderQty: '15,000 units',
-        moq: '3,000 units',
-        pricePerUnit: '₹38',
-        total: '₹5,70,000',
-        belowMoq: false,
-      },
-      {
-        plant: 'UTR',
-        materialCode: 'RM 10045872',
-        supplier: 'Evonik India',
-        orderQty: '10,000 units',
-        moq: '2,000 units',
-        pricePerUnit: '₹50',
-        total: '₹5,00,000',
-        belowMoq: false,
-      },
-    ],
-    score: 'moderate',
+    iut: {
+      materialCode: 'PM 20018734', from: 'U535', to: 'UTR',
+      qty: '12,589 EA', qtyNum: 12589,
+      leadTime: '2 days', leadDays: 2,
+      initiation: '27 May 2026',
+      lane: 'Available' as 'Available' | 'Not set',
+      costPerTrip: '₹300', costNum: 300,
+    },
+    procurement: {
+      u535: { supplier: 'Tata Chemicals', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '3,000 units', priceUnit: 38, total: 570000 },
+      utr:  { supplier: 'Evonik India',   materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '2,000 units', priceUnit: 50, total: 500000 },
+    },
+    totalCost: 1070000,
   },
   {
     id: 3,
     label: 'Option 3',
-    badge: 'Alternate',
     isRecommended: false,
     route: 'UTR → U535',
-    businessWaste: { utr: '₹3,890', u535: '₹1,651', saving: '↓ ₹1,651' },
-    totalProcurementCost: '₹10,70,000',
-    fgProducible: { utr: 60700, u535: 258494 },
-    prodPlanQty: { utr: '58,900 EA', u535: '2,35,294 EA' },
-    stopDate: { utr: '18 Jun 2026', u535: '22 Jun 2026' },
-    planChangeRequired: { utr: true, u535: true },
-    iut: {
-      materialCode: 'PM 30098721',
-      from: 'UTR',
-      to: 'U535',
-      qty: '8,200 EA',
-      leadTime: '4 days',
-      initiation: '18 May 2026',
-      lane: 'Not set',
-      costPerTrip: '₹450',
+    score: 'poor' as const,
+    overview: {
+      fgUTR: 60700, fgU535: 258494,
+      wasteUTR: 3890, wasteU535: 1651,
+      wasteUTRSaving: '₹1,651',
+      prodPlanUTR: '58,900 EA', prodPlanU535: '2,35,294 EA',
+      stopUTR: '18 Jun 2026', stopU535: '22 Jun 2026',
+      planChangeUTR: true, planChangeU535: true,
     },
-    procurement: [
-      {
-        plant: 'U535',
-        materialCode: 'PM 64330490',
-        supplier: 'Tata Chemicals',
-        orderQty: '15,000 units',
-        moq: '3,000 units',
-        pricePerUnit: '₹38',
-        total: '₹5,70,000',
-        belowMoq: false,
-      },
-      {
-        plant: 'UTR',
-        materialCode: 'RM 10045872',
-        supplier: 'Evonik India',
-        orderQty: '10,000 units',
-        moq: '2,000 units',
-        pricePerUnit: '₹50',
-        total: '₹5,00,000',
-        belowMoq: false,
-      },
-    ],
-    score: 'poor',
+    iut: {
+      materialCode: 'PM 30098721', from: 'UTR', to: 'U535',
+      qty: '8,200 EA', qtyNum: 8200,
+      leadTime: '4 days', leadDays: 4,
+      initiation: '18 May 2026',
+      lane: 'Not set' as 'Available' | 'Not set',
+      costPerTrip: '₹450', costNum: 450,
+    },
+    procurement: {
+      u535: { supplier: 'Tata Chemicals', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '3,000 units', priceUnit: 38, total: 570000 },
+      utr:  { supplier: 'Evonik India',   materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '2,000 units', priceUnit: 50, total: 500000 },
+    },
+    totalCost: 1070000,
   },
 ];
 
-/* ──────────────────────── SMALL HELPERS ──────────────────────── */
+type Option = typeof OPTIONS[number];
+type ScoreKey = 'excellent' | 'moderate' | 'poor';
 
-function PlantBadge({ plant }: { plant: string }) {
-  const styles: Record<string, string> = {
-    UTR: 'bg-blue-600 text-white',
-    U535: 'bg-indigo-600 text-white',
-  };
+/* ───────────────────────────── ATOMS ───────────────────────────── */
+
+const SCORE_META: Record<ScoreKey, { dot: string; pill: string; label: string }> = {
+  excellent: { dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: '≥40% Savings' },
+  moderate:  { dot: 'bg-amber-400',   pill: 'bg-amber-50  text-amber-700  border-amber-200',  label: '20–39% Savings' },
+  poor:      { dot: 'bg-red-500',     pill: 'bg-red-50    text-red-600    border-red-200',    label: '<20% Savings' },
+};
+
+function PlantBadge({ plant, sm }: { plant: string; sm?: boolean }) {
+  const s: Record<string, string> = { UTR: 'bg-blue-600', U535: 'bg-indigo-600' };
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${styles[plant] ?? 'bg-slate-600 text-white'}`}
-    >
+    <span className={`inline-flex items-center rounded font-bold tracking-wide text-white ${sm ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-0.5'} ${s[plant] ?? 'bg-slate-600'}`}>
       {plant}
     </span>
   );
 }
 
-function ScoreDot({ score }: { score: string }) {
-  const map: Record<string, { cls: string; label: string }> = {
-    excellent: { cls: 'bg-emerald-500', label: '≥40% Excellent' },
-    moderate:  { cls: 'bg-amber-400',   label: '20–39% Moderate' },
-    poor:      { cls: 'bg-red-500',      label: '<20% Poor' },
-  };
-  const { cls, label } = map[score] ?? map.moderate;
+function ScorePill({ score }: { score: ScoreKey }) {
+  const m = SCORE_META[score];
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600">
-      <span className={`w-2 h-2 rounded-full flex-none ${cls}`} />
-      {label}
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${m.pill}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
+      {m.label}
     </span>
   );
 }
 
-function SectionTitle({
-  icon: Icon,
-  title,
-  accent,
+const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
+
+/* ───────────────────── OPTION SELECTOR CARDS ───────────────────── */
+
+function OptionCard({
+  opt, isSelected, isCompared, mode, onSelect, onToggleCompare,
 }: {
-  icon: React.ElementType;
-  title: string;
-  accent: string;
+  opt: Option; isSelected: boolean; isCompared: boolean;
+  mode: 'focus' | 'compare';
+  onSelect: () => void; onToggleCompare: () => void;
 }) {
-  return (
-    <div className={`flex items-center gap-2 mb-4 pb-2 border-b ${accent}`}>
-      <Icon className="w-4 h-4 text-slate-500" />
-      <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">{title}</span>
-    </div>
-  );
-}
+  const m = SCORE_META[opt.score];
 
-/* ──────────────────────── OPTION SELECTOR STRIP ──────────────────────── */
-
-function OptionPill({
-  opt,
-  isSelected,
-  onClick,
-}: {
-  opt: (typeof OPTIONS)[number];
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const scoreColor =
-    opt.score === 'excellent'
-      ? 'bg-emerald-500'
-      : opt.score === 'moderate'
-      ? 'bg-amber-400'
-      : 'bg-red-500';
-
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex-1 min-w-0 text-left rounded-xl border-2 px-4 py-3 transition-all duration-200 ${
-        isSelected
-          ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-          : 'border-slate-200 bg-white hover:border-indigo-300 text-slate-800'
-      }`}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <span className={`w-2 h-2 rounded-full flex-none ${scoreColor}`} />
-        <span className="font-bold text-sm truncate">{opt.label}</span>
-        {opt.isRecommended && (
-          <span
-            className={`hidden sm:inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-none ${
-              isSelected ? 'bg-amber-300 text-amber-900' : 'bg-amber-100 text-amber-700'
-            }`}
-          >
-            <Star className="w-2 h-2 fill-current" /> REC
-          </span>
-        )}
-      </div>
-      <div
-        className={`text-[11px] mt-0.5 font-medium truncate ${
-          isSelected ? 'text-indigo-200' : 'text-slate-400'
+  if (mode === 'focus') {
+    return (
+      <button
+        onClick={onSelect}
+        className={`relative flex-1 text-left rounded-2xl border-2 px-5 py-4 transition-all duration-200 group ${
+          isSelected
+            ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200'
+            : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md text-slate-800'
         }`}
       >
-        {opt.route}
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-sm">{opt.label}</span>
+              {opt.isRecommended && (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-none ${isSelected ? 'bg-amber-300 text-amber-900' : 'bg-amber-100 text-amber-700'}`}>
+                  <Star className="w-2 h-2 fill-current" /> REC
+                </span>
+              )}
+            </div>
+            <div className={`flex items-center gap-1 mt-1 text-[11px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
+              <PlantBadge plant={opt.iut.from} sm />
+              <ArrowRight className="w-2.5 h-2.5" />
+              <PlantBadge plant={opt.iut.to} sm />
+              <span className="ml-0.5">{opt.route}</span>
+            </div>
+          </div>
+          {isSelected && <CheckCheck className="w-4 h-4 text-indigo-300 flex-none mt-0.5" />}
+        </div>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { l: 'Total Cost', v: fmt(opt.totalCost) },
+            { l: 'FG · UTR', v: opt.overview.fgUTR.toLocaleString('en-IN') },
+            { l: 'FG · U535', v: opt.overview.fgU535.toLocaleString('en-IN') },
+          ].map((k) => (
+            <div key={k.l} className={`rounded-lg px-2.5 py-2 text-center ${isSelected ? 'bg-white/10' : 'bg-slate-50 border border-slate-100'}`}>
+              <div className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isSelected ? 'text-indigo-300' : 'text-slate-400'}`}>{k.l}</div>
+              <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-900'}`}>{k.v}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3">
+          <ScorePill score={opt.score} />
+        </div>
+      </button>
+    );
+  }
+
+  // Compare mode card
+  return (
+    <button
+      onClick={onToggleCompare}
+      className={`relative flex-1 text-left rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 ${
+        isCompared
+          ? 'border-indigo-500 bg-indigo-50 shadow-md'
+          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-500'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className={`font-bold text-sm ${isCompared ? 'text-indigo-900' : 'text-slate-500'}`}>{opt.label}</span>
+            {opt.isRecommended && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-none">
+                <Star className="w-2 h-2 fill-current" /> REC
+              </span>
+            )}
+          </div>
+          <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isCompared ? 'text-slate-500' : 'text-slate-400'}`}>
+            <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-2.5 h-2.5" /><PlantBadge plant={opt.iut.to} sm />
+            <span className="ml-0.5">{opt.route}</span>
+          </div>
+        </div>
+        <div className={`mt-0.5 w-5 h-5 rounded-md flex-none border-2 flex items-center justify-center transition-colors ${isCompared ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
+          {isCompared && <CheckCheck className="w-3 h-3 text-white" />}
+        </div>
       </div>
-      {isSelected && (
-        <CheckCheck className="absolute top-2 right-2 w-4 h-4 text-indigo-300" />
-      )}
+      <div className="mt-2.5">
+        <ScorePill score={opt.score} />
+      </div>
     </button>
   );
 }
 
-/* ──────────────────────── DETAIL PANEL (all-in-one) ──────────────────────── */
+/* ─────────────────────────── FOCUS DETAIL ─────────────────────────── */
 
-function DetailPanel({ opt }: { opt: (typeof OPTIONS)[number] }) {
-  const { iut, procurement } = opt;
+function SectionDivider({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+        <Icon className="w-3.5 h-3.5" /> {label}
+      </div>
+      <div className="flex-1 border-t border-slate-200" />
+    </div>
+  );
+}
+
+function FocusDetail({ opt }: { opt: Option }) {
+  const { overview: ov, iut, procurement: po } = opt;
   const laneOk = iut.lane === 'Available';
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-4">
 
-      {/* ── OVERVIEW ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <SectionTitle icon={BarChart3} title="Overview" accent="border-slate-200" />
-
-        {/* KPI row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          {[
-            { label: 'FG Producible · UTR',   value: opt.fgProducible.utr.toLocaleString('en-IN'), sub: 'units' },
-            { label: 'FG Producible · U535',  value: opt.fgProducible.u535.toLocaleString('en-IN'), sub: 'units' },
-            { label: 'Business Waste · UTR',  value: opt.businessWaste.utr, sub: 'vs no-action baseline' },
-            { label: 'Business Waste · U535', value: opt.businessWaste.u535, sub: opt.businessWaste.saving },
-          ].map((k) => (
-            <div key={k.label} className="bg-slate-50 rounded-xl border border-slate-200 px-4 py-3">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{k.label}</div>
-              <div className="text-xl font-bold text-slate-900 leading-tight">{k.value}</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">{k.sub}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Per-plant detail */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {(['utr', 'u535'] as const).map((key) => {
-            const label = key === 'utr' ? 'UTR' : 'U535';
-            const pcr   = opt.planChangeRequired[key];
-            return (
-              <div key={key} className="border border-slate-200 rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-                  <PlantBadge plant={label} />
-                  <span className="text-sm font-bold text-slate-700">{label} Plant</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-4">
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Prod Plan Qty</div>
-                    <div className="text-sm font-semibold text-slate-800 mt-0.5">{opt.prodPlanQty[key]}</div>
+      {/* OVERVIEW */}
+      <SectionDivider icon={BarChart3} label="Overview" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'FG Producible · UTR',   value: ov.fgUTR.toLocaleString('en-IN'),  sub: 'units' },
+          { label: 'FG Producible · U535',  value: ov.fgU535.toLocaleString('en-IN'), sub: 'units' },
+          { label: 'Business Waste · UTR',  value: fmt(ov.wasteUTR), sub: 'vs no-action' },
+          { label: 'Business Waste · U535', value: fmt(ov.wasteU535), sub: `↓ ${ov.wasteUTRSaving}` },
+        ].map((k) => (
+          <div key={k.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{k.label}</div>
+            <div className="text-xl font-bold text-slate-900 leading-tight">{k.value}</div>
+            <div className="text-[11px] text-slate-400 mt-0.5">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {(['utr','u535'] as const).map((key) => {
+          const label = key === 'utr' ? 'UTR' : 'U535';
+          const pcr = key === 'utr' ? ov.planChangeUTR : ov.planChangeU535;
+          return (
+            <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <PlantBadge plant={label} /><span className="text-sm font-bold text-slate-700">{label} Plant</span>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4">
+                {[
+                  { l: 'Prod Plan Qty', v: key === 'utr' ? ov.prodPlanUTR : ov.prodPlanU535 },
+                  { l: 'Final FG Producible', v: (key === 'utr' ? ov.fgUTR : ov.fgU535).toLocaleString('en-IN'), accent: true },
+                  { l: 'Stop Date', v: key === 'utr' ? ov.stopUTR : ov.stopU535 },
+                ].map((m) => (
+                  <div key={m.l}>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{m.l}</div>
+                    <div className={`text-sm font-bold mt-0.5 ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Final FG Producible</div>
-                    <div className="text-sm font-bold text-indigo-700 mt-0.5">{opt.fgProducible[key].toLocaleString('en-IN')}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Stop Date</div>
-                    <div className="text-sm font-semibold text-slate-800 mt-0.5">{opt.stopDate[key]}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Plan Change</div>
-                    {pcr ? (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 mt-0.5">
-                        <AlertTriangle className="w-3.5 h-3.5" /> Required
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-0.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Not needed
-                      </span>
-                    )}
-                  </div>
+                ))}
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Plan Change</div>
+                  {pcr
+                    ? <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 mt-0.5"><AlertTriangle className="w-3.5 h-3.5" />Required</span>
+                    : <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-0.5"><CheckCircle2 className="w-3.5 h-3.5" />Not needed</span>}
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Connector line */}
-      <div className="flex justify-center">
-        <div className="w-px h-5 bg-slate-200" />
-      </div>
-
-      {/* ── IUT TRANSFER ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <SectionTitle icon={Truck} title="IUT Transfer" accent="border-slate-200" />
-
-        {/* Visual flow strip */}
-        <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 rounded-xl border border-indigo-100 p-5 mb-4">
-          <div className="flex items-center justify-center gap-0">
-            {/* FROM node */}
-            <div className="text-center w-20">
-              <PlantBadge plant={iut.from} />
-              <div className="text-[10px] text-slate-500 mt-1 font-semibold">FROM</div>
-            </div>
-
-            {/* Lane */}
-            <div className="flex-1 flex flex-col items-center gap-1.5 px-4">
-              <div className="text-[11px] font-bold text-indigo-700 bg-white border border-indigo-200 rounded-full px-3 py-0.5 shadow-sm">
-                {iut.qty}
-              </div>
-              <div className="w-full flex items-center gap-1">
-                <div className="flex-1 border-t-2 border-dashed border-indigo-300" />
-                <ArrowRight className="w-5 h-5 text-indigo-500 flex-none" />
-              </div>
-              <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                <span className="font-semibold">{iut.leadTime}</span>
-                <span>·</span>
-                <span className="font-semibold">{iut.initiation}</span>
-                <span>·</span>
-                <span className="font-semibold">{iut.costPerTrip}/trip</span>
-              </div>
-            </div>
-
-            {/* TO node */}
-            <div className="text-center w-20">
-              <PlantBadge plant={iut.to} />
-              <div className="text-[10px] text-slate-500 mt-1 font-semibold">TO</div>
-            </div>
+      {/* IUT */}
+      <SectionDivider icon={Truck} label="IUT Transfer" />
+      <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 rounded-2xl border border-indigo-100 p-5">
+        <div className="flex items-center justify-center gap-0 mb-5">
+          <div className="text-center w-20">
+            <PlantBadge plant={iut.from} /><div className="text-[10px] text-slate-400 mt-1 font-semibold">FROM</div>
+          </div>
+          <div className="flex-1 flex flex-col items-center gap-1.5 px-4">
+            <span className="text-[11px] font-bold text-indigo-700 bg-white border border-indigo-200 rounded-full px-3 py-0.5 shadow-sm">{iut.qty}</span>
+            <div className="w-full flex items-center"><div className="flex-1 border-t-2 border-dashed border-indigo-300" /><ArrowRight className="w-5 h-5 text-indigo-500 flex-none" /></div>
+            <span className="text-[10px] text-slate-500 font-medium">{iut.leadTime} · {iut.initiation} · {iut.costPerTrip}/trip</span>
+          </div>
+          <div className="text-center w-20">
+            <PlantBadge plant={iut.to} /><div className="text-[10px] text-slate-400 mt-1 font-semibold">TO</div>
           </div>
         </div>
-
-        {/* Spec grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {[
-            { label: 'Material Code',  value: iut.materialCode },
-            { label: 'Transfer Qty',   value: iut.qty },
-            { label: 'Lead Time',      value: iut.leadTime },
-            { label: 'Initiation',     value: iut.initiation },
+            { label: 'Material Code', value: iut.materialCode },
+            { label: 'Transfer Qty',  value: iut.qty },
+            { label: 'Lead Time',     value: iut.leadTime },
+            { label: 'Initiation',    value: iut.initiation },
             {
               label: 'Lane',
-              value: iut.lane,
-              el: (
-                <span className={`flex items-center gap-1 text-sm font-bold ${laneOk ? 'text-emerald-600' : 'text-amber-500'}`}>
-                  {laneOk ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-                  {iut.lane}
-                </span>
-              ),
+              el: <span className={`flex items-center gap-1 text-xs font-bold ${laneOk ? 'text-emerald-600' : 'text-amber-500'}`}>
+                {laneOk ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}{iut.lane}
+              </span>,
             },
-            { label: 'Cost / Trip',    value: iut.costPerTrip },
+            { label: 'Cost / Trip', value: iut.costPerTrip },
           ].map((s) => (
-            <div key={s.label} className="bg-slate-50 rounded-lg border border-slate-200 px-3 py-2.5">
+            <div key={s.label} className="bg-white rounded-lg border border-indigo-100 px-3 py-2.5">
               <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{s.label}</div>
               {s.el ?? <div className="text-xs font-bold text-slate-800">{s.value}</div>}
             </div>
@@ -400,131 +327,367 @@ function DetailPanel({ opt }: { opt: (typeof OPTIONS)[number] }) {
         </div>
       </div>
 
-      {/* Connector line */}
-      <div className="flex justify-center">
-        <div className="w-px h-5 bg-slate-200" />
-      </div>
-
-      {/* ── PROCUREMENT ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <SectionTitle icon={ShoppingCart} title="Procurement" accent="border-slate-200" />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {procurement.map((po, i) => (
-            <div
-              key={i}
-              className={`rounded-xl border overflow-hidden ${po.belowMoq ? 'border-red-200' : 'border-slate-200'}`}
-            >
-              {/* Card header */}
-              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-                <div className="flex items-center gap-2 min-w-0">
-                  <PlantBadge plant={po.plant} />
-                  <span className="text-xs font-bold text-slate-600 truncate">{po.materialCode}</span>
-                </div>
-                {po.belowMoq && (
-                  <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 flex-none">
-                    Below MOQ
-                  </span>
-                )}
+      {/* PROCUREMENT */}
+      <SectionDivider icon={ShoppingCart} label="Procurement" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {(['u535','utr'] as const).map((key) => {
+          const p = po[key];
+          return (
+            <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                <PlantBadge plant={key === 'u535' ? 'U535' : 'UTR'} />
+                <span className="text-xs font-bold text-slate-600">{p.materialCode}</span>
               </div>
-
-              {/* Supplier */}
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100">
                 <Truck className="w-3.5 h-3.5 text-slate-400 flex-none" />
-                <span className="text-sm font-semibold text-slate-800">{po.supplier}</span>
+                <span className="text-sm font-semibold text-slate-800">{p.supplier}</span>
               </div>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-4 gap-0 divide-x divide-slate-100">
+              <div className="grid grid-cols-4 divide-x divide-slate-100">
                 {[
-                  { label: 'Order Qty',    value: po.orderQty },
-                  { label: 'MOQ',          value: po.moq },
-                  { label: 'Price/Unit',   value: po.pricePerUnit },
-                  { label: 'Total',        value: po.total, highlight: true },
+                  { l: 'Order Qty',  v: p.orderQty },
+                  { l: 'MOQ',        v: p.moq },
+                  { l: 'Price/Unit', v: `₹${p.priceUnit}` },
+                  { l: 'Total',      v: fmt(p.total), accent: true },
                 ].map((m) => (
-                  <div key={m.label} className="px-3 py-3 text-center">
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{m.label}</div>
-                    <div className={`text-xs font-bold ${m.highlight ? 'text-indigo-700 text-sm' : 'text-slate-800'}`}>
-                      {m.value}
-                    </div>
+                  <div key={m.l} className="px-2.5 py-3 text-center">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{m.l}</div>
+                    <div className={`text-xs font-bold ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Total row */}
-        <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3">
-          <span className="text-sm font-semibold">Total Procurement Cost</span>
-          <span className="text-lg font-bold">{opt.totalProcurementCost}</span>
-        </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
+        <span className="text-sm font-semibold">Total Procurement Cost</span>
+        <span className="text-lg font-bold">{fmt(opt.totalCost)}</span>
       </div>
     </div>
   );
 }
 
-/* ──────────────────────── MAIN PAGE ──────────────────────── */
+/* ─────────────────────── COMPARE GRID ─────────────────────── */
 
-export default function PlanComparisonPage() {
-  const [selectedId, setSelectedId] = useState(1);
-  const selected = OPTIONS.find((o) => o.id === selectedId)!;
+type CellResult = 'best' | 'worst' | 'mid' | 'neutral';
+
+function diffResult(values: (number | null)[], idx: number, higherBetter: boolean): CellResult {
+  const valid = values.filter((v) => v !== null) as number[];
+  if (valid.length < 2) return 'neutral';
+  const v = values[idx];
+  if (v === null) return 'neutral';
+  const best  = higherBetter ? Math.max(...valid) : Math.min(...valid);
+  const worst = higherBetter ? Math.min(...valid) : Math.max(...valid);
+  if (valid.every((x) => x === valid[0])) return 'neutral';
+  if (v === best)  return 'best';
+  if (v === worst) return 'worst';
+  return 'mid';
+}
+
+const CELL_STYLE: Record<CellResult, string> = {
+  best:    'bg-emerald-50 text-emerald-800',
+  worst:   'bg-red-50    text-red-700',
+  mid:     'bg-slate-50  text-slate-700',
+  neutral: 'text-slate-700',
+};
+const CELL_BADGE: Partial<Record<CellResult, string>> = {
+  best:  'bg-emerald-100 text-emerald-700',
+  worst: 'bg-red-100    text-red-600',
+};
+
+function DiffCell({ value, display, result }: { value: number | null; display: string; result: CellResult }) {
+  const badge = CELL_BADGE[result];
+  return (
+    <td className={`px-4 py-3 text-center align-middle ${CELL_STYLE[result]}`}>
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-sm font-bold">{display}</span>
+        {badge && (
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge}`}>
+            {result === 'best' ? '✓ Best' : '↓ High'}
+          </span>
+        )}
+      </div>
+    </td>
+  );
+}
+
+function TextCell({ value }: { value: React.ReactNode }) {
+  return <td className="px-4 py-3 text-center align-middle text-sm text-slate-700">{value}</td>;
+}
+
+function RowLabel({ label }: { label: string }) {
+  return (
+    <td className="pl-4 pr-3 py-3 text-left align-middle sticky left-0 bg-white border-r border-slate-100 z-10 min-w-[160px]">
+      <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">{label}</span>
+    </td>
+  );
+}
+
+function SectionRow({ label, icon: Icon, cols }: { label: string; icon: React.ElementType; cols: number }) {
+  return (
+    <tr className="bg-slate-800">
+      <td colSpan={cols + 1} className="px-4 py-2.5 sticky left-0">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-300">
+          <Icon className="w-3.5 h-3.5" />{label}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function CompareGrid({ opts }: { opts: Option[] }) {
+  const n = opts.length;
+
+  // helper: get diff across compared options
+  const numDiff = (vals: (number | null)[], hb: boolean) =>
+    vals.map((_, i) => diffResult(vals, i, hb));
+
+  // Numeric arrays
+  const fgUTRs   = opts.map((o) => o.overview.fgUTR);
+  const fgU535s  = opts.map((o) => o.overview.fgU535);
+  const wUTRs    = opts.map((o) => o.overview.wasteUTR);
+  const wU535s   = opts.map((o) => o.overview.wasteU535);
+  const leadDays = opts.map((o) => o.iut.leadDays);
+  const costTrip = opts.map((o) => o.iut.costNum);
+  const qtyNums  = opts.map((o) => o.iut.qtyNum);
+  const pu535    = opts.map((o) => o.procurement.u535.priceUnit);
+  const tu535    = opts.map((o) => o.procurement.u535.total);
+  const putr     = opts.map((o) => o.procurement.utr.priceUnit);
+  const tutr     = opts.map((o) => o.procurement.utr.total);
+  const totals   = opts.map((o) => o.totalCost);
+
+  const fgUTRd  = numDiff(fgUTRs,  true);
+  const fgU535d = numDiff(fgU535s, true);
+  const wUTRd   = numDiff(wUTRs,   false);
+  const wU535d  = numDiff(wU535s,  false);
+  const leadD   = numDiff(leadDays, false);
+  const costTD  = numDiff(costTrip, false);
+  const qtyD    = numDiff(qtyNums,  true);
+  const pu535d  = numDiff(pu535,    false);
+  const tu535d  = numDiff(tu535,    false);
+  const putrd   = numDiff(putr,     false);
+  const tutrd   = numDiff(tutr,     false);
+  const totalD  = numDiff(totals,   false);
 
   return (
-    <div className="flex-1 w-full max-w-5xl mx-auto p-4 sm:p-6 pb-12 flex flex-col gap-5">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-slate-900">
+            <th className="pl-4 pr-3 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 sticky left-0 bg-slate-900 border-r border-slate-700 min-w-[160px]">
+              Detail
+            </th>
+            {opts.map((o) => (
+              <th key={o.id} className="px-4 py-4 text-center min-w-[180px]">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-white font-bold text-sm">{o.label}</span>
+                    {o.isRecommended && (
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-900 flex-none">
+                        <Star className="w-2 h-2 fill-current" />REC
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                    <PlantBadge plant={o.iut.from} sm /><ArrowRight className="w-2.5 h-2.5 text-slate-500" /><PlantBadge plant={o.iut.to} sm />
+                  </div>
+                  <ScorePill score={o.score} />
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 bg-white">
 
-      {/* Page header */}
+          {/* ── OVERVIEW ── */}
+          <SectionRow icon={BarChart3} label="Overview" cols={n} />
+          <tr><RowLabel label="FG Producible · UTR" />{fgUTRs.map((v, i) => <DiffCell key={i} value={v} display={v.toLocaleString('en-IN')} result={fgUTRd[i]} />)}</tr>
+          <tr><RowLabel label="FG Producible · U535"/>{fgU535s.map((v,i)=><DiffCell key={i} value={v} display={v.toLocaleString('en-IN')} result={fgU535d[i]}/>)}</tr>
+          <tr><RowLabel label="Business Waste · UTR"/>{wUTRs.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={wUTRd[i]}/>)}</tr>
+          <tr><RowLabel label="Business Waste · U535"/>{wU535s.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={wU535d[i]}/>)}</tr>
+          <tr><RowLabel label="Stop Date · UTR"/>{opts.map((o,i)=><TextCell key={i} value={o.overview.stopUTR}/>)}</tr>
+          <tr><RowLabel label="Stop Date · U535"/>{opts.map((o,i)=><TextCell key={i} value={o.overview.stopU535}/>)}</tr>
+          <tr><RowLabel label="Plan Change · UTR"/>{opts.map((o,i)=><TextCell key={i} value={
+            o.overview.planChangeUTR
+              ? <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600"><AlertTriangle className="w-3 h-3"/>Yes</span>
+              : <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3 h-3"/>No</span>
+          }/>)}</tr>
+
+          {/* ── IUT ── */}
+          <SectionRow icon={Truck} label="IUT Transfer" cols={n} />
+          <tr><RowLabel label="Material Code"/>{opts.map((o,i)=><TextCell key={i} value={<span className="font-mono text-xs text-indigo-700">{o.iut.materialCode}</span>}/>)}</tr>
+          <tr><RowLabel label="Transfer Route"/>{opts.map((o,i)=><TextCell key={i} value={
+            <span className="inline-flex items-center gap-1"><PlantBadge plant={o.iut.from} sm/><ArrowRight className="w-3 h-3 text-slate-400"/><PlantBadge plant={o.iut.to} sm/></span>
+          }/>)}</tr>
+          <tr><RowLabel label="Transfer Qty"/>{qtyNums.map((v,i)=><DiffCell key={i} value={v} display={opts[i].iut.qty} result={qtyD[i]}/>)}</tr>
+          <tr><RowLabel label="IUT Lead Time"/>{leadDays.map((v,i)=><DiffCell key={i} value={v} display={opts[i].iut.leadTime} result={leadD[i]}/>)}</tr>
+          <tr><RowLabel label="Initiation Date"/>{opts.map((o,i)=><TextCell key={i} value={o.iut.initiation}/>)}</tr>
+          <tr><RowLabel label="Lane Availability"/>{opts.map((o,i)=><TextCell key={i} value={
+            o.iut.lane === 'Available'
+              ? <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><Wifi className="w-3.5 h-3.5"/>Available</span>
+              : <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500"><WifiOff className="w-3.5 h-3.5"/>Not set</span>
+          }/>)}</tr>
+          <tr><RowLabel label="Cost / Trip"/>{costTrip.map((v,i)=><DiffCell key={i} value={v} display={opts[i].iut.costPerTrip} result={costTD[i]}/>)}</tr>
+
+          {/* ── PROCUREMENT ── */}
+          <SectionRow icon={ShoppingCart} label="Procurement — U535 Plant" cols={n} />
+          <tr><RowLabel label="Supplier"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.supplier}/>)}</tr>
+          <tr><RowLabel label="Order Qty"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.orderQty}/>)}</tr>
+          <tr><RowLabel label="MOQ"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.moq}/>)}</tr>
+          <tr><RowLabel label="Price / Unit"/>{pu535.map((v,i)=><DiffCell key={i} value={v} display={`₹${v}`} result={pu535d[i]}/>)}</tr>
+          <tr><RowLabel label="Total Order"/>{tu535.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={tu535d[i]}/>)}</tr>
+
+          <SectionRow icon={ShoppingCart} label="Procurement — UTR Plant" cols={n} />
+          <tr><RowLabel label="Supplier"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.supplier}/>)}</tr>
+          <tr><RowLabel label="Order Qty"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.orderQty}/>)}</tr>
+          <tr><RowLabel label="MOQ"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.moq}/>)}</tr>
+          <tr><RowLabel label="Price / Unit"/>{putr.map((v,i)=><DiffCell key={i} value={v} display={`₹${v}`} result={putrd[i]}/>)}</tr>
+          <tr><RowLabel label="Total Order"/>{tutr.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={tutrd[i]}/>)}</tr>
+
+          {/* ── TOTAL ── */}
+          <tr className="bg-slate-50 border-t-2 border-slate-300">
+            <td className="pl-4 pr-3 py-4 sticky left-0 bg-slate-50 border-r border-slate-200 z-10">
+              <div className="flex items-center gap-1.5">
+                <Trophy className="w-4 h-4 text-indigo-500" />
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Total Procurement Cost</span>
+              </div>
+            </td>
+            {totals.map((v, i) => (
+              <DiffCell key={i} value={v} display={fmt(v)} result={totalD[i]} />
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ─────────────────────────── PAGE ─────────────────────────── */
+
+export default function PlanComparisonPage() {
+  const [mode, setMode]       = useState<'focus' | 'compare'>('focus');
+  const [selectedId, setSelectedId]   = useState(1);
+  const [comparedIds, setComparedIds] = useState<number[]>([1, 2, 3]);
+
+  const selected   = OPTIONS.find((o) => o.id === selectedId)!;
+  const comparedOpts = OPTIONS.filter((o) => comparedIds.includes(o.id));
+
+  const toggleCompared = (id: number) => {
+    setComparedIds((prev) =>
+      prev.includes(id)
+        ? prev.length > 1 ? prev.filter((x) => x !== id) : prev   // keep min 1
+        : [...prev, id],
+    );
+  };
+
+  return (
+    <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 pb-16 flex flex-col gap-5">
+
+      {/* ── PAGE HEADER ── */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">IUT + Procurement</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Plan Comparison · IUT + Break MOQ</p>
+        </div>
+        {/* Mode toggle */}
+        <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 gap-1">
+          {[
+            { id: 'focus' as const,   label: 'Focus View',   Icon: LayoutGrid },
+            { id: 'compare' as const, label: 'Compare',      Icon: SlidersHorizontal },
+          ].map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              onClick={() => setMode(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                mode === id
+                  ? 'bg-white text-indigo-700 shadow-sm border border-slate-200'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />{label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── OPTION CARDS ── */}
       <div>
-        <h1 className="text-xl font-bold text-slate-900">IUT + Procurement</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Plan Comparison · Select an option below to see its full breakdown
-        </p>
+        <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
+          {mode === 'focus' ? 'Select an option to view its details' : 'Select options to compare — tick the ones you want'}
+        </div>
+        <div className="flex gap-3">
+          {OPTIONS.map((opt) => (
+            <OptionCard
+              key={opt.id}
+              opt={opt}
+              isSelected={opt.id === selectedId}
+              isCompared={comparedIds.includes(opt.id)}
+              mode={mode}
+              onSelect={() => setSelectedId(opt.id)}
+              onToggleCompare={() => toggleCompared(opt.id)}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Option pills */}
-      <div className="flex gap-3">
-        {OPTIONS.map((opt) => (
-          <OptionPill
-            key={opt.id}
-            opt={opt}
-            isSelected={opt.id === selectedId}
-            onClick={() => setSelectedId(opt.id)}
-          />
-        ))}
-      </div>
-
-      {/* Selected option header bar */}
-      <div className="flex items-center justify-between bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-2xl px-5 py-4 text-white">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-base">{selected.label}</span>
-              {selected.isRecommended && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-amber-900 flex-none">
-                  <Star className="w-2.5 h-2.5 fill-current" /> Recommended
-                </span>
-              )}
-              <span className="text-indigo-200 text-sm">{selected.route}</span>
-            </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              <PlantBadge plant={selected.iut.from} />
-              <ArrowRight className="w-3 h-3 text-indigo-300" />
-              <PlantBadge plant={selected.iut.to} />
+      {/* ── MAIN CONTENT ── */}
+      {mode === 'focus' ? (
+        <>
+          {/* Selected header */}
+          <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl px-5 py-4 text-white">
+            <div className="flex items-center gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-base">{selected.label}</span>
+                  {selected.isRecommended && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-amber-900">
+                      <Star className="w-2.5 h-2.5 fill-current" />Recommended
+                    </span>
+                  )}
+                  <ScorePill score={selected.score} />
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5 text-slate-400 text-xs">
+                  <PlantBadge plant={selected.iut.from} sm /><ArrowRight className="w-3 h-3" /><PlantBadge plant={selected.iut.to} sm />
+                  <span>{selected.route}</span>
+                  <span className="mx-1 text-slate-600">·</span>
+                  <span>Total</span>
+                  <span className="text-white font-bold">{fmt(selected.totalCost)}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <ScoreDot score={selected.score} />
-      </div>
-
-      {/* All-in-one detail */}
-      <DetailPanel opt={selected} />
+          <FocusDetail opt={selected} />
+        </>
+      ) : (
+        <>
+          {comparedOpts.length < 2 ? (
+            <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-10 text-center">
+              Select at least 2 options above to compare them side by side.
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <Layers className="w-3.5 h-3.5" />
+                <span>
+                  Comparing <b className="text-slate-800">{comparedOpts.map((o) => o.label).join(' vs ')}</b>
+                  &nbsp;·&nbsp;
+                  <span className="text-emerald-600 font-semibold">Green = best value</span>
+                  &nbsp;·&nbsp;
+                  <span className="text-red-500 font-semibold">Red = high cost / worse</span>
+                </span>
+              </div>
+              <CompareGrid opts={comparedOpts} />
+            </>
+          )}
+        </>
+      )}
 
       {/* Legend */}
       <div className="text-[11px] text-slate-400 text-center">
-        ↓ Savings vs No Action baseline · Reduction %:{' '}
-        <span className="text-emerald-600 font-semibold">≥40% Excellent</span>{' '}
-        <span className="text-amber-500 font-semibold">· 20–39% Moderate</span>{' '}
-        <span className="text-red-500 font-semibold">· &lt;20% Poor</span>
+        ↓ Savings vs No Action baseline &nbsp;·&nbsp;
+        <span className="text-emerald-600 font-semibold">≥40% Excellent</span> &nbsp;·&nbsp;
+        <span className="text-amber-500 font-semibold">20–39% Moderate</span> &nbsp;·&nbsp;
+        <span className="text-red-500 font-semibold">&lt;20% Poor</span>
       </div>
     </div>
   );
