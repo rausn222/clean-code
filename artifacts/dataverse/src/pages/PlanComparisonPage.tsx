@@ -505,115 +505,80 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
   );
 }
 
-/* ────────────────── PROCUREMENT SECTION (multi-order) ────────────────── */
-
-function OrderChip({ order, isSelected, onSelect }: { order: PurchaseOrder; isSelected: boolean; onSelect: () => void }) {
-  const attention = order.status === 'attention';
-  return (
-    <button
-      onClick={onSelect}
-      className={`flex-none text-left rounded-xl border-2 px-3 py-2 transition-all min-w-[160px] ${
-        isSelected
-          ? 'border-indigo-600 bg-white shadow-md'
-          : 'border-transparent bg-white/70 hover:bg-white hover:border-indigo-200'
-      }`}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className={`w-1.5 h-1.5 rounded-full flex-none ${attention ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-        <PlantBadge plant={order.plant} sm />
-        <span className={`font-mono text-[10px] font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600'}`}>{order.materialCode}</span>
-      </div>
-      <div className="text-xs font-bold text-slate-800 mt-0.5 truncate">{order.name}</div>
-      <div className="text-[10px] text-slate-500 truncate">{order.supplier} · {fmt(order.total)}</div>
-    </button>
-  );
-}
+/* ────────────── PROCUREMENT SECTION (single estimation view) ────────────── */
 
 function ProcurementSection({ po }: { po: Option['procurement'] }) {
   const agg = useMemo(() => poAgg(po), [po]);
   const orders = useMemo(() => sortedOrders(po.orders as PurchaseOrder[]), [po]);
-  const [attentionOnly, setAttentionOnly] = useState(false);
-  const [selectedCode, setSelectedCode] = useState(orders[0]!.materialCode);
-
-  const visible = attentionOnly ? orders.filter((o) => o.status === 'attention') : orders;
-  const toggleAttentionOnly = () => {
-    const next = !attentionOnly;
-    setAttentionOnly(next);
-    if (next) {
-      const current = orders.find((o) => o.materialCode === selectedCode);
-      if (!current || current.status !== 'attention') {
-        const firstAttention = orders.find((o) => o.status === 'attention');
-        if (firstAttention) setSelectedCode(firstAttention.materialCode);
-      }
-    }
-  };
-  const order = visible.find((o) => o.materialCode === selectedCode) ?? visible[0] ?? orders[0]!;
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50/60 via-slate-50 to-emerald-50/60 rounded-2xl border border-slate-200 p-5 flex flex-col gap-4">
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
 
-      {/* Aggregate roll-up */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      {/* Estimation roll-up across all raw materials */}
+      <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2 flex-wrap text-xs text-slate-600">
           <span className="font-bold text-slate-800">{agg.count} purchase orders</span>
           <span className="text-slate-300">·</span>
           <span><b className="text-slate-800">{agg.suppliers} suppliers</b></span>
           <span className="text-slate-300">·</span>
           <span><b className="text-slate-800">{agg.totalUnits.toLocaleString('en-IN')} units</b></span>
-          <span className="text-slate-300">·</span>
-          <span><b className="text-slate-800">{fmt(agg.totalValue)}</b> order value</span>
         </div>
         {agg.attention > 0 && (
-          <button
-            onClick={toggleAttentionOnly}
-            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
-              attentionOnly
-                ? 'bg-amber-400 border-amber-400 text-amber-950'
-                : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
             <AlertTriangle className="w-3 h-3" />{agg.attention} need attention
-          </button>
+          </span>
         )}
       </div>
 
-      {/* Order selector strip (attention-first) */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {visible.map((o) => (
-          <OrderChip key={o.materialCode} order={o} isSelected={o.materialCode === order.materialCode} onSelect={() => setSelectedCode(o.materialCode)} />
-        ))}
-      </div>
-
-      {/* Focused order detail */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-        {order.status === 'attention' && order.note && (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border-b border-amber-200 px-4 py-2">
-            <AlertTriangle className="w-3.5 h-3.5 flex-none" />{order.note}
-          </div>
-        )}
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-          <PlantBadge plant={order.plant} />
-          <span className="text-xs font-bold text-slate-600">{order.materialCode}</span>
-          <span className="text-xs text-slate-400">·</span>
-          <span className="text-xs font-semibold text-slate-700">{order.name}</span>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100">
-          <Truck className="w-3.5 h-3.5 text-slate-400 flex-none" />
-          <span className="text-sm font-semibold text-slate-800">{order.supplier}</span>
-        </div>
-        <div className="grid grid-cols-4 divide-x divide-slate-100">
-          {[
-            { l: 'Order Qty',  v: order.orderQty },
-            { l: 'MOQ',        v: order.moq },
-            { l: 'Price/Unit', v: `₹${order.priceUnit}` },
-            { l: 'Total',      v: fmt(order.total), accent: true },
-          ].map((m) => (
-            <div key={m.l} className="px-2.5 py-3 text-center">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{m.l}</div>
-              <div className={`text-xs font-bold ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
-            </div>
-          ))}
-        </div>
+      {/* All raw materials in one table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              <th className="text-left px-4 py-2">Material</th>
+              <th className="text-left px-3 py-2">Plant</th>
+              <th className="text-left px-3 py-2">Supplier</th>
+              <th className="text-right px-3 py-2">Order Qty</th>
+              <th className="text-right px-3 py-2">MOQ</th>
+              <th className="text-right px-3 py-2">Price/Unit</th>
+              <th className="text-right px-4 py-2">Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {orders.map((o) => (
+              <tr key={o.materialCode} className={o.status === 'attention' ? 'bg-amber-50/60' : ''}>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-none ${o.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">{o.name}</div>
+                      <div className="font-mono text-[10px] text-slate-500">{o.materialCode}</div>
+                    </div>
+                  </div>
+                  {o.status === 'attention' && o.note && (
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
+                      <AlertTriangle className="w-3 h-3 flex-none" />{o.note}
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-2.5"><PlantBadge plant={o.plant} sm /></td>
+                <td className="px-3 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap">{o.supplier}</td>
+                <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{o.orderQty}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{o.moq}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">₹{o.priceUnit}</td>
+                <td className="px-4 py-2.5 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(o.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="bg-slate-50 border-t-2 border-slate-200">
+              <td colSpan={3} className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Estimated Total</td>
+              <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalUnits.toLocaleString('en-IN')} units</td>
+              <td colSpan={2} />
+              <td className="px-4 py-3 text-sm font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(agg.totalValue)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );
