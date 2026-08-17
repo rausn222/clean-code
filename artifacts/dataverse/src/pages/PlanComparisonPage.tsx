@@ -501,6 +501,65 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
           ))}
         </div>
       </div>
+
+      {/* Tabular view — all materials at once (trial) */}
+      <div className="bg-white rounded-xl border border-indigo-100 overflow-hidden">
+        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          All Materials — Tabular View
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                <th className="text-left px-4 py-2">Material</th>
+                <th className="text-right px-3 py-2">Transfer Qty</th>
+                <th className="text-right px-3 py-2">Lead Time</th>
+                <th className="text-left px-3 py-2">Initiation</th>
+                <th className="text-right px-4 py-2">Cost / Trip</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mats.map((m) => (
+                <tr
+                  key={m.code}
+                  onClick={() => setSelectedCode(m.code)}
+                  className={`cursor-pointer transition-colors ${
+                    m.code === mat.code ? 'bg-indigo-50/70' : m.status === 'attention' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                      <div>
+                        <div className="text-xs font-bold text-slate-800">{m.name}</div>
+                        <div className="font-mono text-[10px] text-slate-500">{m.code}</div>
+                      </div>
+                    </div>
+                    {m.status === 'attention' && m.note && (
+                      <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
+                        <AlertTriangle className="w-3 h-3 flex-none" />{m.note}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{m.qty}</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.leadTime}</td>
+                  <td className="px-3 py-2.5 text-xs text-slate-600 whitespace-nowrap">{m.initiation}</td>
+                  <td className="px-4 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.costPerTrip}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-slate-50 border-t-2 border-slate-200">
+                <td className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Total · {agg.count} materials</td>
+                <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalQty.toLocaleString('en-IN')} EA</td>
+                <td className="px-3 py-3 text-xs text-slate-600 text-right whitespace-nowrap">max {agg.maxLead} days</td>
+                <td />
+                <td className="px-4 py-3 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(agg.totalTripCost)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
