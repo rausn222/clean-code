@@ -36,8 +36,12 @@ const OPTIONS = [
       ],
     },
     procurement: {
-      u535: { supplier: 'Reliance Ind.', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '5,000 units', priceUnit: 42, total: 630000 },
-      utr:  { supplier: 'BASF India',    materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '4,000 units', priceUnit: 45, total: 450000 },
+      orders: [
+        { plant: 'U535', supplier: 'Reliance Ind.', materialCode: 'PM 64330490', name: 'Sealant Compound', orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 42, total: 630000, status: 'ok' as MatStatus },
+        { plant: 'U535', supplier: 'Asian Paints',  materialCode: 'RM 10047001', name: 'Paint Additive',   orderQty: '4,000 units',  orderQtyNum: 4000,  moq: '2,000 units', priceUnit: 61, total: 244000, status: 'ok' as MatStatus },
+        { plant: 'UTR',  supplier: 'BASF India',    materialCode: 'RM 10045872', name: 'PP Granules',      orderQty: '10,000 units', orderQtyNum: 10000, moq: '4,000 units', priceUnit: 45, total: 450000, status: 'ok' as MatStatus },
+        { plant: 'UTR',  supplier: 'Pidilite Ind.', materialCode: 'PM 64330488', name: 'Adhesive Film',    orderQty: '5,000 units',  orderQtyNum: 5000,  moq: '5,000 units', priceUnit: 31, total: 155000, status: 'attention' as MatStatus, note: 'MOQ forces over-order: need 1,800, must buy 5,000' },
+      ],
     },
     totalCost: 1080000,
   },
@@ -66,8 +70,11 @@ const OPTIONS = [
       ],
     },
     procurement: {
-      u535: { supplier: 'Tata Chemicals', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '3,000 units', priceUnit: 38, total: 570000 },
-      utr:  { supplier: 'Evonik India',   materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '2,000 units', priceUnit: 50, total: 500000 },
+      orders: [
+        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Steel Sheet Coil', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus },
+        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Rubber Gasket',    orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus },
+        { plant: 'UTR',  supplier: 'Sundram Fast.',  materialCode: 'PM 20018902', name: 'Fastener Kit',     orderQty: '6,000 units',  orderQtyNum: 6000,  moq: '3,000 units', priceUnit: 22, total: 132000, status: 'ok' as MatStatus },
+      ],
     },
     totalCost: 1070000,
   },
@@ -96,8 +103,12 @@ const OPTIONS = [
       ],
     },
     procurement: {
-      u535: { supplier: 'Tata Chemicals', materialCode: 'PM 64330490', orderQty: '15,000 units', moq: '3,000 units', priceUnit: 38, total: 570000 },
-      utr:  { supplier: 'Evonik India',   materialCode: 'RM 10045872', orderQty: '10,000 units', moq: '2,000 units', priceUnit: 50, total: 500000 },
+      orders: [
+        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Glass Panel',     orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus },
+        { plant: 'U535', supplier: 'Saint-Gobain',   materialCode: 'RM 10047230', name: 'Foam Padding',    orderQty: '3,000 units',  orderQtyNum: 3000,  moq: '3,000 units', priceUnit: 55, total: 165000, status: 'attention' as MatStatus, note: 'Single-source supplier · price 20% above benchmark' },
+        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Trim Clip Set',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus },
+        { plant: 'UTR',  supplier: 'Castrol India',  materialCode: 'RM 10047555', name: 'Lubricant Drum',  orderQty: '1,500 units',  orderQtyNum: 1500,  moq: '1,000 units', priceUnit: 88, total: 132000, status: 'ok' as MatStatus },
+      ],
     },
     totalCost: 1070000,
   },
@@ -130,6 +141,32 @@ function iutAgg(iut: Option['iut']) {
 /* Attention-first ordering for the material strip */
 function sortedMaterials(mats: Material[]) {
   return [...mats].sort((a, b) =>
+    a.status === b.status ? 0 : a.status === 'attention' ? -1 : 1,
+  );
+}
+
+interface PurchaseOrder {
+  plant: string; supplier: string;
+  materialCode: string; name: string;
+  orderQty: string; orderQtyNum: number;
+  moq: string; priceUnit: number; total: number;
+  status: MatStatus; note?: string;
+}
+
+/* Aggregates across an option's purchase orders */
+function poAgg(po: Option['procurement']) {
+  const orders = po.orders as PurchaseOrder[];
+  return {
+    count: orders.length,
+    attention: orders.filter((o) => o.status === 'attention').length,
+    totalUnits: orders.reduce((s, o) => s + o.orderQtyNum, 0),
+    totalValue: orders.reduce((s, o) => s + o.total, 0),
+    suppliers: new Set(orders.map((o) => o.supplier)).size,
+  };
+}
+
+function sortedOrders(orders: PurchaseOrder[]) {
+  return [...orders].sort((a, b) =>
     a.status === b.status ? 0 : a.status === 'attention' ? -1 : 1,
   );
 }
@@ -327,40 +364,11 @@ function FocusDetail({ opt }: { opt: Option }) {
 
       {/* IUT */}
       <SectionDivider icon={Truck} label="IUT Transfer" />
-      <IutSection key={opt.id} iut={iut} />
+      <IutSection key={`iut-${opt.id}`} iut={iut} />
 
       {/* PROCUREMENT */}
       <SectionDivider icon={ShoppingCart} label="Procurement" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {(['u535','utr'] as const).map((key) => {
-          const p = po[key];
-          return (
-            <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-                <PlantBadge plant={key === 'u535' ? 'U535' : 'UTR'} />
-                <span className="text-xs font-bold text-slate-600">{p.materialCode}</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100">
-                <Truck className="w-3.5 h-3.5 text-slate-400 flex-none" />
-                <span className="text-sm font-semibold text-slate-800">{p.supplier}</span>
-              </div>
-              <div className="grid grid-cols-4 divide-x divide-slate-100">
-                {[
-                  { l: 'Order Qty',  v: p.orderQty },
-                  { l: 'MOQ',        v: p.moq },
-                  { l: 'Price/Unit', v: `₹${p.priceUnit}` },
-                  { l: 'Total',      v: fmt(p.total), accent: true },
-                ].map((m) => (
-                  <div key={m.l} className="px-2.5 py-3 text-center">
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{m.l}</div>
-                    <div className={`text-xs font-bold ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <ProcurementSection key={`po-${opt.id}`} po={po} />
       <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
         <span className="text-sm font-semibold">Total Procurement Cost</span>
         <span className="text-lg font-bold">{fmt(opt.totalCost)}</span>
@@ -497,6 +505,120 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
   );
 }
 
+/* ────────────────── PROCUREMENT SECTION (multi-order) ────────────────── */
+
+function OrderChip({ order, isSelected, onSelect }: { order: PurchaseOrder; isSelected: boolean; onSelect: () => void }) {
+  const attention = order.status === 'attention';
+  return (
+    <button
+      onClick={onSelect}
+      className={`flex-none text-left rounded-xl border-2 px-3 py-2 transition-all min-w-[160px] ${
+        isSelected
+          ? 'border-indigo-600 bg-white shadow-md'
+          : 'border-transparent bg-white/70 hover:bg-white hover:border-indigo-200'
+      }`}
+    >
+      <div className="flex items-center gap-1.5">
+        <span className={`w-1.5 h-1.5 rounded-full flex-none ${attention ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+        <PlantBadge plant={order.plant} sm />
+        <span className={`font-mono text-[10px] font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600'}`}>{order.materialCode}</span>
+      </div>
+      <div className="text-xs font-bold text-slate-800 mt-0.5 truncate">{order.name}</div>
+      <div className="text-[10px] text-slate-500 truncate">{order.supplier} · {fmt(order.total)}</div>
+    </button>
+  );
+}
+
+function ProcurementSection({ po }: { po: Option['procurement'] }) {
+  const agg = useMemo(() => poAgg(po), [po]);
+  const orders = useMemo(() => sortedOrders(po.orders as PurchaseOrder[]), [po]);
+  const [attentionOnly, setAttentionOnly] = useState(false);
+  const [selectedCode, setSelectedCode] = useState(orders[0]!.materialCode);
+
+  const visible = attentionOnly ? orders.filter((o) => o.status === 'attention') : orders;
+  const toggleAttentionOnly = () => {
+    const next = !attentionOnly;
+    setAttentionOnly(next);
+    if (next) {
+      const current = orders.find((o) => o.materialCode === selectedCode);
+      if (!current || current.status !== 'attention') {
+        const firstAttention = orders.find((o) => o.status === 'attention');
+        if (firstAttention) setSelectedCode(firstAttention.materialCode);
+      }
+    }
+  };
+  const order = visible.find((o) => o.materialCode === selectedCode) ?? visible[0] ?? orders[0]!;
+
+  return (
+    <div className="bg-gradient-to-r from-emerald-50/60 via-slate-50 to-emerald-50/60 rounded-2xl border border-slate-200 p-5 flex flex-col gap-4">
+
+      {/* Aggregate roll-up */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2 flex-wrap text-xs text-slate-600">
+          <span className="font-bold text-slate-800">{agg.count} purchase orders</span>
+          <span className="text-slate-300">·</span>
+          <span><b className="text-slate-800">{agg.suppliers} suppliers</b></span>
+          <span className="text-slate-300">·</span>
+          <span><b className="text-slate-800">{agg.totalUnits.toLocaleString('en-IN')} units</b></span>
+          <span className="text-slate-300">·</span>
+          <span><b className="text-slate-800">{fmt(agg.totalValue)}</b> order value</span>
+        </div>
+        {agg.attention > 0 && (
+          <button
+            onClick={toggleAttentionOnly}
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
+              attentionOnly
+                ? 'bg-amber-400 border-amber-400 text-amber-950'
+                : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            <AlertTriangle className="w-3 h-3" />{agg.attention} need attention
+          </button>
+        )}
+      </div>
+
+      {/* Order selector strip (attention-first) */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {visible.map((o) => (
+          <OrderChip key={o.materialCode} order={o} isSelected={o.materialCode === order.materialCode} onSelect={() => setSelectedCode(o.materialCode)} />
+        ))}
+      </div>
+
+      {/* Focused order detail */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        {order.status === 'attention' && order.note && (
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border-b border-amber-200 px-4 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 flex-none" />{order.note}
+          </div>
+        )}
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+          <PlantBadge plant={order.plant} />
+          <span className="text-xs font-bold text-slate-600">{order.materialCode}</span>
+          <span className="text-xs text-slate-400">·</span>
+          <span className="text-xs font-semibold text-slate-700">{order.name}</span>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100">
+          <Truck className="w-3.5 h-3.5 text-slate-400 flex-none" />
+          <span className="text-sm font-semibold text-slate-800">{order.supplier}</span>
+        </div>
+        <div className="grid grid-cols-4 divide-x divide-slate-100">
+          {[
+            { l: 'Order Qty',  v: order.orderQty },
+            { l: 'MOQ',        v: order.moq },
+            { l: 'Price/Unit', v: `₹${order.priceUnit}` },
+            { l: 'Total',      v: fmt(order.total), accent: true },
+          ].map((m) => (
+            <div key={m.l} className="px-2.5 py-3 text-center">
+              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{m.l}</div>
+              <div className={`text-xs font-bold ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────── COMPARE GRID ─────────────────────── */
 
 type CellResult = 'best' | 'worst' | 'mid' | 'neutral';
@@ -568,6 +690,7 @@ function SectionRow({ label, icon: Icon, cols }: { label: string; icon: React.El
 function CompareGrid({ opts }: { opts: Option[] }) {
   const n = opts.length;
   const [showMats, setShowMats] = useState(false);
+  const [showOrders, setShowOrders] = useState(false);
 
   // helper: get diff across compared options
   const numDiff = (vals: (number | null)[], hb: boolean) =>
@@ -582,10 +705,9 @@ function CompareGrid({ opts }: { opts: Option[] }) {
   const leadDays = aggs.map((a) => a.maxLead);
   const costTrip = aggs.map((a) => a.totalTripCost);
   const qtyNums  = aggs.map((a) => a.totalQty);
-  const pu535    = opts.map((o) => o.procurement.u535.priceUnit);
-  const tu535    = opts.map((o) => o.procurement.u535.total);
-  const putr     = opts.map((o) => o.procurement.utr.priceUnit);
-  const tutr     = opts.map((o) => o.procurement.utr.total);
+  const poAggs   = opts.map((o) => poAgg(o.procurement));
+  const poUnits  = poAggs.map((a) => a.totalUnits);
+  const poValues = poAggs.map((a) => a.totalValue);
   const totals   = opts.map((o) => o.totalCost);
 
   const fgUTRd  = numDiff(fgUTRs,  true);
@@ -595,10 +717,8 @@ function CompareGrid({ opts }: { opts: Option[] }) {
   const leadD   = numDiff(leadDays, false);
   const costTD  = numDiff(costTrip, false);
   const qtyD    = numDiff(qtyNums,  true);
-  const pu535d  = numDiff(pu535,    false);
-  const tu535d  = numDiff(tu535,    false);
-  const putrd   = numDiff(putr,     false);
-  const tutrd   = numDiff(tutr,     false);
+  const poUnitsD = numDiff(poUnits, true);
+  const poValueD = numDiff(poValues, false);
   const totalD  = numDiff(totals,   false);
 
   return (
@@ -699,19 +819,50 @@ function CompareGrid({ opts }: { opts: Option[] }) {
           )}
 
           {/* ── PROCUREMENT ── */}
-          <SectionRow icon={ShoppingCart} label="Procurement — U535 Plant" cols={n} />
-          <tr><RowLabel label="Supplier"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.supplier}/>)}</tr>
-          <tr><RowLabel label="Order Qty"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.orderQty}/>)}</tr>
-          <tr><RowLabel label="MOQ"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.u535.moq}/>)}</tr>
-          <tr><RowLabel label="Price / Unit"/>{pu535.map((v,i)=><DiffCell key={i} value={v} display={`₹${v}`} result={pu535d[i]}/>)}</tr>
-          <tr><RowLabel label="Total Order"/>{tu535.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={tu535d[i]}/>)}</tr>
-
-          <SectionRow icon={ShoppingCart} label="Procurement — UTR Plant" cols={n} />
-          <tr><RowLabel label="Supplier"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.supplier}/>)}</tr>
-          <tr><RowLabel label="Order Qty"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.orderQty}/>)}</tr>
-          <tr><RowLabel label="MOQ"/>{opts.map((o,i)=><TextCell key={i} value={o.procurement.utr.moq}/>)}</tr>
-          <tr><RowLabel label="Price / Unit"/>{putr.map((v,i)=><DiffCell key={i} value={v} display={`₹${v}`} result={putrd[i]}/>)}</tr>
-          <tr><RowLabel label="Total Order"/>{tutr.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={tutrd[i]}/>)}</tr>
+          <SectionRow icon={ShoppingCart} label="Procurement" cols={n} />
+          <tr><RowLabel label="Purchase Orders"/>{poAggs.map((a,i)=><TextCell key={i} value={
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              {a.count}
+              {a.attention > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  <AlertTriangle className="w-2.5 h-2.5"/>{a.attention}
+                </span>
+              )}
+            </span>
+          }/>)}</tr>
+          <tr><RowLabel label="Suppliers"/>{poAggs.map((a,i)=><TextCell key={i} value={a.suppliers}/>)}</tr>
+          <tr><RowLabel label="Total Order Qty"/>{poUnits.map((v,i)=><DiffCell key={i} value={v} display={`${v.toLocaleString('en-IN')} units`} result={poUnitsD[i]}/>)}</tr>
+          <tr><RowLabel label="Total Order Value"/>{poValues.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={poValueD[i]}/>)}</tr>
+          <tr>
+            <td className="pl-4 pr-3 py-2 text-left sticky left-0 bg-white border-r border-slate-100 z-10">
+              <button onClick={() => setShowOrders((v) => !v)} className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors whitespace-nowrap">
+                <Layers className="w-3 h-3"/>{showOrders ? 'Hide orders' : 'By order'}
+              </button>
+            </td>
+            {opts.map((o) => <td key={o.id} className="bg-white" />)}
+          </tr>
+          {showOrders && (
+            <tr className="align-top">
+              <RowLabel label="Order Breakdown" />
+              {opts.map((o) => (
+                <td key={o.id} className="px-3 py-3 align-top">
+                  <div className="flex flex-col gap-1.5">
+                    {sortedOrders(o.procurement.orders as PurchaseOrder[]).map((p) => (
+                      <div key={p.materialCode} className={`rounded-lg border px-2.5 py-1.5 text-left ${p.status === 'attention' ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full flex-none ${p.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                          <PlantBadge plant={p.plant} sm />
+                          <span className="font-mono text-[10px] font-bold text-slate-600">{p.materialCode}</span>
+                        </div>
+                        <div className="text-[11px] font-semibold text-slate-800">{p.name} · {p.supplier}</div>
+                        <div className="text-[10px] text-slate-500">{p.orderQty} · ₹{p.priceUnit}/unit · {fmt(p.total)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </td>
+              ))}
+            </tr>
+          )}
 
           {/* ── TOTAL ── */}
           <tr className="bg-slate-50 border-t-2 border-slate-300">
