@@ -343,63 +343,6 @@ function SectionDivider({ icon: Icon, label }: { icon: React.ElementType; label:
   );
 }
 
-function OverviewBlock({ opt }: { opt: Option }) {
-  const ov = opt.overview;
-
-  return (
-    <div className="flex flex-col gap-4">
-
-      {/* OVERVIEW */}
-      <SectionDivider icon={BarChart3} label="Overview" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'FG Producible · UTR',   value: ov.fgUTR.toLocaleString('en-IN'),  sub: 'units' },
-          { label: 'FG Producible · U535',  value: ov.fgU535.toLocaleString('en-IN'), sub: 'units' },
-          { label: 'Business Waste · UTR',  value: fmt(ov.wasteUTR), sub: 'vs no-action' },
-          { label: 'Business Waste · U535', value: fmt(ov.wasteU535), sub: `↓ ${ov.wasteUTRSaving}` },
-        ].map((k) => (
-          <div key={k.label} className="bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{k.label}</div>
-            <div className="text-xl font-bold text-slate-900 leading-tight">{k.value}</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">{k.sub}</div>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {(['utr','u535'] as const).map((key) => {
-          const label = key === 'utr' ? 'UTR' : 'U535';
-          const pcr = key === 'utr' ? ov.planChangeUTR : ov.planChangeU535;
-          return (
-            <div key={key} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
-                <PlantBadge plant={label} /><span className="text-sm font-bold text-slate-700">{label} Plant</span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4">
-                {[
-                  { l: 'Prod Plan Qty', v: key === 'utr' ? ov.prodPlanUTR : ov.prodPlanU535 },
-                  { l: 'Final FG Producible', v: (key === 'utr' ? ov.fgUTR : ov.fgU535).toLocaleString('en-IN'), accent: true },
-                  { l: 'Stop Date', v: key === 'utr' ? ov.stopUTR : ov.stopU535 },
-                ].map((m) => (
-                  <div key={m.l}>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{m.l}</div>
-                    <div className={`text-sm font-bold mt-0.5 ${m.accent ? 'text-indigo-700' : 'text-slate-800'}`}>{m.v}</div>
-                  </div>
-                ))}
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Plan Change</div>
-                  {pcr
-                    ? <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 mt-0.5"><AlertTriangle className="w-3.5 h-3.5" />Required</span>
-                    : <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 mt-0.5"><CheckCircle2 className="w-3.5 h-3.5" />Not needed</span>}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-    </div>
-  );
-}
 
 /* Detail for one strategy inside a main option */
 function StrategyDetail({ opt, strat }: { opt: Option; strat: Strategy }) {
@@ -764,19 +707,12 @@ const BADGE_STYLE: Record<NonNullable<Strategy['badge']>, string> = {
 };
 
 export default function PlanComparisonPage() {
-  /* MAIN OPTION selection + expansion */
+  /* MAIN OPTION selection */
   const [selectedOptId, setSelectedOptId] = useState(1);
-  const [openOptIds, setOpenOptIds] = useState<Set<number>>(new Set([1]));
   /* per-option strategy selection ("optId" -> strategy key) + expansion ("optId:stratKey") */
   const [stratSelection, setStratSelection] = useState<Record<number, string>>({ 1: 'iut-proc', 2: 'iut-proc', 3: 'iut-proc' });
   const [openStrats, setOpenStrats] = useState<Set<string>>(new Set());
 
-  const toggleOpt = (id: number) =>
-    setOpenOptIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
   const toggleStrat = (id: string) =>
     setOpenStrats((prev) => {
       const next = new Set(prev);
@@ -790,169 +726,184 @@ export default function PlanComparisonPage() {
       {/* ── PAGE HEADER ── */}
       <div>
         <h1 className="text-xl font-bold text-slate-900">Plan Comparison</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Pick a main option on the left · expand it to compare its strategies (IUT, Procurement, …)</p>
+        <p className="text-sm text-slate-500 mt-0.5">Options side by side · pick an option in the header, pick a strategy per option, expand any cell for details</p>
       </div>
 
-      {/* ── MAIN OPTIONS ── */}
-      <div className="flex flex-col gap-3">
-        {OPTIONS.map((opt) => {
-          const isSelected = opt.id === selectedOptId;
-          const isOpen = openOptIds.has(opt.id);
-          const baseline = noActionCost(opt);
-          return (
-            <div
-              key={opt.id}
-              className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-colors ${
-                isSelected ? 'border-indigo-400 ring-1 ring-indigo-200' : 'border-slate-200'
-              }`}
-            >
-              {/* MAIN OPTION row */}
-              <div
-                onClick={() => toggleOpt(opt.id)}
-                className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
-                  isSelected ? 'bg-indigo-50/50 hover:bg-indigo-50' : 'hover:bg-slate-50'
-                }`}
-              >
-                {/* Leftmost selection radio */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setSelectedOptId(opt.id); }}
-                  role="radio"
-                  aria-checked={isSelected}
-                  aria-label={`Select ${opt.label}`}
-                  className="flex-none"
-                >
-                  <span className={`block w-5 h-5 rounded-full border-2 transition-colors ${
-                    isSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_3px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
-                  }`} />
-                </button>
-
-                <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <span className="text-base font-bold text-slate-900">{opt.label}</span>
-                  {opt.isRecommended && (
-                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider">
-                      <Star className="w-2.5 h-2.5 fill-current" />Recommended
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                    <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={opt.iut.to} sm />
-                  </span>
-                  {isSelected && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600">
-                      <CheckCircle2 className="w-3 h-3" />Selected
-                    </span>
-                  )}
-                </div>
-
-                <div className="ml-auto flex items-center gap-5 flex-none">
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-slate-900">{fmt(opt.totalCost)}</div>
-                    <div className="text-[10px] text-slate-400">base total cost</div>
-                  </div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleOpt(opt.id); }}
-                    aria-expanded={isOpen}
-                    aria-controls={`opt-detail-${opt.id}`}
-                    aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${opt.label}`}
-                    className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+      {/* ── COMPARISON TABLE — options side by side ── */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b-2 border-slate-200">
+              <th className="text-left px-4 py-3 align-bottom w-52">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Strategy</span>
+              </th>
+              {OPTIONS.map((opt) => {
+                const isSelected = opt.id === selectedOptId;
+                return (
+                  <th
+                    key={opt.id}
+                    className={`px-4 py-3 text-left align-top transition-colors ${isSelected ? 'bg-indigo-50/60' : ''}`}
                   >
-                    {isOpen
-                      ? <ChevronDown className="w-4 h-4 text-indigo-600" />
-                      : <ChevronRight className="w-4 h-4 text-slate-400" />}
-                  </button>
-                </div>
-              </div>
+                    <div className="flex items-start gap-2.5">
+                      {/* Leftmost selection radio */}
+                      <button
+                        onClick={() => setSelectedOptId(opt.id)}
+                        role="radio"
+                        aria-checked={isSelected}
+                        aria-label={`Select ${opt.label}`}
+                        className="flex-none mt-0.5"
+                      >
+                        <span className={`block w-5 h-5 rounded-full border-2 transition-colors ${
+                          isSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_3px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
+                        }`} />
+                      </button>
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-bold text-slate-900">{opt.label}</span>
+                          {opt.isRecommended && (
+                            <span className="inline-flex items-center gap-1 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider">
+                              <Star className="w-2.5 h-2.5 fill-current" />Rec
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={opt.iut.to} sm />
+                        </div>
+                        <div className="text-xs font-bold text-slate-700 mt-1">{fmt(opt.totalCost)}<span className="font-normal text-slate-400 text-[10px]"> base</span></div>
+                        {isSelected && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 mt-0.5">
+                            <CheckCircle2 className="w-3 h-3" />Selected
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
 
-              {/* MAIN OPTION expanded: overview + its own strategy list */}
-              {isOpen && (
-                <div id={`opt-detail-${opt.id}`} className="border-t border-slate-200 bg-slate-50/50 p-4 flex flex-col gap-4">
-                  <OverviewBlock opt={opt} />
+            {/* ── OVERVIEW ROWS ── */}
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <BarChart3 className="w-3.5 h-3.5" />Overview
+                </span>
+              </td>
+            </tr>
+            {[
+              { l: 'FG Producible · UTR',   v: (o: Option) => o.overview.fgUTR.toLocaleString('en-IN') + ' units' },
+              { l: 'FG Producible · U535',  v: (o: Option) => o.overview.fgU535.toLocaleString('en-IN') + ' units' },
+              { l: 'Business Waste · UTR',  v: (o: Option) => fmt(o.overview.wasteUTR) },
+              { l: 'Business Waste · U535', v: (o: Option) => fmt(o.overview.wasteU535) },
+              { l: 'Stop Date · UTR / U535', v: (o: Option) => `${o.overview.stopUTR} / ${o.overview.stopU535}` },
+            ].map((row) => (
+              <tr key={row.l} className="border-b border-slate-100">
+                <td className="px-4 py-2 text-xs font-semibold text-slate-500">{row.l}</td>
+                {OPTIONS.map((opt) => (
+                  <td key={opt.id} className={`px-4 py-2 text-xs font-bold text-slate-800 ${opt.id === selectedOptId ? 'bg-indigo-50/40' : ''}`}>
+                    {row.v(opt)}
+                  </td>
+                ))}
+              </tr>
+            ))}
 
-                  <SectionDivider icon={Layers} label={`Strategies · ${opt.label}`} />
-                  <div className="flex flex-col gap-2">
-                    {STRATEGIES.map((strat) => {
+            {/* ── STRATEGY ROWS ── */}
+            <tr className="bg-slate-50 border-b border-slate-200">
+              <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <Layers className="w-3.5 h-3.5" />Strategies — pick one per option · expand for details
+                </span>
+              </td>
+            </tr>
+            {STRATEGIES.map((strat) => {
+              const Icon = strat.icon;
+              const openOpts = OPTIONS.filter((o) => openStrats.has(`${o.id}:${strat.key}`));
+              return (
+                <Fragment key={strat.key}>
+                  <tr className="border-b border-slate-100">
+                    {/* Strategy label — leftmost */}
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-slate-400 flex-none" />
+                        <span className="text-xs font-bold text-slate-800">{strat.name}</span>
+                        {strat.badge && (
+                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[strat.badge]}`}>
+                            {strat.badge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-1 ml-6">{strat.days}d · till {strat.endDate}</div>
+                    </td>
+
+                    {/* One cell per option */}
+                    {OPTIONS.map((opt) => {
                       const stratId = `${opt.id}:${strat.key}`;
                       const sSelected = stratSelection[opt.id] === strat.key;
                       const sOpen = openStrats.has(stratId);
                       const cost = stratCost(opt, strat);
-                      const saving = strat.key === 'no-action' ? null : baseline - cost;
-                      const Icon = strat.icon;
+                      const saving = strat.key === 'no-action' ? null : noActionCost(opt) - cost;
                       return (
-                        <div
-                          key={strat.key}
-                          className={`rounded-xl border bg-white overflow-hidden transition-colors ${
-                            sSelected ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-200'
+                        <td
+                          key={opt.id}
+                          onClick={() => toggleStrat(stratId)}
+                          className={`px-4 py-3 align-top cursor-pointer transition-colors ${
+                            sSelected ? 'bg-emerald-50/60 hover:bg-emerald-50' : opt.id === selectedOptId ? 'bg-indigo-50/40 hover:bg-indigo-50/70' : 'hover:bg-slate-50'
                           }`}
                         >
-                          {/* Strategy row */}
-                          <div
-                            onClick={() => toggleStrat(stratId)}
-                            className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors ${
-                              sSelected ? 'bg-indigo-50/40 hover:bg-indigo-50' : 'hover:bg-slate-50'
-                            }`}
-                          >
+                          <div className="flex items-start gap-2">
                             <button
                               onClick={(e) => { e.stopPropagation(); setStratSelection((prev) => ({ ...prev, [opt.id]: strat.key })); }}
                               role="radio"
                               aria-checked={sSelected}
                               aria-label={`Select strategy ${strat.name} for ${opt.label}`}
-                              className="flex-none"
+                              className="flex-none mt-0.5"
                             >
                               <span className={`block w-4 h-4 rounded-full border-2 transition-colors ${
-                                sSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_2.5px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
+                                sSelected ? 'border-emerald-600 bg-emerald-600 shadow-[inset_0_0_0_2.5px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
                               }`} />
                             </button>
-
-                            <Icon className={`w-4 h-4 flex-none ${sSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-
-                            <div className="flex items-center gap-2 flex-wrap min-w-0">
-                              <span className="text-xs font-bold text-slate-800">{strat.name}</span>
-                              {strat.badge && (
-                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[strat.badge]}`}>
-                                  {strat.badge}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="ml-auto flex items-center gap-4 flex-none">
-                              <div className="text-right">
-                                <div className={`text-xs font-bold ${saving === null ? 'text-red-500' : 'text-slate-900'}`}>{fmt(cost)}</div>
-                                {saving !== null
-                                  ? <div className="text-[9px] font-semibold text-emerald-600">↓ {fmt(saving)} vs No Action</div>
-                                  : <div className="text-[9px] font-semibold text-slate-400">baseline</div>}
-                              </div>
-                              <div className="text-right hidden sm:block">
-                                <div className="text-xs font-bold text-slate-800">{strat.days}d</div>
-                                <div className="text-[9px] text-slate-400">till {strat.endDate}</div>
-                              </div>
+                            <div className="min-w-0">
+                              <div className={`text-xs font-bold ${saving === null ? 'text-red-500' : 'text-slate-900'}`}>{fmt(cost)}</div>
+                              {saving !== null
+                                ? <div className="text-[9px] font-semibold text-emerald-600">↓ {fmt(saving)}</div>
+                                : <div className="text-[9px] font-semibold text-slate-400">baseline</div>}
                               <button
                                 onClick={(e) => { e.stopPropagation(); toggleStrat(stratId); }}
                                 aria-expanded={sOpen}
                                 aria-controls={`strat-detail-${opt.id}-${strat.key}`}
-                                aria-label={`${sOpen ? 'Collapse' : 'Expand'} ${strat.name} details`}
-                                className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+                                aria-label={`${sOpen ? 'Collapse' : 'Expand'} ${strat.name} details for ${opt.label}`}
+                                className={`inline-flex items-center gap-0.5 mt-1 text-[10px] font-bold rounded transition-colors ${sOpen ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`}
                               >
-                                {sOpen
-                                  ? <ChevronDown className="w-4 h-4 text-indigo-600" />
-                                  : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                                {sOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                                {sOpen ? 'Hide details' : 'More details'}
                               </button>
                             </div>
                           </div>
-
-                          {/* Strategy expanded: its sections */}
-                          {sOpen && (
-                            <div id={`strat-detail-${opt.id}-${strat.key}`} className="border-t border-slate-200 bg-slate-50/60 p-3.5">
-                              <StrategyDetail opt={opt} strat={strat} />
-                            </div>
-                          )}
-                        </div>
+                        </td>
                       );
                     })}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </tr>
+
+                  {/* Expanded details — one full-width block per open option */}
+                  {openOpts.map((opt) => (
+                    <tr key={`detail-${opt.id}`} className="border-b border-slate-100 bg-slate-50/60">
+                      <td colSpan={1 + OPTIONS.length} className="px-4 py-3">
+                        <div id={`strat-detail-${opt.id}-${strat.key}`} className="flex flex-col gap-3">
+                          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
+                            <Icon className="w-3.5 h-3.5" />{opt.label} · {strat.name}
+                          </div>
+                          <StrategyDetail opt={opt} strat={strat} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </Fragment>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Legend */}
