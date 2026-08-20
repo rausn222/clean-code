@@ -24,7 +24,7 @@ const OPTIONS = [
       stopUTR: '15 Jun 2026', stopU535: '22 Jun 2026',
       planChangeUTR: true, planChangeU535: true,
     },
-    iut: {
+    iuts: [{
       from: 'UTR', to: 'U535',
       lane: 'Available' as 'Available' | 'Not set',
       materials: [
@@ -56,6 +56,22 @@ const OPTIONS = [
           ] },
       ],
     },
+    {
+      from: 'MSIL', to: 'U535',
+      lane: 'Available' as 'Available' | 'Not set',
+      materials: [
+        { code: 'RM 10049230', name: 'Rubber Gasket Set', qty: '4,200 EA', qtyNum: 4200, leadTime: '4 days', leadDays: 4, initiation: '21 May 2026', costPerTrip: '₹340', costNum: 340, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '4,200 EA', qtyNum: 4200, leadTime: '4 days', leadDays: 4, initiation: '21 May 2026', costPerTrip: '₹340', costNum: 340, status: 'ok' as MatStatus, selected: true },
+            { label: 'Express dispatch', qty: '4,200 EA', qtyNum: 4200, leadTime: '2 days', leadDays: 2, initiation: '23 May 2026', costPerTrip: '₹560', costNum: 560, status: 'attention' as MatStatus, note: 'Cost/trip 65% above standard' },
+          ] },
+        { code: 'PM 64331020', name: 'Wiring Harness Clip', qty: '9,600 EA', qtyNum: 9600, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹290', costNum: 290, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck', qty: '9,600 EA', qtyNum: 9600, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹290', costNum: 290, status: 'ok' as MatStatus, selected: true },
+            { label: 'Club with Rubber Gasket Set', qty: '9,600 EA', qtyNum: 9600, leadTime: '4 days', leadDays: 4, initiation: '21 May 2026', costPerTrip: '₹170', costNum: 170, status: 'ok' as MatStatus },
+          ] },
+      ],
+    }],
     procurement: {
       orders: [
         { plant: 'U535', supplier: 'Reliance Ind.', materialCode: 'PM 64330490', name: 'Sealant Compound', orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 42, total: 630000, status: 'ok' as MatStatus,
@@ -98,7 +114,7 @@ const OPTIONS = [
       stopUTR: '18 Jun 2026', stopU535: '22 Jun 2026',
       planChangeUTR: true, planChangeU535: true,
     },
-    iut: {
+    iuts: [{
       from: 'U535', to: 'UTR',
       lane: 'Available' as 'Available' | 'Not set',
       materials: [
@@ -123,7 +139,7 @@ const OPTIONS = [
             { label: 'Split shipment',   qty: '2 × 1,200 EA', qtyNum: 2400, leadTime: '4 days', leadDays: 4, initiation: '24 May 2026', costPerTrip: '₹390', costNum: 390, status: 'attention' as MatStatus, note: 'Two trips, higher handling' },
           ] },
       ],
-    },
+    }],
     procurement: {
       orders: [
         { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Steel Sheet Coil', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus,
@@ -160,7 +176,7 @@ const OPTIONS = [
       stopUTR: '18 Jun 2026', stopU535: '22 Jun 2026',
       planChangeUTR: true, planChangeU535: true,
     },
-    iut: {
+    iuts: [{
       from: 'UTR', to: 'U535',
       lane: 'Not set' as 'Available' | 'Not set',
       materials: [
@@ -185,7 +201,7 @@ const OPTIONS = [
             { label: 'Milk-run consolidation', qty: '1,250 EA', qtyNum: 1250, leadTime: '4 days', leadDays: 4, initiation: '19 May 2026', costPerTrip: '₹180', costNum: 180, status: 'ok' as MatStatus },
           ] },
       ],
-    },
+    }],
     procurement: {
       orders: [
         { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Glass Panel',     orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus,
@@ -263,7 +279,7 @@ interface Material {
 }
 
 /* Aggregates across an option's IUT materials */
-function iutAgg(iut: Option['iut']) {
+function iutAgg(iut: Option['iuts'][number]) {
   const mats = iut.materials as Material[];
   return {
     count: mats.length,
@@ -351,7 +367,9 @@ function StrategyDetail({ opt, strat }: { opt: Option; strat: Strategy }) {
       {strat.showIut && (
         <>
           <SectionDivider icon={Truck} label="IUT Transfer" />
-          <IutSection key={`iut-${opt.id}-${strat.key}`} iut={opt.iut} />
+          {opt.iuts.map((leg, i) => (
+            <IutSection key={`iut-${opt.id}-${strat.key}-${i}`} iut={leg} />
+          ))}
         </>
       )}
 
@@ -378,7 +396,7 @@ function StrategyDetail({ opt, strat }: { opt: Option; strat: Strategy }) {
 
 /* ─────────────────── IUT SECTION (tabular only) ─────────────────── */
 
-function IutSection({ iut }: { iut: Option['iut'] }) {
+function IutSection({ iut }: { iut: Option['iuts'][number] }) {
   const agg = useMemo(() => iutAgg(iut), [iut]);
   const mats = useMemo(() => sortedMaterials(iut.materials as Material[]), [iut]);
   const laneOk = iut.lane === 'Available';
@@ -828,8 +846,14 @@ const BADGE_STYLE: Record<NonNullable<Strategy['badge']>, string> = {
 };
 
 export default function PlanComparisonPage() {
-  /* MAIN OPTION selection */
-  const [selectedOptId, setSelectedOptId] = useState(1);
+  /* which options are included in the comparison table */
+  const [compareOpts, setCompareOpts] = useState<Set<number>>(new Set([1, 2, 3]));
+  const toggleCompareOpt = (id: number) =>
+    setCompareOpts((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   /* per-option strategy selection ("optId" -> strategy key) + expansion ("optId:stratKey") */
   const [stratSelection, setStratSelection] = useState<Record<number, string>>({ 1: 'iut-proc', 2: 'iut-proc', 3: 'iut-proc' });
   const [openStrats, setOpenStrats] = useState<Set<string>>(new Set());
@@ -852,6 +876,8 @@ export default function PlanComparisonPage() {
       return next;
     });
 
+  const visibleOpts = OPTIONS.filter((o) => compareOpts.has(o.id));
+
   /* Strategies picked for the cross-plan Scenario Comparison panel */
   const [compareKeys, setCompareKeys] = useState<string[]>(['iut-proc', 'iut']);
   const toggleCompare = (key: string) =>
@@ -865,7 +891,32 @@ export default function PlanComparisonPage() {
       {/* ── PAGE HEADER ── */}
       <div>
         <h1 className="text-xl font-bold text-slate-900">Plan Comparison</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Options side by side · pick an option in the header, pick a strategy per option, expand any cell for details</p>
+        <p className="text-sm text-slate-500 mt-0.5">Choose options to compare · pick a strategy per option · each header shows the selected plan's details</p>
+      </div>
+
+      {/* ── OPTION PICKER — choose which options to compare ── */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Compare options:</span>
+        {OPTIONS.map((opt) => {
+          const on = compareOpts.has(opt.id);
+          return (
+            <label
+              key={opt.id}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold cursor-pointer select-none transition-colors ${
+                on ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-200 text-slate-400 hover:border-indigo-300'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={on}
+                onChange={() => toggleCompareOpt(opt.id)}
+                aria-label={`Include ${opt.label} in comparison`}
+                className="w-3.5 h-3.5 rounded border-slate-300 accent-indigo-600"
+              />
+              {opt.label}
+            </label>
+          );
+        })}
       </div>
 
       {/* ── COMPARISON TABLE — options side by side ── */}
@@ -876,9 +927,11 @@ export default function PlanComparisonPage() {
               <th className="text-left px-4 py-3 align-bottom w-52">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Strategy</span>
               </th>
-              {OPTIONS.map((opt) => {
-                const isSelected = opt.id === selectedOptId;
+              {visibleOpts.map((opt) => {
                 const isExpanded = expandedOpts.has(opt.id);
+                const selStrat = STRATEGIES.find((s) => s.key === stratSelection[opt.id])!;
+                const selCost = stratCost(opt, selStrat);
+                const selSaving = selStrat.key === 'no-action' ? null : noActionCost(opt) - selCost;
                 if (!isExpanded) {
                   return (
                     <th key={opt.id} className="px-2 py-3 text-left align-top w-24 bg-slate-50/80">
@@ -895,23 +948,8 @@ export default function PlanComparisonPage() {
                   );
                 }
                 return (
-                  <th
-                    key={opt.id}
-                    className={`px-4 py-3 text-left align-top transition-colors ${isSelected ? 'bg-indigo-50/60' : ''}`}
-                  >
+                  <th key={opt.id} className="px-4 py-3 text-left align-top">
                     <div className="flex items-start gap-2.5">
-                      {/* Leftmost selection radio */}
-                      <button
-                        onClick={() => setSelectedOptId(opt.id)}
-                        role="radio"
-                        aria-checked={isSelected}
-                        aria-label={`Select ${opt.label}`}
-                        className="flex-none mt-0.5"
-                      >
-                        <span className={`block w-5 h-5 rounded-full border-2 transition-colors ${
-                          isSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_3px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
-                        }`} />
-                      </button>
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-sm font-bold text-slate-900">{opt.label}</span>
@@ -921,15 +959,25 @@ export default function PlanComparisonPage() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 mt-1">
-                          <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={opt.iut.to} sm />
+                        <div className="flex items-center gap-x-2 gap-y-1 mt-1 flex-wrap">
+                          {opt.iuts.map((leg, i) => (
+                            <span key={i} className="inline-flex items-center gap-1">
+                              <PlantBadge plant={leg.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={leg.to} sm />
+                            </span>
+                          ))}
                         </div>
                         <div className="text-xs font-bold text-slate-700 mt-1">{fmt(opt.totalCost)}<span className="font-normal text-slate-400 text-[10px]"> base</span></div>
-                        {isSelected && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 mt-0.5">
-                            <CheckCircle2 className="w-3 h-3" />Selected
-                          </span>
-                        )}
+                        {/* Selected strategy details */}
+                        <div className="mt-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1">
+                          <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                            <CheckCircle2 className="w-3 h-3" />Selected · {selStrat.name}
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-800 mt-0.5">
+                            {fmt(selCost)}
+                            {selSaving !== null && <span className="font-semibold text-emerald-600"> · ↓ {fmt(selSaving)}</span>}
+                            <span className="font-normal text-slate-400"> · {selStrat.days}d</span>
+                          </div>
+                        </div>
                       </div>
                       <button
                         onClick={() => toggleOpt(opt.id)}
@@ -948,12 +996,21 @@ export default function PlanComparisonPage() {
           </thead>
           <tbody>
 
+            {/* Empty state when no options are selected for comparison */}
+            {visibleOpts.length === 0 && (
+              <tr>
+                <td colSpan={1} className="px-4 py-8 text-center text-xs text-slate-400 font-semibold">
+                  Select at least one option above to compare.
+                </td>
+              </tr>
+            )}
+
             {/* ── OVERVIEW ROWS ── */}
             <tr
               onClick={() => setShowOverview((v) => !v)}
               className="bg-slate-50 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
             >
-              <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
+              <td colSpan={1 + visibleOpts.length} className="px-4 py-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowOverview((v) => !v); }}
                   aria-expanded={showOverview}
@@ -973,10 +1030,10 @@ export default function PlanComparisonPage() {
             ].map((row) => (
               <tr key={row.l} className="border-b border-slate-100">
                 <td className="px-4 py-2 text-xs font-semibold text-slate-500">{row.l}</td>
-                {OPTIONS.map((opt) => (
+                {visibleOpts.map((opt) => (
                   expandedOpts.has(opt.id)
                     ? (
-                      <td key={opt.id} className={`px-4 py-2 text-xs font-bold text-slate-800 ${opt.id === selectedOptId ? 'bg-indigo-50/40' : ''}`}>
+                      <td key={opt.id} className="px-4 py-2 text-xs font-bold text-slate-800">
                         {row.v(opt)}
                       </td>
                     )
@@ -990,7 +1047,7 @@ export default function PlanComparisonPage() {
               onClick={() => setShowStrategies((v) => !v)}
               className="bg-slate-50 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
             >
-              <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
+              <td colSpan={1 + visibleOpts.length} className="px-4 py-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowStrategies((v) => !v); }}
                   aria-expanded={showStrategies}
@@ -1003,7 +1060,7 @@ export default function PlanComparisonPage() {
             </tr>
             {showStrategies && STRATEGIES.map((strat) => {
               const Icon = strat.icon;
-              const openOpts = OPTIONS.filter((o) => openStrats.has(`${o.id}:${strat.key}`));
+              const openOpts = visibleOpts.filter((o) => openStrats.has(`${o.id}:${strat.key}`));
               return (
                 <Fragment key={strat.key}>
                   <tr className="border-b border-slate-100">
@@ -1035,7 +1092,7 @@ export default function PlanComparisonPage() {
                     </td>
 
                     {/* One cell per option */}
-                    {OPTIONS.map((opt) => {
+                    {visibleOpts.map((opt) => {
                       const stratId = `${opt.id}:${strat.key}`;
                       const sSelected = stratSelection[opt.id] === strat.key;
                       const sOpen = openStrats.has(stratId);
@@ -1049,14 +1106,13 @@ export default function PlanComparisonPage() {
                           key={opt.id}
                           onClick={() => toggleStrat(stratId)}
                           className={`px-4 py-3 align-top cursor-pointer transition-colors ${
-                            sSelected ? 'bg-emerald-50/60 hover:bg-emerald-50' : opt.id === selectedOptId ? 'bg-indigo-50/40 hover:bg-indigo-50/70' : 'hover:bg-slate-50'
+                            sSelected ? 'bg-emerald-50/60 hover:bg-emerald-50' : 'hover:bg-slate-50'
                           }`}
                         >
                           <div className="flex items-start gap-2">
                             <button
                               onClick={(e) => { e.stopPropagation(); setStratSelection((prev) => ({ ...prev, [opt.id]: strat.key })); }}
-                              role="radio"
-                              aria-checked={sSelected}
+                              aria-pressed={sSelected}
                               aria-label={`Select strategy ${strat.name} for ${opt.label}`}
                               className="flex-none mt-0.5"
                             >
@@ -1089,7 +1145,7 @@ export default function PlanComparisonPage() {
                   {/* Expanded details — one full-width block per open option */}
                   {openOpts.filter((o) => expandedOpts.has(o.id)).map((opt) => (
                     <tr key={`detail-${opt.id}`} className="border-b border-slate-100 bg-slate-50/60">
-                      <td colSpan={1 + OPTIONS.length} className="px-4 py-3">
+                      <td colSpan={1 + visibleOpts.length} className="px-4 py-3">
                         <div id={`strat-detail-${opt.id}-${strat.key}`} className="flex flex-col gap-3">
                           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
                             <Icon className="w-3.5 h-3.5" />{opt.label} · {strat.name}
