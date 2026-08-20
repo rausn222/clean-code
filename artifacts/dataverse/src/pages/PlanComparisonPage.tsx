@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import {
   ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
   BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers,
-  ChevronDown, ChevronRight, Maximize2, Minimize2,
+  ChevronDown, ChevronRight, Maximize2, Minimize2, GitCompareArrows, X,
 } from 'lucide-react';
 
 /* ───────────────────────────── DATA ───────────────────────────── */
@@ -698,8 +698,129 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
   );
 }
 
-/* ─────────────────────────── PAGE ─────────────────────────── */
+function ScenarioComparison({
+  comparedKeys, onRemove,
+}: { comparedKeys: string[]; onRemove: (key: string) => void }) {
+  const [open, setOpen] = useState(true);
+  const plans = comparedKeys
+    .map((k) => STRATEGIES.find((p) => p.key === k))
+    .filter((p): p is Strategy => Boolean(p));
 
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Panel header */}
+      <div
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+      >
+        <GitCompareArrows className="w-4 h-4 text-indigo-600 flex-none" />
+        <span className="text-sm font-bold text-slate-800">Scenario Comparison</span>
+        <span className="text-[11px] text-slate-400">component-level numbers · {plans.length} plans</span>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          {plans.map((p) => (
+            <span key={p.key} className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
+              {p.name}
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemove(p.key); }}
+                aria-label={`Remove ${p.name} from comparison`}
+                className="p-0.5 rounded-full hover:bg-indigo-100"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+            aria-expanded={open}
+            aria-controls="scenario-comparison-panel"
+            aria-label={`${open ? 'Collapse' : 'Expand'} scenario comparison`}
+            className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+          >
+            {open
+              ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+              : <ChevronRight className="w-4 h-4 text-slate-400" />}
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <div id="scenario-comparison-panel" className="border-t border-slate-200">
+          {plans.length < 2 ? (
+            <div className="px-5 py-8 text-center text-sm text-slate-500">
+              Pick at least 2 plans with the <b>Compare</b> checkbox on a plan row to see components side by side.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 bg-slate-50/60">
+                    <th className="text-left px-4 py-2 align-bottom" rowSpan={2}>Component</th>
+                    <th className="text-right px-3 py-2 align-bottom" rowSpan={2}>On-hand</th>
+                    <th className="text-right px-3 py-2 align-bottom" rowSpan={2}>Open PO</th>
+                    <th className="text-right px-3 py-2 align-bottom" rowSpan={2}>Unit Price</th>
+                    {plans.map((p) => (
+                      <th key={p.key} colSpan={2} className="text-center px-3 py-2 border-l border-slate-200 text-indigo-500">
+                        {p.name}
+                      </th>
+                    ))}
+                  </tr>
+                  <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 bg-slate-50/60">
+                    {plans.map((p) => (
+                      <Fragment key={p.key}>
+                        <th className="text-right px-3 py-1.5 border-l border-slate-200">Producible FG</th>
+                        <th className="text-right px-3 py-1.5">Leftover RM+PM</th>
+                      </Fragment>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON_DATA.map((group) => (
+                    <Fragment key={group.plant}>
+                      <tr className="bg-slate-100/80 border-y border-slate-200">
+                        <td colSpan={4 + plans.length * 2} className="px-4 py-1.5">
+                          <span className="inline-flex items-center gap-2">
+                            <PlantBadge plant={group.plant} sm />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{group.plant} Plant · {group.components.length} components</span>
+                          </span>
+                        </td>
+                      </tr>
+                      {group.components.map((c) => (
+                        <tr key={c.code} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-2.5">
+                            <div className="text-xs font-bold text-slate-800">{c.name}</div>
+                            <div className="font-mono text-[10px] text-slate-500">{c.code}</div>
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-slate-700 text-right whitespace-nowrap">{c.onHand.toLocaleString('en-IN')} EA</td>
+                          <td className="px-3 py-2.5 text-xs text-slate-700 text-right whitespace-nowrap">{c.openPO > 0 ? `${c.openPO.toLocaleString('en-IN')} EA` : '—'}</td>
+                          <td className="px-3 py-2.5 text-xs text-slate-700 text-right whitespace-nowrap">₹{c.unitPrice}</td>
+                          {plans.map((p) => {
+                            const f = c.byPlan[p.key];
+                            return (
+                              <Fragment key={p.key}>
+                                <td className="px-3 py-2.5 text-right whitespace-nowrap border-l border-slate-100">
+                                  <div className="text-xs font-bold text-indigo-700">{f.producibleFG.toLocaleString('en-IN')}</div>
+                                  <div className="text-[10px] text-slate-400">prod end {f.prodEnd}</div>
+                                </td>
+                                <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                                  <div className={`text-xs font-bold ${f.leftover > 3000 ? 'text-amber-600' : 'text-slate-700'}`}>{f.leftover.toLocaleString('en-IN')} EA</div>
+                                  <div className="text-[10px] text-slate-400">≈ {fmt(f.leftover * c.unitPrice)}</div>
+                                </td>
+                              </Fragment>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 const BADGE_STYLE: Record<NonNullable<Strategy['badge']>, string> = {
   Best: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   New:  'bg-indigo-100 text-indigo-700 border-indigo-200',
@@ -730,6 +851,13 @@ export default function PlanComparisonPage() {
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
+
+  /* Strategies picked for the cross-plan Scenario Comparison panel */
+  const [compareKeys, setCompareKeys] = useState<string[]>(['iut-proc', 'iut']);
+  const toggleCompare = (key: string) =>
+    setCompareKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
 
   return (
     <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 pb-16 flex flex-col gap-5">
@@ -891,6 +1019,19 @@ export default function PlanComparisonPage() {
                         )}
                       </div>
                       <div className="text-[10px] text-slate-400 mt-1 ml-6">{strat.days}d · till {strat.endDate}</div>
+                      <label
+                        onClick={(e) => e.stopPropagation()}
+                        className="ml-6 mt-1 inline-flex items-center gap-1.5 cursor-pointer select-none text-[10px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={compareKeys.includes(strat.key)}
+                          onChange={() => toggleCompare(strat.key)}
+                          aria-label={`Add ${strat.name} to comparison`}
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
+                        />
+                        Compare
+                      </label>
                     </td>
 
                     {/* One cell per option */}
@@ -965,6 +1106,12 @@ export default function PlanComparisonPage() {
         </table>
       </div>
 
+      {/* ── SCENARIO COMPARISON ── */}
+      <ScenarioComparison
+        comparedKeys={compareKeys}
+        onRemove={(key) => setCompareKeys((prev) => prev.filter((k) => k !== key))}
+      />
+
       {/* Legend */}
       <div className="text-[11px] text-slate-400 text-center">
         ↓ Savings vs No Action baseline &nbsp;·&nbsp;
@@ -975,3 +1122,93 @@ export default function PlanComparisonPage() {
     </div>
   );
 }
+
+interface CompPlantGroup {
+  plant: string;
+  components: CompComponent[];
+}
+
+interface CompPlanFigures {
+  producibleFG: number;
+  prodEnd: string;
+  leftover: number;
+}
+
+interface CompComponent {
+  code: string;
+  name: string;
+  kind: 'RM' | 'PM';
+  onHand: number;
+  openPO: number;
+  unitPrice: number;
+  byPlan: Record<string, CompPlanFigures>;
+}
+
+/* Hardcoded demo data, consistent with the rest of the page.
+   byPlan is keyed by Plan.key — every plan has figures so any 2+ plans compare. */
+const COMPARISON_DATA: CompPlantGroup[] = [
+  {
+    plant: 'U535',
+    components: [
+      { code: 'RM 10045872', name: 'PP Granules', kind: 'RM', onHand: 18400, openPO: 10000, unitPrice: 45,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 70214, prodEnd: '15 Jun 2026', leftover: 1240 },
+          'iut-proc':      { producibleFG: 70214, prodEnd: '14 Jun 2026', leftover: 980 },
+          'iut':           { producibleFG: 61480, prodEnd: '14 Jun 2026', leftover: 3420 },
+          'proc':          { producibleFG: 58120, prodEnd: '12 Jun 2026', leftover: 4210 },
+          'iut-proc-new':  { producibleFG: 69540, prodEnd: '14 Jun 2026', leftover: 1105 },
+          'no-action':     { producibleFG: 52300, prodEnd: '12 Jun 2026', leftover: 6890 },
+        } },
+      { code: 'PM 64330490', name: 'Sealant Compound', kind: 'PM', onHand: 6200, openPO: 15000, unitPrice: 42,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 68930, prodEnd: '15 Jun 2026', leftover: 860 },
+          'iut-proc':      { producibleFG: 68930, prodEnd: '14 Jun 2026', leftover: 640 },
+          'iut':           { producibleFG: 60110, prodEnd: '14 Jun 2026', leftover: 2980 },
+          'proc':          { producibleFG: 57400, prodEnd: '12 Jun 2026', leftover: 3550 },
+          'iut-proc-new':  { producibleFG: 68210, prodEnd: '14 Jun 2026', leftover: 720 },
+          'no-action':     { producibleFG: 51260, prodEnd: '12 Jun 2026', leftover: 5940 },
+        } },
+      { code: 'RM 10047001', name: 'Paint Additive', kind: 'RM', onHand: 2900, openPO: 4000, unitPrice: 61,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 70214, prodEnd: '15 Jun 2026', leftover: 310 },
+          'iut-proc':      { producibleFG: 70214, prodEnd: '14 Jun 2026', leftover: 260 },
+          'iut':           { producibleFG: 61480, prodEnd: '14 Jun 2026', leftover: 1140 },
+          'proc':          { producibleFG: 58120, prodEnd: '12 Jun 2026', leftover: 1420 },
+          'iut-proc-new':  { producibleFG: 69540, prodEnd: '14 Jun 2026', leftover: 295 },
+          'no-action':     { producibleFG: 52300, prodEnd: '12 Jun 2026', leftover: 2350 },
+        } },
+    ],
+  },
+  {
+    plant: 'UTR',
+    components: [
+      { code: 'PM 64330488', name: 'Adhesive Film', kind: 'PM', onHand: 950, openPO: 5000, unitPrice: 31,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 56311, prodEnd: '15 Jun 2026', leftover: 480 },
+          'iut-proc':      { producibleFG: 56311, prodEnd: '14 Jun 2026', leftover: 390 },
+          'iut':           { producibleFG: 49820, prodEnd: '14 Jun 2026', leftover: 1730 },
+          'proc':          { producibleFG: 47010, prodEnd: '12 Jun 2026', leftover: 2140 },
+          'iut-proc-new':  { producibleFG: 55640, prodEnd: '14 Jun 2026', leftover: 430 },
+          'no-action':     { producibleFG: 42980, prodEnd: '12 Jun 2026', leftover: 3670 },
+        } },
+      { code: 'RM 10046110', name: 'ABS Resin', kind: 'RM', onHand: 4100, openPO: 0, unitPrice: 58,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 55870, prodEnd: '15 Jun 2026', leftover: 720 },
+          'iut-proc':      { producibleFG: 55870, prodEnd: '14 Jun 2026', leftover: 610 },
+          'iut':           { producibleFG: 49110, prodEnd: '14 Jun 2026', leftover: 2260 },
+          'proc':          { producibleFG: 46550, prodEnd: '12 Jun 2026', leftover: 2810 },
+          'iut-proc-new':  { producibleFG: 55190, prodEnd: '14 Jun 2026', leftover: 665 },
+          'no-action':     { producibleFG: 42310, prodEnd: '12 Jun 2026', leftover: 4520 },
+        } },
+      { code: 'PM 20018902', name: 'Fastener Kit', kind: 'PM', onHand: 12750, openPO: 6000, unitPrice: 22,
+        byPlan: {
+          'iut-break-moq': { producibleFG: 56311, prodEnd: '15 Jun 2026', leftover: 1980 },
+          'iut-proc':      { producibleFG: 56311, prodEnd: '14 Jun 2026', leftover: 1740 },
+          'iut':           { producibleFG: 49820, prodEnd: '14 Jun 2026', leftover: 4380 },
+          'proc':          { producibleFG: 47010, prodEnd: '12 Jun 2026', leftover: 5120 },
+          'iut-proc-new':  { producibleFG: 55640, prodEnd: '14 Jun 2026', leftover: 1860 },
+          'no-action':     { producibleFG: 42980, prodEnd: '12 Jun 2026', leftover: 7830 },
+        } },
+    ],
+  },
+];
