@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import {
   ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
   BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers, Trophy,
-  SlidersHorizontal, LayoutGrid,
+  SlidersHorizontal, LayoutGrid, ChevronDown, ChevronRight,
 } from 'lucide-react';
 
 /* ───────────────────────────── DATA ───────────────────────────── */
@@ -37,10 +37,28 @@ const OPTIONS = [
     },
     procurement: {
       orders: [
-        { plant: 'U535', supplier: 'Reliance Ind.', materialCode: 'PM 64330490', name: 'Sealant Compound', orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 42, total: 630000, status: 'ok' as MatStatus },
-        { plant: 'U535', supplier: 'Asian Paints',  materialCode: 'RM 10047001', name: 'Paint Additive',   orderQty: '4,000 units',  orderQtyNum: 4000,  moq: '2,000 units', priceUnit: 61, total: 244000, status: 'ok' as MatStatus },
-        { plant: 'UTR',  supplier: 'BASF India',    materialCode: 'RM 10045872', name: 'PP Granules',      orderQty: '10,000 units', orderQtyNum: 10000, moq: '4,000 units', priceUnit: 45, total: 450000, status: 'ok' as MatStatus },
-        { plant: 'UTR',  supplier: 'Pidilite Ind.', materialCode: 'PM 64330488', name: 'Adhesive Film',    orderQty: '5,000 units',  orderQtyNum: 5000,  moq: '5,000 units', priceUnit: 31, total: 155000, status: 'attention' as MatStatus, note: 'MOQ forces over-order: need 1,800, must buy 5,000' },
+        { plant: 'U535', supplier: 'Reliance Ind.', materialCode: 'PM 64330490', name: 'Sealant Compound', orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 42, total: 630000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate',  supplier: 'Reliance Ind.',  orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 42, total: 630000, leadTime: '4 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Alternate vendor', supplier: 'Supreme Petro.', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 45, total: 675000, leadTime: '3 days', status: 'ok' as MatStatus },
+            { label: 'Split order',      supplier: 'Reliance + Supreme', orderQty: '15,000 units', orderQtyNum: 15000, moq: '—', priceUnit: 43, total: 648000, leadTime: '4 days', status: 'attention' as MatStatus, note: 'Two POs, higher admin effort' },
+          ] },
+        { plant: 'U535', supplier: 'Asian Paints',  materialCode: 'RM 10047001', name: 'Paint Additive',   orderQty: '4,000 units',  orderQtyNum: 4000,  moq: '2,000 units', priceUnit: 61, total: 244000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate',  supplier: 'Asian Paints',  orderQty: '4,000 units', orderQtyNum: 4000, moq: '2,000 units', priceUnit: 61, total: 244000, leadTime: '3 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Bulk discount',    supplier: 'Asian Paints',  orderQty: '6,000 units', orderQtyNum: 6000, moq: '2,000 units', priceUnit: 55, total: 330000, leadTime: '3 days', status: 'attention' as MatStatus, note: 'Over-stocks by 2,000 units' },
+          ] },
+        { plant: 'UTR',  supplier: 'BASF India',    materialCode: 'RM 10045872', name: 'PP Granules',      orderQty: '10,000 units', orderQtyNum: 10000, moq: '4,000 units', priceUnit: 45, total: 450000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate',  supplier: 'BASF India',    orderQty: '10,000 units', orderQtyNum: 10000, moq: '4,000 units', priceUnit: 45, total: 450000, leadTime: '5 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Spot buy',         supplier: 'LG Polymers',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '1,000 units', priceUnit: 48, total: 480000, leadTime: '2 days', status: 'ok' as MatStatus },
+            { label: 'Import lot',       supplier: 'Sabic (import)', orderQty: '12,000 units', orderQtyNum: 12000, moq: '12,000 units', priceUnit: 40, total: 480000, leadTime: '18 days', status: 'attention' as MatStatus, note: 'Lead time misses plan window' },
+          ] },
+        { plant: 'UTR',  supplier: 'Pidilite Ind.', materialCode: 'PM 64330488', name: 'Adhesive Film',    orderQty: '5,000 units',  orderQtyNum: 5000,  moq: '5,000 units', priceUnit: 31, total: 155000, status: 'attention' as MatStatus, note: 'MOQ forces over-order: need 1,800, must buy 5,000',
+          scenarios: [
+            { label: 'Contracted rate',  supplier: 'Pidilite Ind.', orderQty: '5,000 units', orderQtyNum: 5000, moq: '5,000 units', priceUnit: 31, total: 155000, leadTime: '4 days', status: 'attention' as MatStatus, note: 'MOQ over-order: need 1,800, must buy 5,000', selected: true },
+            { label: 'Low-MOQ vendor',   supplier: '3M India',      orderQty: '2,000 units', orderQtyNum: 2000, moq: '1,000 units', priceUnit: 39, total: 78000,  leadTime: '6 days', status: 'ok' as MatStatus },
+          ] },
       ],
     },
     totalCost: 1080000,
@@ -71,9 +89,22 @@ const OPTIONS = [
     },
     procurement: {
       orders: [
-        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Steel Sheet Coil', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus },
-        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Rubber Gasket',    orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus },
-        { plant: 'UTR',  supplier: 'Sundram Fast.',  materialCode: 'PM 20018902', name: 'Fastener Kit',     orderQty: '6,000 units',  orderQtyNum: 6000,  moq: '3,000 units', priceUnit: 22, total: 132000, status: 'ok' as MatStatus },
+        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Steel Sheet Coil', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Tata Chemicals', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, leadTime: '5 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Alternate mill',  supplier: 'JSW Steel',      orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 36, total: 540000, leadTime: '9 days', status: 'attention' as MatStatus, note: 'Longer lead time, quality re-approval needed' },
+          ] },
+        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Rubber Gasket',    orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Evonik India',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, leadTime: '4 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Local vendor',    supplier: 'MRF Polymers',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 47, total: 470000, leadTime: '3 days', status: 'ok' as MatStatus },
+            { label: 'Spot buy',        supplier: 'Open market',    orderQty: '10,000 units', orderQtyNum: 10000, moq: '—',           priceUnit: 54, total: 540000, leadTime: '1 day',  status: 'attention' as MatStatus, note: 'Price 8% above contract' },
+          ] },
+        { plant: 'UTR',  supplier: 'Sundram Fast.',  materialCode: 'PM 20018902', name: 'Fastener Kit',     orderQty: '6,000 units',  orderQtyNum: 6000,  moq: '3,000 units', priceUnit: 22, total: 132000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Sundram Fast.',  orderQty: '6,000 units',  orderQtyNum: 6000,  moq: '3,000 units', priceUnit: 22, total: 132000, leadTime: '3 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Annual buy',      supplier: 'Sundram Fast.',  orderQty: '12,000 units', orderQtyNum: 12000, moq: '3,000 units', priceUnit: 20, total: 240000, leadTime: '3 days', status: 'ok' as MatStatus },
+          ] },
       ],
     },
     totalCost: 1070000,
@@ -104,10 +135,26 @@ const OPTIONS = [
     },
     procurement: {
       orders: [
-        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Glass Panel',     orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus },
-        { plant: 'U535', supplier: 'Saint-Gobain',   materialCode: 'RM 10047230', name: 'Foam Padding',    orderQty: '3,000 units',  orderQtyNum: 3000,  moq: '3,000 units', priceUnit: 55, total: 165000, status: 'attention' as MatStatus, note: 'Single-source supplier · price 20% above benchmark' },
-        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Trim Clip Set',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus },
-        { plant: 'UTR',  supplier: 'Castrol India',  materialCode: 'RM 10047555', name: 'Lubricant Drum',  orderQty: '1,500 units',  orderQtyNum: 1500,  moq: '1,000 units', priceUnit: 88, total: 132000, status: 'ok' as MatStatus },
+        { plant: 'U535', supplier: 'Tata Chemicals', materialCode: 'PM 64330490', name: 'Glass Panel',     orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Tata Chemicals', orderQty: '15,000 units', orderQtyNum: 15000, moq: '3,000 units', priceUnit: 38, total: 570000, leadTime: '6 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Alternate vendor', supplier: 'AGC India',     orderQty: '15,000 units', orderQtyNum: 15000, moq: '5,000 units', priceUnit: 41, total: 615000, leadTime: '4 days', status: 'ok' as MatStatus },
+          ] },
+        { plant: 'U535', supplier: 'Saint-Gobain',   materialCode: 'RM 10047230', name: 'Foam Padding',    orderQty: '3,000 units',  orderQtyNum: 3000,  moq: '3,000 units', priceUnit: 55, total: 165000, status: 'attention' as MatStatus, note: 'Single-source supplier · price 20% above benchmark',
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Saint-Gobain',   orderQty: '3,000 units', orderQtyNum: 3000, moq: '3,000 units', priceUnit: 55, total: 165000, leadTime: '5 days', status: 'attention' as MatStatus, note: 'Single-source · price 20% above benchmark', selected: true },
+            { label: 'New vendor trial', supplier: 'Sheela Foam',   orderQty: '3,000 units', orderQtyNum: 3000, moq: '1,000 units', priceUnit: 46, total: 138000, leadTime: '8 days', status: 'attention' as MatStatus, note: 'PPAP approval pending' },
+          ] },
+        { plant: 'UTR',  supplier: 'Evonik India',   materialCode: 'RM 10045872', name: 'Trim Clip Set',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Evonik India',   orderQty: '10,000 units', orderQtyNum: 10000, moq: '2,000 units', priceUnit: 50, total: 500000, leadTime: '4 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Bulk discount',   supplier: 'Evonik India',   orderQty: '14,000 units', orderQtyNum: 14000, moq: '2,000 units', priceUnit: 46, total: 644000, leadTime: '4 days', status: 'attention' as MatStatus, note: 'Ties up working capital' },
+          ] },
+        { plant: 'UTR',  supplier: 'Castrol India',  materialCode: 'RM 10047555', name: 'Lubricant Drum',  orderQty: '1,500 units',  orderQtyNum: 1500,  moq: '1,000 units', priceUnit: 88, total: 132000, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Contracted rate', supplier: 'Castrol India',  orderQty: '1,500 units', orderQtyNum: 1500, moq: '1,000 units', priceUnit: 88, total: 132000, leadTime: '2 days', status: 'ok' as MatStatus, selected: true },
+            { label: 'Spot buy',        supplier: 'Gulf Oil',       orderQty: '1,500 units', orderQtyNum: 1500, moq: '500 units',   priceUnit: 92, total: 138000, leadTime: '1 day',  status: 'ok' as MatStatus },
+          ] },
       ],
     },
     totalCost: 1070000,
@@ -145,12 +192,22 @@ function sortedMaterials(mats: Material[]) {
   );
 }
 
+interface ProcScenario {
+  label: string; supplier: string;
+  orderQty: string; orderQtyNum: number;
+  moq: string; priceUnit: number; total: number;
+  leadTime: string;
+  status: MatStatus; note?: string;
+  selected?: boolean;
+}
+
 interface PurchaseOrder {
   plant: string; supplier: string;
   materialCode: string; name: string;
   orderQty: string; orderQtyNum: number;
   moq: string; priceUnit: number; total: number;
   status: MatStatus; note?: string;
+  scenarios: ProcScenario[];
 }
 
 /* Aggregates across an option's purchase orders */
@@ -370,195 +427,88 @@ function FocusDetail({ opt }: { opt: Option }) {
       <SectionDivider icon={ShoppingCart} label="Procurement" />
       <ProcurementSection key={`po-${opt.id}`} po={po} />
       <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
-        <span className="text-sm font-semibold">Total Procurement Cost</span>
+        <span className="text-sm font-semibold">Total Plan Cost</span>
         <span className="text-lg font-bold">{fmt(opt.totalCost)}</span>
       </div>
     </div>
   );
 }
 
-/* ─────────────────── IUT SECTION (multi-material) ─────────────────── */
-
-function MaterialChip({ mat, isSelected, onSelect }: { mat: Material; isSelected: boolean; onSelect: () => void }) {
-  const attention = mat.status === 'attention';
-  return (
-    <button
-      onClick={onSelect}
-      className={`flex-none text-left rounded-xl border-2 px-3 py-2 transition-all min-w-[150px] ${
-        isSelected
-          ? 'border-indigo-600 bg-white shadow-md'
-          : 'border-transparent bg-white/70 hover:bg-white hover:border-indigo-200'
-      }`}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className={`w-1.5 h-1.5 rounded-full flex-none ${attention ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-        <span className={`font-mono text-[10px] font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-600'}`}>{mat.code}</span>
-      </div>
-      <div className="text-xs font-bold text-slate-800 mt-0.5 truncate">{mat.name}</div>
-      <div className="text-[10px] text-slate-500">{mat.qty}</div>
-    </button>
-  );
-}
+/* ─────────────────── IUT SECTION (tabular only) ─────────────────── */
 
 function IutSection({ iut }: { iut: Option['iut'] }) {
   const agg = useMemo(() => iutAgg(iut), [iut]);
   const mats = useMemo(() => sortedMaterials(iut.materials as Material[]), [iut]);
-  const [attentionOnly, setAttentionOnly] = useState(false);
-  const [selectedCode, setSelectedCode] = useState(mats[0]!.code);
-
-  const visible = attentionOnly ? mats.filter((m) => m.status === 'attention') : mats;
-  const toggleAttentionOnly = () => {
-    const next = !attentionOnly;
-    setAttentionOnly(next);
-    // Keep detail panel in sync with the filtered strip
-    if (next) {
-      const current = mats.find((m) => m.code === selectedCode);
-      if (!current || current.status !== 'attention') {
-        const firstAttention = mats.find((m) => m.status === 'attention');
-        if (firstAttention) setSelectedCode(firstAttention.code);
-      }
-    }
-  };
-  const mat = visible.find((m) => m.code === selectedCode) ?? visible[0] ?? mats[0]!;
   const laneOk = iut.lane === 'Available';
 
   return (
-    <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50 rounded-2xl border border-indigo-100 p-5 flex flex-col gap-4">
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
 
       {/* Aggregate roll-up — the at-a-glance line */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
         <div className="flex items-center gap-2 flex-wrap text-xs text-slate-600">
           <span className="inline-flex items-center gap-1"><PlantBadge plant={iut.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={iut.to} sm /></span>
           <span className="font-bold text-slate-800">{agg.count} materials</span>
           <span className="text-slate-300">·</span>
           <span><b className="text-slate-800">{agg.totalQty.toLocaleString('en-IN')} EA</b> total</span>
           <span className="text-slate-300">·</span>
-          <span><b className="text-slate-800">{fmt(agg.totalTripCost)}</b> transport</span>
-          <span className="text-slate-300">·</span>
           <span className={`inline-flex items-center gap-1 font-bold ${laneOk ? 'text-emerald-600' : 'text-amber-500'}`}>
             {laneOk ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}Lane {iut.lane}
           </span>
         </div>
         {agg.attention > 0 && (
-          <button
-            onClick={toggleAttentionOnly}
-            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
-              attentionOnly
-                ? 'bg-amber-400 border-amber-400 text-amber-950'
-                : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
             <AlertTriangle className="w-3 h-3" />{agg.attention} need attention
-          </button>
+          </span>
         )}
       </div>
 
-      {/* Material selector strip (attention-first) */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-        {visible.map((m) => (
-          <MaterialChip key={m.code} mat={m} isSelected={m.code === mat.code} onSelect={() => setSelectedCode(m.code)} />
-        ))}
-      </div>
-
-      {/* Focused material detail — one at a time */}
-      <div className="bg-white/60 rounded-xl border border-indigo-100 p-4">
-        {mat.status === 'attention' && mat.note && (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 mb-3">
-            <AlertTriangle className="w-3.5 h-3.5 flex-none" />{mat.note}
-          </div>
-        )}
-        <div className="flex items-center justify-center gap-0 mb-4">
-          <div className="text-center w-20">
-            <PlantBadge plant={iut.from} /><div className="text-[10px] text-slate-400 mt-1 font-semibold">FROM</div>
-          </div>
-          <div className="flex-1 flex flex-col items-center gap-1.5 px-4">
-            <span className="text-[11px] font-bold text-indigo-700 bg-white border border-indigo-200 rounded-full px-3 py-0.5 shadow-sm">{mat.name} · {mat.qty}</span>
-            <div className="w-full flex items-center"><div className="flex-1 border-t-2 border-dashed border-indigo-300" /><ArrowRight className="w-5 h-5 text-indigo-500 flex-none" /></div>
-            <span className="text-[10px] text-slate-500 font-medium">{mat.leadTime} · {mat.initiation} · {mat.costPerTrip}/trip</span>
-          </div>
-          <div className="text-center w-20">
-            <PlantBadge plant={iut.to} /><div className="text-[10px] text-slate-400 mt-1 font-semibold">TO</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {[
-            { label: 'Material Code', value: mat.code },
-            { label: 'Transfer Qty',  value: mat.qty },
-            { label: 'Lead Time',     value: mat.leadTime },
-            { label: 'Initiation',    value: mat.initiation },
-            {
-              label: 'Lane',
-              el: <span className={`flex items-center gap-1 text-xs font-bold ${laneOk ? 'text-emerald-600' : 'text-amber-500'}`}>
-                {laneOk ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}{iut.lane}
-              </span>,
-            },
-            { label: 'Cost / Trip', value: mat.costPerTrip },
-          ].map((s) => (
-            <div key={s.label} className="bg-white rounded-lg border border-indigo-100 px-3 py-2.5">
-              <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-1">{s.label}</div>
-              {'el' in s && s.el ? s.el : <div className="text-xs font-bold text-slate-800">{s.value}</div>}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Tabular view — all materials at once (trial) */}
-      <div className="bg-white rounded-xl border border-indigo-100 overflow-hidden">
-        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-          All Materials — Tabular View
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                <th className="text-left px-4 py-2">Material</th>
-                <th className="text-right px-3 py-2">Transfer Qty</th>
-                <th className="text-right px-3 py-2">Lead Time</th>
-                <th className="text-left px-3 py-2">Initiation</th>
-                <th className="text-right px-4 py-2">Cost / Trip</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {mats.map((m) => (
-                <tr
-                  key={m.code}
-                  onClick={() => setSelectedCode(m.code)}
-                  className={`cursor-pointer transition-colors ${
-                    m.code === mat.code ? 'bg-indigo-50/70' : m.status === 'attention' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-slate-50'
-                  }`}
-                >
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                      <div>
-                        <div className="text-xs font-bold text-slate-800">{m.name}</div>
-                        <div className="font-mono text-[10px] text-slate-500">{m.code}</div>
-                      </div>
+      {/* All materials in one table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              <th className="text-left px-4 py-2">Material</th>
+              <th className="text-right px-3 py-2">Transfer Qty</th>
+              <th className="text-right px-3 py-2">Lead Time</th>
+              <th className="text-left px-3 py-2">Initiation</th>
+              <th className="text-right px-4 py-2">Cost / Trip</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {mats.map((m) => (
+              <tr key={m.code} className={m.status === 'attention' ? 'bg-amber-50/60' : ''}>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">{m.name}</div>
+                      <div className="font-mono text-[10px] text-slate-500">{m.code}</div>
                     </div>
-                    {m.status === 'attention' && m.note && (
-                      <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
-                        <AlertTriangle className="w-3 h-3 flex-none" />{m.note}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{m.qty}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.leadTime}</td>
-                  <td className="px-3 py-2.5 text-xs text-slate-600 whitespace-nowrap">{m.initiation}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.costPerTrip}</td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-slate-50 border-t-2 border-slate-200">
-                <td className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Total · {agg.count} materials</td>
-                <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalQty.toLocaleString('en-IN')} EA</td>
-                <td className="px-3 py-3 text-xs text-slate-600 text-right whitespace-nowrap">max {agg.maxLead} days</td>
-                <td />
-                <td className="px-4 py-3 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(agg.totalTripCost)}</td>
+                  </div>
+                  {m.status === 'attention' && m.note && (
+                    <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
+                      <AlertTriangle className="w-3 h-3 flex-none" />{m.note}
+                    </div>
+                  )}
+                </td>
+                <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{m.qty}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.leadTime}</td>
+                <td className="px-3 py-2.5 text-xs text-slate-600 whitespace-nowrap">{m.initiation}</td>
+                <td className="px-4 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.costPerTrip}</td>
               </tr>
-            </tfoot>
-          </table>
-        </div>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="bg-slate-50 border-t-2 border-slate-200">
+              <td className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Total · {agg.count} materials</td>
+              <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalQty.toLocaleString('en-IN')} EA</td>
+              <td className="px-3 py-3 text-xs text-slate-600 text-right whitespace-nowrap">max {agg.maxLead} days</td>
+              <td />
+              <td className="px-4 py-3 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(agg.totalTripCost)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );
@@ -569,6 +519,13 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
 function ProcurementSection({ po }: { po: Option['procurement'] }) {
   const agg = useMemo(() => poAgg(po), [po]);
   const orders = useMemo(() => sortedOrders(po.orders as PurchaseOrder[]), [po]);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (code: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code); else next.add(code);
+      return next;
+    });
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -594,7 +551,8 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-              <th className="text-left px-4 py-2">Material</th>
+              <th className="w-8 px-2 py-2" />
+              <th className="text-left px-2 py-2">Material</th>
               <th className="text-left px-3 py-2">Plant</th>
               <th className="text-left px-3 py-2">Supplier</th>
               <th className="text-right px-3 py-2">Order Qty</th>
@@ -604,34 +562,115 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {orders.map((o) => (
-              <tr key={o.materialCode} className={o.status === 'attention' ? 'bg-amber-50/60' : ''}>
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-none ${o.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">{o.name}</div>
-                      <div className="font-mono text-[10px] text-slate-500">{o.materialCode}</div>
-                    </div>
-                  </div>
-                  {o.status === 'attention' && o.note && (
-                    <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
-                      <AlertTriangle className="w-3 h-3 flex-none" />{o.note}
-                    </div>
+            {orders.map((o) => {
+              const isOpen = expanded.has(o.materialCode);
+              return (
+                <Fragment key={o.materialCode}>
+                  <tr
+                    onClick={() => toggle(o.materialCode)}
+                    className={`cursor-pointer transition-colors ${
+                      isOpen ? 'bg-indigo-50/60' : o.status === 'attention' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <td className="px-2 py-2.5 w-8 text-center align-middle">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggle(o.materialCode); }}
+                        aria-expanded={isOpen}
+                        aria-controls={`scenarios-${o.materialCode.replace(/\s/g, '-')}`}
+                        aria-label={`${isOpen ? 'Hide' : 'Show'} procurement scenarios for ${o.name}`}
+                        className="p-0.5 rounded hover:bg-slate-200/60 transition-colors align-middle"
+                      >
+                        {isOpen
+                          ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+                          : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                      </button>
+                    </td>
+                    <td className="px-2 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-none ${o.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{o.name}</div>
+                          <div className="font-mono text-[10px] text-slate-500">{o.materialCode}</div>
+                        </div>
+                      </div>
+                      {o.status === 'attention' && o.note && (
+                        <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
+                          <AlertTriangle className="w-3 h-3 flex-none" />{o.note}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5"><PlantBadge plant={o.plant} sm /></td>
+                    <td className="px-3 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap">
+                      {o.supplier}
+                      <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{o.scenarios.length} scenarios</span>
+                    </td>
+                    <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{o.orderQty}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{o.moq}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">₹{o.priceUnit}</td>
+                    <td className="px-4 py-2.5 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(o.total)}</td>
+                  </tr>
+
+                  {/* Nested scenario table */}
+                  {isOpen && (
+                    <tr className="bg-indigo-50/40">
+                      <td />
+                      <td colSpan={7} className="px-3 pb-3 pt-1">
+                        <div id={`scenarios-${o.materialCode.replace(/\s/g, '-')}`} className="rounded-lg border border-indigo-100 bg-white overflow-hidden">
+                          <div className="px-3 py-2 bg-indigo-50/70 border-b border-indigo-100 text-[9px] font-bold uppercase tracking-widest text-indigo-500">
+                            Procurement scenarios · {o.name}
+                          </div>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                                <th className="text-left px-3 py-1.5">Scenario</th>
+                                <th className="text-left px-3 py-1.5">Supplier</th>
+                                <th className="text-right px-3 py-1.5">Order Qty</th>
+                                <th className="text-right px-3 py-1.5">MOQ</th>
+                                <th className="text-right px-3 py-1.5">Price/Unit</th>
+                                <th className="text-right px-3 py-1.5">Lead Time</th>
+                                <th className="text-right px-3 py-1.5">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {o.scenarios.map((s) => (
+                                <tr key={s.label} className={s.selected ? 'bg-emerald-50/60' : s.status === 'attention' ? 'bg-amber-50/50' : ''}>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-1.5">
+                                      {s.selected
+                                        ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-none" />
+                                        : <span className={`w-1.5 h-1.5 rounded-full flex-none ${s.status === 'attention' ? 'bg-amber-400' : 'bg-slate-300'}`} />}
+                                      <span className={`text-xs font-bold ${s.selected ? 'text-emerald-800' : 'text-slate-700'}`}>{s.label}</span>
+                                      {s.selected && (
+                                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">SELECTED</span>
+                                      )}
+                                    </div>
+                                    {s.note && (
+                                      <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-0.5 ml-5">
+                                        <AlertTriangle className="w-3 h-3 flex-none" />{s.note}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2 text-xs font-semibold text-slate-700 whitespace-nowrap">{s.supplier}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-700 text-right whitespace-nowrap">{s.orderQty}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">{s.moq}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">₹{s.priceUnit}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">{s.leadTime}</td>
+                                  <td className={`px-3 py-2 text-xs font-bold text-right whitespace-nowrap ${s.selected ? 'text-emerald-700' : 'text-slate-800'}`}>{fmt(s.total)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                </td>
-                <td className="px-3 py-2.5"><PlantBadge plant={o.plant} sm /></td>
-                <td className="px-3 py-2.5 text-xs font-semibold text-slate-700 whitespace-nowrap">{o.supplier}</td>
-                <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{o.orderQty}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{o.moq}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">₹{o.priceUnit}</td>
-                <td className="px-4 py-2.5 text-xs font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(o.total)}</td>
-              </tr>
-            ))}
+                </Fragment>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 border-t-2 border-slate-200">
-              <td colSpan={3} className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Estimated Total</td>
+              <td colSpan={4} className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Estimated Total · selected scenarios</td>
               <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalUnits.toLocaleString('en-IN')} units</td>
               <td colSpan={2} />
               <td className="px-4 py-3 text-sm font-bold text-indigo-700 text-right whitespace-nowrap">{fmt(agg.totalValue)}</td>
