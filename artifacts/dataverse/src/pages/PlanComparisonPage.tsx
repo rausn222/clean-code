@@ -712,9 +712,20 @@ export default function PlanComparisonPage() {
   /* per-option strategy selection ("optId" -> strategy key) + expansion ("optId:stratKey") */
   const [stratSelection, setStratSelection] = useState<Record<number, string>>({ 1: 'iut-proc', 2: 'iut-proc', 3: 'iut-proc' });
   const [openStrats, setOpenStrats] = useState<Set<string>>(new Set());
+  /* option columns expand/contract */
+  const [expandedOpts, setExpandedOpts] = useState<Set<number>>(new Set([1, 2, 3]));
+  /* collapsible table sections */
+  const [showOverview, setShowOverview] = useState(true);
+  const [showStrategies, setShowStrategies] = useState(true);
 
   const toggleStrat = (id: string) =>
     setOpenStrats((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const toggleOpt = (id: number) =>
+    setExpandedOpts((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
@@ -739,6 +750,21 @@ export default function PlanComparisonPage() {
               </th>
               {OPTIONS.map((opt) => {
                 const isSelected = opt.id === selectedOptId;
+                const isExpanded = expandedOpts.has(opt.id);
+                if (!isExpanded) {
+                  return (
+                    <th key={opt.id} className="px-2 py-3 text-left align-top w-24 bg-slate-50/80">
+                      <button
+                        onClick={() => toggleOpt(opt.id)}
+                        aria-expanded={false}
+                        aria-label={`Expand ${opt.label}`}
+                        className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />{opt.label}
+                      </button>
+                    </th>
+                  );
+                }
                 return (
                   <th
                     key={opt.id}
@@ -776,6 +802,14 @@ export default function PlanComparisonPage() {
                           </span>
                         )}
                       </div>
+                      <button
+                        onClick={() => toggleOpt(opt.id)}
+                        aria-expanded={true}
+                        aria-label={`Contract ${opt.label}`}
+                        className="ml-auto p-1 rounded-lg hover:bg-slate-200/60 transition-colors flex-none"
+                      >
+                        <ChevronDown className="w-4 h-4 text-indigo-600" />
+                      </button>
                     </div>
                   </th>
                 );
@@ -785,14 +819,22 @@ export default function PlanComparisonPage() {
           <tbody>
 
             {/* ── OVERVIEW ROWS ── */}
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr
+              onClick={() => setShowOverview((v) => !v)}
+              className="bg-slate-50 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+            >
               <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowOverview((v) => !v); }}
+                  aria-expanded={showOverview}
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  {showOverview ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                   <BarChart3 className="w-3.5 h-3.5" />Overview
-                </span>
+                </button>
               </td>
             </tr>
-            {[
+            {showOverview && [
               { l: 'FG Producible · UTR',   v: (o: Option) => o.overview.fgUTR.toLocaleString('en-IN') + ' units' },
               { l: 'FG Producible · U535',  v: (o: Option) => o.overview.fgU535.toLocaleString('en-IN') + ' units' },
               { l: 'Business Waste · UTR',  v: (o: Option) => fmt(o.overview.wasteUTR) },
@@ -802,22 +844,34 @@ export default function PlanComparisonPage() {
               <tr key={row.l} className="border-b border-slate-100">
                 <td className="px-4 py-2 text-xs font-semibold text-slate-500">{row.l}</td>
                 {OPTIONS.map((opt) => (
-                  <td key={opt.id} className={`px-4 py-2 text-xs font-bold text-slate-800 ${opt.id === selectedOptId ? 'bg-indigo-50/40' : ''}`}>
-                    {row.v(opt)}
-                  </td>
+                  expandedOpts.has(opt.id)
+                    ? (
+                      <td key={opt.id} className={`px-4 py-2 text-xs font-bold text-slate-800 ${opt.id === selectedOptId ? 'bg-indigo-50/40' : ''}`}>
+                        {row.v(opt)}
+                      </td>
+                    )
+                    : <td key={opt.id} className="px-2 py-2 bg-slate-50/80" />
                 ))}
               </tr>
             ))}
 
             {/* ── STRATEGY ROWS ── */}
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr
+              onClick={() => setShowStrategies((v) => !v)}
+              className="bg-slate-50 border-b border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+            >
               <td colSpan={1 + OPTIONS.length} className="px-4 py-2">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowStrategies((v) => !v); }}
+                  aria-expanded={showStrategies}
+                  className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  {showStrategies ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                   <Layers className="w-3.5 h-3.5" />Strategies — pick one per option · expand for details
-                </span>
+                </button>
               </td>
             </tr>
-            {STRATEGIES.map((strat) => {
+            {showStrategies && STRATEGIES.map((strat) => {
               const Icon = strat.icon;
               const openOpts = OPTIONS.filter((o) => openStrats.has(`${o.id}:${strat.key}`));
               return (
@@ -844,6 +898,9 @@ export default function PlanComparisonPage() {
                       const sOpen = openStrats.has(stratId);
                       const cost = stratCost(opt, strat);
                       const saving = strat.key === 'no-action' ? null : noActionCost(opt) - cost;
+                      if (!expandedOpts.has(opt.id)) {
+                        return <td key={opt.id} className="px-2 py-3 bg-slate-50/80" />;
+                      }
                       return (
                         <td
                           key={opt.id}
@@ -887,7 +944,7 @@ export default function PlanComparisonPage() {
                   </tr>
 
                   {/* Expanded details — one full-width block per open option */}
-                  {openOpts.map((opt) => (
+                  {openOpts.filter((o) => expandedOpts.has(o.id)).map((opt) => (
                     <tr key={`detail-${opt.id}`} className="border-b border-slate-100 bg-slate-50/60">
                       <td colSpan={1 + OPTIONS.length} className="px-4 py-3">
                         <div id={`strat-detail-${opt.id}-${strat.key}`} className="flex flex-col gap-3">
