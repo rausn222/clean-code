@@ -1,8 +1,8 @@
 import { Fragment, useMemo, useState } from 'react';
 import {
   ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
-  BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers, Trophy,
-  SlidersHorizontal, LayoutGrid, ChevronDown, ChevronRight,
+  BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers,
+  ChevronDown, ChevronRight,
 } from 'lucide-react';
 
 /* ───────────────────────────── DATA ───────────────────────────── */
@@ -217,6 +217,30 @@ const OPTIONS = [
 type Option = typeof OPTIONS[number];
 type ScoreKey = 'excellent' | 'moderate' | 'poor';
 
+/* ── Plan categories (single-view expandable list) ── */
+interface Plan {
+  key: string;
+  name: string;
+  badge?: 'Best' | 'New' | 'Base';
+  icon: React.ElementType;
+  opt: Option;
+  showIut: boolean;
+  showProc: boolean;
+  cost: number;
+  saving: number | null;   // vs No Action baseline
+  days: number;
+  endDate: string;
+}
+
+const PLANS: Plan[] = [
+  { key: 'iut-break-moq', name: 'IUT + Break MOQ',        icon: Layers,       opt: OPTIONS[0], showIut: true,  showProc: true,  cost:  965000, saving: 589000, days: 26, endDate: '15 Jun 2026' },
+  { key: 'iut-proc',      name: 'IUT + Procurement',      icon: Star,         opt: OPTIONS[1], showIut: true,  showProc: true,  cost: 1070000, saving: 484000, days: 25, endDate: '14 Jun 2026', badge: 'Best' },
+  { key: 'iut',           name: 'IUT',                    icon: Truck,        opt: OPTIONS[0], showIut: true,  showProc: false, cost: 1141000, saving: 413000, days: 25, endDate: '14 Jun 2026' },
+  { key: 'proc',          name: 'Procurement',            icon: ShoppingCart, opt: OPTIONS[1], showIut: false, showProc: true,  cost: 1454000, saving: 100000, days: 23, endDate: '12 Jun 2026' },
+  { key: 'iut-proc-new',  name: 'IUT + Procurement New',  icon: Star,         opt: OPTIONS[2], showIut: true,  showProc: true,  cost: 1078000, saving: 476000, days: 25, endDate: '14 Jun 2026', badge: 'New' },
+  { key: 'no-action',     name: 'No Action',              icon: CheckCheck,   opt: OPTIONS[0], showIut: false, showProc: false, cost: 1554000, saving: null,   days: 23, endDate: '12 Jun 2026', badge: 'Base' },
+];
+
 interface IutScenario {
   label: string;
   qty: string; qtyNum: number;
@@ -294,12 +318,6 @@ function sortedOrders(orders: PurchaseOrder[]) {
 
 /* ───────────────────────────── ATOMS ───────────────────────────── */
 
-const SCORE_META: Record<ScoreKey, { dot: string; pill: string; label: string }> = {
-  excellent: { dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 border-emerald-200', label: '≥40% Savings' },
-  moderate:  { dot: 'bg-amber-400',   pill: 'bg-amber-50  text-amber-700  border-amber-200',  label: '20–39% Savings' },
-  poor:      { dot: 'bg-red-500',     pill: 'bg-red-50    text-red-600    border-red-200',    label: '<20% Savings' },
-};
-
 function PlantBadge({ plant, sm }: { plant: string; sm?: boolean }) {
   const s: Record<string, string> = { UTR: 'bg-blue-600', U535: 'bg-indigo-600' };
   return (
@@ -309,112 +327,7 @@ function PlantBadge({ plant, sm }: { plant: string; sm?: boolean }) {
   );
 }
 
-function ScorePill({ score }: { score: ScoreKey }) {
-  const m = SCORE_META[score];
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${m.pill}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
-      {m.label}
-    </span>
-  );
-}
-
 const fmt = (n: number) => '₹' + n.toLocaleString('en-IN');
-
-/* ───────────────────── OPTION SELECTOR CARDS ───────────────────── */
-
-function OptionCard({
-  opt, isSelected, isCompared, mode, onSelect, onToggleCompare,
-}: {
-  opt: Option; isSelected: boolean; isCompared: boolean;
-  mode: 'focus' | 'compare';
-  onSelect: () => void; onToggleCompare: () => void;
-}) {
-  const m = SCORE_META[opt.score];
-
-  if (mode === 'focus') {
-    return (
-      <button
-        onClick={onSelect}
-        className={`relative flex-1 text-left rounded-2xl border-2 px-5 py-4 transition-all duration-200 group ${
-          isSelected
-            ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-200'
-            : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md text-slate-800'
-        }`}
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-sm">{opt.label}</span>
-              {opt.isRecommended && (
-                <span className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-none ${isSelected ? 'bg-amber-300 text-amber-900' : 'bg-amber-100 text-amber-700'}`}>
-                  <Star className="w-2 h-2 fill-current" /> REC
-                </span>
-              )}
-            </div>
-            <div className={`flex items-center gap-1 mt-1 text-[11px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`}>
-              <PlantBadge plant={opt.iut.from} sm />
-              <ArrowRight className="w-2.5 h-2.5" />
-              <PlantBadge plant={opt.iut.to} sm />
-              <span className="ml-0.5">{opt.route}</span>
-            </div>
-          </div>
-          {isSelected && <CheckCheck className="w-4 h-4 text-indigo-300 flex-none mt-0.5" />}
-        </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {[
-            { l: 'Total Cost', v: fmt(opt.totalCost) },
-            { l: 'FG · UTR', v: opt.overview.fgUTR.toLocaleString('en-IN') },
-            { l: 'FG · U535', v: opt.overview.fgU535.toLocaleString('en-IN') },
-          ].map((k) => (
-            <div key={k.l} className={`rounded-lg px-2.5 py-2 text-center ${isSelected ? 'bg-white/10' : 'bg-slate-50 border border-slate-100'}`}>
-              <div className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isSelected ? 'text-indigo-300' : 'text-slate-400'}`}>{k.l}</div>
-              <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-900'}`}>{k.v}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3">
-          <ScorePill score={opt.score} />
-        </div>
-      </button>
-    );
-  }
-
-  // Compare mode card
-  return (
-    <button
-      onClick={onToggleCompare}
-      className={`relative flex-1 text-left rounded-2xl border-2 px-4 py-3.5 transition-all duration-200 ${
-        isCompared
-          ? 'border-indigo-500 bg-indigo-50 shadow-md'
-          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-500'
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className={`font-bold text-sm ${isCompared ? 'text-indigo-900' : 'text-slate-500'}`}>{opt.label}</span>
-            {opt.isRecommended && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-none">
-                <Star className="w-2 h-2 fill-current" /> REC
-              </span>
-            )}
-          </div>
-          <div className={`flex items-center gap-1 mt-0.5 text-[10px] ${isCompared ? 'text-slate-500' : 'text-slate-400'}`}>
-            <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-2.5 h-2.5" /><PlantBadge plant={opt.iut.to} sm />
-            <span className="ml-0.5">{opt.route}</span>
-          </div>
-        </div>
-        <div className={`mt-0.5 w-5 h-5 rounded-md flex-none border-2 flex items-center justify-center transition-colors ${isCompared ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
-          {isCompared && <CheckCheck className="w-3 h-3 text-white" />}
-        </div>
-      </div>
-      <div className="mt-2.5">
-        <ScorePill score={opt.score} />
-      </div>
-    </button>
-  );
-}
 
 /* ─────────────────────────── FOCUS DETAIL ─────────────────────────── */
 
@@ -429,7 +342,8 @@ function SectionDivider({ icon: Icon, label }: { icon: React.ElementType; label:
   );
 }
 
-function FocusDetail({ opt }: { opt: Option }) {
+function FocusDetail({ plan }: { plan: Plan }) {
+  const { opt, showIut, showProc } = plan;
   const { overview: ov, iut, procurement: po } = opt;
 
   return (
@@ -484,15 +398,30 @@ function FocusDetail({ opt }: { opt: Option }) {
       </div>
 
       {/* IUT */}
-      <SectionDivider icon={Truck} label="IUT Transfer" />
-      <IutSection key={`iut-${opt.id}`} iut={iut} />
+      {showIut && (
+        <>
+          <SectionDivider icon={Truck} label="IUT Transfer" />
+          <IutSection key={`iut-${plan.key}`} iut={iut} />
+        </>
+      )}
 
       {/* PROCUREMENT */}
-      <SectionDivider icon={ShoppingCart} label="Procurement" />
-      <ProcurementSection key={`po-${opt.id}`} po={po} />
+      {showProc && (
+        <>
+          <SectionDivider icon={ShoppingCart} label="Procurement" />
+          <ProcurementSection key={`po-${plan.key}`} po={po} />
+        </>
+      )}
+
+      {!showIut && !showProc && (
+        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-5 py-6 text-center">
+          Baseline scenario — no IUT transfer or procurement action is taken.
+        </div>
+      )}
+
       <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
         <span className="text-sm font-semibold">Total Plan Cost</span>
-        <span className="text-lg font-bold">{fmt(opt.totalCost)}</span>
+        <span className="text-lg font-bold">{fmt(plan.cost)}</span>
       </div>
     </div>
   );
@@ -820,388 +749,118 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
   );
 }
 
-/* ─────────────────────── COMPARE GRID ─────────────────────── */
-
-type CellResult = 'best' | 'worst' | 'mid' | 'neutral';
-
-function diffResult(values: (number | null)[], idx: number, higherBetter: boolean): CellResult {
-  const valid = values.filter((v) => v !== null) as number[];
-  if (valid.length < 2) return 'neutral';
-  const v = values[idx];
-  if (v === null) return 'neutral';
-  const best  = higherBetter ? Math.max(...valid) : Math.min(...valid);
-  const worst = higherBetter ? Math.min(...valid) : Math.max(...valid);
-  if (valid.every((x) => x === valid[0])) return 'neutral';
-  if (v === best)  return 'best';
-  if (v === worst) return 'worst';
-  return 'mid';
-}
-
-const CELL_STYLE: Record<CellResult, string> = {
-  best:    'bg-emerald-50 text-emerald-800',
-  worst:   'bg-red-50    text-red-700',
-  mid:     'bg-slate-50  text-slate-700',
-  neutral: 'text-slate-700',
-};
-const CELL_BADGE: Partial<Record<CellResult, string>> = {
-  best:  'bg-emerald-100 text-emerald-700',
-  worst: 'bg-red-100    text-red-600',
-};
-
-function DiffCell({ value, display, result }: { value: number | null; display: string; result: CellResult }) {
-  const badge = CELL_BADGE[result];
-  return (
-    <td className={`px-4 py-3 text-center align-middle ${CELL_STYLE[result]}`}>
-      <div className="flex flex-col items-center gap-0.5">
-        <span className="text-sm font-bold">{display}</span>
-        {badge && (
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badge}`}>
-            {result === 'best' ? '✓ Best' : '↓ High'}
-          </span>
-        )}
-      </div>
-    </td>
-  );
-}
-
-function TextCell({ value }: { value: React.ReactNode }) {
-  return <td className="px-4 py-3 text-center align-middle text-sm text-slate-700">{value}</td>;
-}
-
-function RowLabel({ label }: { label: string }) {
-  return (
-    <td className="pl-4 pr-3 py-3 text-left align-middle sticky left-0 bg-white border-r border-slate-100 z-10 min-w-[160px]">
-      <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">{label}</span>
-    </td>
-  );
-}
-
-function SectionRow({ label, icon: Icon, cols }: { label: string; icon: React.ElementType; cols: number }) {
-  return (
-    <tr className="bg-slate-800">
-      <td colSpan={cols + 1} className="px-4 py-2.5 sticky left-0">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-300">
-          <Icon className="w-3.5 h-3.5" />{label}
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function CompareGrid({ opts }: { opts: Option[] }) {
-  const n = opts.length;
-  const [showMats, setShowMats] = useState(false);
-  const [showOrders, setShowOrders] = useState(false);
-
-  // helper: get diff across compared options
-  const numDiff = (vals: (number | null)[], hb: boolean) =>
-    vals.map((_, i) => diffResult(vals, i, hb));
-
-  // Numeric arrays
-  const fgUTRs   = opts.map((o) => o.overview.fgUTR);
-  const fgU535s  = opts.map((o) => o.overview.fgU535);
-  const wUTRs    = opts.map((o) => o.overview.wasteUTR);
-  const wU535s   = opts.map((o) => o.overview.wasteU535);
-  const aggs     = opts.map((o) => iutAgg(o.iut));
-  const leadDays = aggs.map((a) => a.maxLead);
-  const costTrip = aggs.map((a) => a.totalTripCost);
-  const qtyNums  = aggs.map((a) => a.totalQty);
-  const poAggs   = opts.map((o) => poAgg(o.procurement));
-  const poUnits  = poAggs.map((a) => a.totalUnits);
-  const poValues = poAggs.map((a) => a.totalValue);
-  const totals   = opts.map((o) => o.totalCost);
-
-  const fgUTRd  = numDiff(fgUTRs,  true);
-  const fgU535d = numDiff(fgU535s, true);
-  const wUTRd   = numDiff(wUTRs,   false);
-  const wU535d  = numDiff(wU535s,  false);
-  const leadD   = numDiff(leadDays, false);
-  const costTD  = numDiff(costTrip, false);
-  const qtyD    = numDiff(qtyNums,  true);
-  const poUnitsD = numDiff(poUnits, true);
-  const poValueD = numDiff(poValues, false);
-  const totalD  = numDiff(totals,   false);
-
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr className="bg-slate-900">
-            <th className="pl-4 pr-3 py-4 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 sticky left-0 bg-slate-900 border-r border-slate-700 min-w-[160px]">
-              Detail
-            </th>
-            {opts.map((o) => (
-              <th key={o.id} className="px-4 py-4 text-center min-w-[180px]">
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-white font-bold text-sm">{o.label}</span>
-                    {o.isRecommended && (
-                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-900 flex-none">
-                        <Star className="w-2 h-2 fill-current" />REC
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                    <PlantBadge plant={o.iut.from} sm /><ArrowRight className="w-2.5 h-2.5 text-slate-500" /><PlantBadge plant={o.iut.to} sm />
-                  </div>
-                  <ScorePill score={o.score} />
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
-
-          {/* ── OVERVIEW ── */}
-          <SectionRow icon={BarChart3} label="Overview" cols={n} />
-          <tr><RowLabel label="FG Producible · UTR" />{fgUTRs.map((v, i) => <DiffCell key={i} value={v} display={v.toLocaleString('en-IN')} result={fgUTRd[i]} />)}</tr>
-          <tr><RowLabel label="FG Producible · U535"/>{fgU535s.map((v,i)=><DiffCell key={i} value={v} display={v.toLocaleString('en-IN')} result={fgU535d[i]}/>)}</tr>
-          <tr><RowLabel label="Business Waste · UTR"/>{wUTRs.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={wUTRd[i]}/>)}</tr>
-          <tr><RowLabel label="Business Waste · U535"/>{wU535s.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={wU535d[i]}/>)}</tr>
-          <tr><RowLabel label="Stop Date · UTR"/>{opts.map((o,i)=><TextCell key={i} value={o.overview.stopUTR}/>)}</tr>
-          <tr><RowLabel label="Stop Date · U535"/>{opts.map((o,i)=><TextCell key={i} value={o.overview.stopU535}/>)}</tr>
-          <tr><RowLabel label="Plan Change · UTR"/>{opts.map((o,i)=><TextCell key={i} value={
-            o.overview.planChangeUTR
-              ? <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600"><AlertTriangle className="w-3 h-3"/>Yes</span>
-              : <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3 h-3"/>No</span>
-          }/>)}</tr>
-
-          {/* ── IUT ── */}
-          <SectionRow icon={Truck} label="IUT Transfer" cols={n} />
-          <tr><RowLabel label="Transfer Route"/>{opts.map((o,i)=><TextCell key={i} value={
-            <span className="inline-flex items-center gap-1"><PlantBadge plant={o.iut.from} sm/><ArrowRight className="w-3 h-3 text-slate-400"/><PlantBadge plant={o.iut.to} sm/></span>
-          }/>)}</tr>
-          <tr><RowLabel label="Materials"/>{aggs.map((a,i)=><TextCell key={i} value={
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
-              {a.count}
-              {a.attention > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  <AlertTriangle className="w-2.5 h-2.5"/>{a.attention}
-                </span>
-              )}
-            </span>
-          }/>)}</tr>
-          <tr><RowLabel label="Total Transfer Qty"/>{qtyNums.map((v,i)=><DiffCell key={i} value={v} display={`${v.toLocaleString('en-IN')} EA`} result={qtyD[i]}/>)}</tr>
-          <tr><RowLabel label="Longest Lead Time"/>{leadDays.map((v,i)=><DiffCell key={i} value={v} display={`${v} days`} result={leadD[i]}/>)}</tr>
-          <tr><RowLabel label="Lane Availability"/>{opts.map((o,i)=><TextCell key={i} value={
-            o.iut.lane === 'Available'
-              ? <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><Wifi className="w-3.5 h-3.5"/>Available</span>
-              : <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-500"><WifiOff className="w-3.5 h-3.5"/>Not set</span>
-          }/>)}</tr>
-          <tr><RowLabel label="Transport Cost"/>{costTrip.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={costTD[i]}/>)}</tr>
-          <tr>
-            <td className="pl-4 pr-3 py-2 text-left sticky left-0 bg-white border-r border-slate-100 z-10">
-              <button onClick={() => setShowMats((v) => !v)} className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors whitespace-nowrap">
-                <Layers className="w-3 h-3"/>{showMats ? 'Hide materials' : 'By material'}
-              </button>
-            </td>
-            {opts.map((o) => <td key={o.id} className="bg-white" />)}
-          </tr>
-          {showMats && (
-            <tr className="align-top">
-              <RowLabel label="Material Breakdown" />
-              {opts.map((o) => (
-                <td key={o.id} className="px-3 py-3 align-top">
-                  <div className="flex flex-col gap-1.5">
-                    {sortedMaterials(o.iut.materials as Material[]).map((m) => (
-                      <div key={m.code} className={`rounded-lg border px-2.5 py-1.5 text-left ${m.status === 'attention' ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                          <span className="font-mono text-[10px] font-bold text-slate-600">{m.code}</span>
-                        </div>
-                        <div className="text-[11px] font-semibold text-slate-800">{m.name}</div>
-                        <div className="text-[10px] text-slate-500">{m.qty} · {m.leadTime} · {m.costPerTrip}/trip</div>
-                      </div>
-                    ))}
-                  </div>
-                </td>
-              ))}
-            </tr>
-          )}
-
-          {/* ── PROCUREMENT ── */}
-          <SectionRow icon={ShoppingCart} label="Procurement" cols={n} />
-          <tr><RowLabel label="Purchase Orders"/>{poAggs.map((a,i)=><TextCell key={i} value={
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800">
-              {a.count}
-              {a.attention > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  <AlertTriangle className="w-2.5 h-2.5"/>{a.attention}
-                </span>
-              )}
-            </span>
-          }/>)}</tr>
-          <tr><RowLabel label="Suppliers"/>{poAggs.map((a,i)=><TextCell key={i} value={a.suppliers}/>)}</tr>
-          <tr><RowLabel label="Total Order Qty"/>{poUnits.map((v,i)=><DiffCell key={i} value={v} display={`${v.toLocaleString('en-IN')} units`} result={poUnitsD[i]}/>)}</tr>
-          <tr><RowLabel label="Total Order Value"/>{poValues.map((v,i)=><DiffCell key={i} value={v} display={fmt(v)} result={poValueD[i]}/>)}</tr>
-          <tr>
-            <td className="pl-4 pr-3 py-2 text-left sticky left-0 bg-white border-r border-slate-100 z-10">
-              <button onClick={() => setShowOrders((v) => !v)} className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors whitespace-nowrap">
-                <Layers className="w-3 h-3"/>{showOrders ? 'Hide orders' : 'By order'}
-              </button>
-            </td>
-            {opts.map((o) => <td key={o.id} className="bg-white" />)}
-          </tr>
-          {showOrders && (
-            <tr className="align-top">
-              <RowLabel label="Order Breakdown" />
-              {opts.map((o) => (
-                <td key={o.id} className="px-3 py-3 align-top">
-                  <div className="flex flex-col gap-1.5">
-                    {sortedOrders(o.procurement.orders as PurchaseOrder[]).map((p) => (
-                      <div key={p.materialCode} className={`rounded-lg border px-2.5 py-1.5 text-left ${p.status === 'attention' ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-slate-50'}`}>
-                        <div className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full flex-none ${p.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                          <PlantBadge plant={p.plant} sm />
-                          <span className="font-mono text-[10px] font-bold text-slate-600">{p.materialCode}</span>
-                        </div>
-                        <div className="text-[11px] font-semibold text-slate-800">{p.name} · {p.supplier}</div>
-                        <div className="text-[10px] text-slate-500">{p.orderQty} · ₹{p.priceUnit}/unit · {fmt(p.total)}</div>
-                      </div>
-                    ))}
-                  </div>
-                </td>
-              ))}
-            </tr>
-          )}
-
-          {/* ── TOTAL ── */}
-          <tr className="bg-slate-50 border-t-2 border-slate-300">
-            <td className="pl-4 pr-3 py-4 sticky left-0 bg-slate-50 border-r border-slate-200 z-10">
-              <div className="flex items-center gap-1.5">
-                <Trophy className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Total Procurement Cost</span>
-              </div>
-            </td>
-            {totals.map((v, i) => (
-              <DiffCell key={i} value={v} display={fmt(v)} result={totalD[i]} />
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 /* ─────────────────────────── PAGE ─────────────────────────── */
 
+const BADGE_STYLE: Record<NonNullable<Plan['badge']>, string> = {
+  Best: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  New:  'bg-indigo-100 text-indigo-700 border-indigo-200',
+  Base: 'bg-slate-100 text-slate-500 border-slate-200',
+};
+
 export default function PlanComparisonPage() {
-  const [mode, setMode]       = useState<'focus' | 'compare'>('focus');
-  const [selectedId, setSelectedId]   = useState(1);
-  const [comparedIds, setComparedIds] = useState<number[]>([1, 2, 3]);
+  const [selectedKey, setSelectedKey] = useState('iut-proc');
+  const [openKeys, setOpenKeys] = useState<Set<string>>(new Set(['iut-proc']));
 
-  const selected   = OPTIONS.find((o) => o.id === selectedId)!;
-  const comparedOpts = OPTIONS.filter((o) => comparedIds.includes(o.id));
-
-  const toggleCompared = (id: number) => {
-    setComparedIds((prev) =>
-      prev.includes(id)
-        ? prev.length > 1 ? prev.filter((x) => x !== id) : prev   // keep min 1
-        : [...prev, id],
-    );
-  };
+  const toggleOpen = (key: string) =>
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
 
   return (
     <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 pb-16 flex flex-col gap-5">
 
       {/* ── PAGE HEADER ── */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">IUT + Procurement</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Plan Comparison · IUT + Break MOQ</p>
-        </div>
-        {/* Mode toggle */}
-        <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1 gap-1">
-          {[
-            { id: 'focus' as const,   label: 'Focus View',   Icon: LayoutGrid },
-            { id: 'compare' as const, label: 'Compare',      Icon: SlidersHorizontal },
-          ].map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              onClick={() => setMode(id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                mode === id
-                  ? 'bg-white text-indigo-700 shadow-sm border border-slate-200'
-                  : 'text-slate-500 hover:text-slate-800'
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Plan Comparison</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Select a plan on the left · expand any row to see its details</p>
+      </div>
+
+      {/* ── PLAN LIST ── */}
+      <div className="flex flex-col gap-3">
+        {PLANS.map((plan) => {
+          const isSelected = plan.key === selectedKey;
+          const isOpen = openKeys.has(plan.key);
+          const Icon = plan.icon;
+          return (
+            <div
+              key={plan.key}
+              className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-colors ${
+                isSelected ? 'border-indigo-400 ring-1 ring-indigo-200' : 'border-slate-200'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />{label}
-            </button>
-          ))}
-        </div>
-      </div>
+              {/* Row header */}
+              <div
+                onClick={() => toggleOpen(plan.key)}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                  isSelected ? 'bg-indigo-50/50 hover:bg-indigo-50' : 'hover:bg-slate-50'
+                }`}
+              >
+                {/* Leftmost selection radio */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSelectedKey(plan.key); }}
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={`Select plan ${plan.name}`}
+                  className="flex-none"
+                >
+                  <span className={`block w-5 h-5 rounded-full border-2 transition-colors ${
+                    isSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_3px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
+                  }`} />
+                </button>
 
-      {/* ── OPTION CARDS ── */}
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-2">
-          {mode === 'focus' ? 'Select an option to view its details' : 'Select options to compare — tick the ones you want'}
-        </div>
-        <div className="flex gap-3">
-          {OPTIONS.map((opt) => (
-            <OptionCard
-              key={opt.id}
-              opt={opt}
-              isSelected={opt.id === selectedId}
-              isCompared={comparedIds.includes(opt.id)}
-              mode={mode}
-              onSelect={() => setSelectedId(opt.id)}
-              onToggleCompare={() => toggleCompared(opt.id)}
-            />
-          ))}
-        </div>
-      </div>
+                <Icon className={`w-4 h-4 flex-none ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
 
-      {/* ── MAIN CONTENT ── */}
-      {mode === 'focus' ? (
-        <>
-          {/* Selected header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl px-5 py-4 text-white">
-            <div className="flex items-center gap-3">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-base">{selected.label}</span>
-                  {selected.isRecommended && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400 text-amber-900">
-                      <Star className="w-2.5 h-2.5 fill-current" />Recommended
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className="text-sm font-bold text-slate-800">{plan.name}</span>
+                  {plan.badge && (
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[plan.badge]}`}>
+                      {plan.badge}
                     </span>
                   )}
-                  <ScorePill score={selected.score} />
+                  {isSelected && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600">
+                      <CheckCircle2 className="w-3 h-3" />Selected
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1.5 mt-1.5 text-slate-400 text-xs">
-                  <PlantBadge plant={selected.iut.from} sm /><ArrowRight className="w-3 h-3" /><PlantBadge plant={selected.iut.to} sm />
-                  <span>{selected.route}</span>
-                  <span className="mx-1 text-slate-600">·</span>
-                  <span>Total</span>
-                  <span className="text-white font-bold">{fmt(selected.totalCost)}</span>
+
+                <div className="ml-auto flex items-center gap-5 flex-none">
+                  <div className="text-right">
+                    <div className={`text-sm font-bold ${plan.saving === null ? 'text-red-500' : 'text-slate-900'}`}>{fmt(plan.cost)}</div>
+                    {plan.saving !== null
+                      ? <div className="text-[10px] font-semibold text-emerald-600">↓ {fmt(plan.saving)} vs No Action</div>
+                      : <div className="text-[10px] font-semibold text-slate-400">baseline</div>}
+                  </div>
+                  <div className="text-right hidden sm:block">
+                    <div className="text-sm font-bold text-slate-800">{plan.days}d</div>
+                    <div className="text-[10px] text-slate-400">till {plan.endDate}</div>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleOpen(plan.key); }}
+                    aria-expanded={isOpen}
+                    aria-controls={`plan-detail-${plan.key}`}
+                    aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${plan.name} details`}
+                    className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+                  >
+                    {isOpen
+                      ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+                      : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                  </button>
                 </div>
               </div>
+
+              {/* Expanded detail */}
+              {isOpen && (
+                <div id={`plan-detail-${plan.key}`} className="border-t border-slate-200 bg-slate-50/50 p-4">
+                  <FocusDetail plan={plan} />
+                </div>
+              )}
             </div>
-          </div>
-          <FocusDetail opt={selected} />
-        </>
-      ) : (
-        <>
-          {comparedOpts.length < 2 ? (
-            <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-2xl px-6 py-10 text-center">
-              Select at least 2 options above to compare them side by side.
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <Layers className="w-3.5 h-3.5" />
-                <span>
-                  Comparing <b className="text-slate-800">{comparedOpts.map((o) => o.label).join(' vs ')}</b>
-                  &nbsp;·&nbsp;
-                  <span className="text-emerald-600 font-semibold">Green = best value</span>
-                  &nbsp;·&nbsp;
-                  <span className="text-red-500 font-semibold">Red = high cost / worse</span>
-                </span>
-              </div>
-              <CompareGrid opts={comparedOpts} />
-            </>
-          )}
-        </>
-      )}
+          );
+        })}
+      </div>
 
       {/* Legend */}
       <div className="text-[11px] text-slate-400 text-center">
