@@ -28,11 +28,32 @@ const OPTIONS = [
       from: 'UTR', to: 'U535',
       lane: 'Available' as 'Available' | 'Not set',
       materials: [
-        { code: 'RM 10045872', name: 'PP Granules',       qty: '12,589 EA', qtyNum: 12589, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
-        { code: 'RM 10046110', name: 'ABS Resin',         qty: '6,400 EA',  qtyNum: 6400,  leadTime: '3 days', leadDays: 3, initiation: '24 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
-        { code: 'PM 64330512', name: 'Sealant Compound',  qty: '2,150 EA',  qtyNum: 2150,  leadTime: '6 days', leadDays: 6, initiation: '19 May 2026', costPerTrip: '₹420', costNum: 420, status: 'attention' as MatStatus, note: 'Lead time exceeds 5-day SLA' },
-        { code: 'RM 10047001', name: 'Paint Additive',    qty: '3,900 EA',  qtyNum: 3900,  leadTime: '2 days', leadDays: 2, initiation: '25 May 2026', costPerTrip: '₹280', costNum: 280, status: 'ok' as MatStatus },
-        { code: 'PM 64330488', name: 'Adhesive Film',     qty: '1,800 EA',  qtyNum: 1800,  leadTime: '3 days', leadDays: 3, initiation: '23 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
+        { code: 'RM 10045872', name: 'PP Granules',       qty: '12,589 EA', qtyNum: 12589, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',    qty: '12,589 EA', qtyNum: 12589, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Express dispatch',  qty: '12,589 EA', qtyNum: 12589, leadTime: '1 day',  leadDays: 1, initiation: '24 May 2026', costPerTrip: '₹520', costNum: 520, status: 'attention' as MatStatus, note: 'Cost/trip 73% above standard' },
+            { label: 'Milk-run consolidation', qty: '12,589 EA', qtyNum: 12589, leadTime: '5 days', leadDays: 5, initiation: '20 May 2026', costPerTrip: '₹210', costNum: 210, status: 'ok' as MatStatus },
+          ] },
+        { code: 'RM 10046110', name: 'ABS Resin',         qty: '6,400 EA',  qtyNum: 6400,  leadTime: '3 days', leadDays: 3, initiation: '24 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',    qty: '6,400 EA', qtyNum: 6400, leadTime: '3 days', leadDays: 3, initiation: '24 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Club with PP Granules', qty: '6,400 EA', qtyNum: 6400, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹180', costNum: 180, status: 'ok' as MatStatus },
+          ] },
+        { code: 'PM 64330512', name: 'Sealant Compound',  qty: '2,150 EA',  qtyNum: 2150,  leadTime: '6 days', leadDays: 6, initiation: '19 May 2026', costPerTrip: '₹420', costNum: 420, status: 'attention' as MatStatus, note: 'Lead time exceeds 5-day SLA',
+          scenarios: [
+            { label: 'Standard truck',    qty: '2,150 EA', qtyNum: 2150, leadTime: '6 days', leadDays: 6, initiation: '19 May 2026', costPerTrip: '₹420', costNum: 420, status: 'attention' as MatStatus, note: 'Lead time exceeds 5-day SLA', selected: true },
+            { label: 'Express dispatch',  qty: '2,150 EA', qtyNum: 2150, leadTime: '3 days', leadDays: 3, initiation: '22 May 2026', costPerTrip: '₹640', costNum: 640, status: 'ok' as MatStatus },
+          ] },
+        { code: 'RM 10047001', name: 'Paint Additive',    qty: '3,900 EA',  qtyNum: 3900,  leadTime: '2 days', leadDays: 2, initiation: '25 May 2026', costPerTrip: '₹280', costNum: 280, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',    qty: '3,900 EA', qtyNum: 3900, leadTime: '2 days', leadDays: 2, initiation: '25 May 2026', costPerTrip: '₹280', costNum: 280, status: 'ok' as MatStatus, selected: true },
+            { label: 'Split shipment',    qty: '2 × 1,950 EA', qtyNum: 3900, leadTime: '2 days', leadDays: 2, initiation: '25 May 2026', costPerTrip: '₹320', costNum: 320, status: 'attention' as MatStatus, note: 'Two trips, higher handling' },
+          ] },
+        { code: 'PM 64330488', name: 'Adhesive Film',     qty: '1,800 EA',  qtyNum: 1800,  leadTime: '3 days', leadDays: 3, initiation: '23 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',    qty: '1,800 EA', qtyNum: 1800, leadTime: '3 days', leadDays: 3, initiation: '23 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Club with Sealant Compound', qty: '1,800 EA', qtyNum: 1800, leadTime: '6 days', leadDays: 6, initiation: '19 May 2026', costPerTrip: '₹150', costNum: 150, status: 'attention' as MatStatus, note: 'Inherits 6-day lead time' },
+          ] },
       ],
     },
     procurement: {
@@ -81,10 +102,26 @@ const OPTIONS = [
       from: 'U535', to: 'UTR',
       lane: 'Available' as 'Available' | 'Not set',
       materials: [
-        { code: 'PM 20018734', name: 'Steel Sheet Coil',  qty: '12,589 EA', qtyNum: 12589, leadTime: '2 days', leadDays: 2, initiation: '27 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
-        { code: 'PM 20018902', name: 'Fastener Kit',      qty: '8,750 EA',  qtyNum: 8750,  leadTime: '2 days', leadDays: 2, initiation: '28 May 2026', costPerTrip: '₹260', costNum: 260, status: 'ok' as MatStatus },
-        { code: 'RM 10046995', name: 'Rubber Gasket',     qty: '5,200 EA',  qtyNum: 5200,  leadTime: '3 days', leadDays: 3, initiation: '26 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
-        { code: 'PM 20019110', name: 'Wiring Harness',    qty: '2,400 EA',  qtyNum: 2400,  leadTime: '4 days', leadDays: 4, initiation: '24 May 2026', costPerTrip: '₹340', costNum: 340, status: 'ok' as MatStatus },
+        { code: 'PM 20018734', name: 'Steel Sheet Coil',  qty: '12,589 EA', qtyNum: 12589, leadTime: '2 days', leadDays: 2, initiation: '27 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '12,589 EA', qtyNum: 12589, leadTime: '2 days', leadDays: 2, initiation: '27 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Rail consolidation', qty: '12,589 EA', qtyNum: 12589, leadTime: '4 days', leadDays: 4, initiation: '25 May 2026', costPerTrip: '₹190', costNum: 190, status: 'ok' as MatStatus },
+          ] },
+        { code: 'PM 20018902', name: 'Fastener Kit',      qty: '8,750 EA',  qtyNum: 8750,  leadTime: '2 days', leadDays: 2, initiation: '28 May 2026', costPerTrip: '₹260', costNum: 260, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '8,750 EA', qtyNum: 8750, leadTime: '2 days', leadDays: 2, initiation: '28 May 2026', costPerTrip: '₹260', costNum: 260, status: 'ok' as MatStatus, selected: true },
+            { label: 'Club with Steel Sheet Coil', qty: '8,750 EA', qtyNum: 8750, leadTime: '2 days', leadDays: 2, initiation: '27 May 2026', costPerTrip: '₹140', costNum: 140, status: 'ok' as MatStatus },
+          ] },
+        { code: 'RM 10046995', name: 'Rubber Gasket',     qty: '5,200 EA',  qtyNum: 5200,  leadTime: '3 days', leadDays: 3, initiation: '26 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '5,200 EA', qtyNum: 5200, leadTime: '3 days', leadDays: 3, initiation: '26 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Express dispatch', qty: '5,200 EA', qtyNum: 5200, leadTime: '1 day',  leadDays: 1, initiation: '28 May 2026', costPerTrip: '₹480', costNum: 480, status: 'attention' as MatStatus, note: 'Cost/trip 60% above standard' },
+          ] },
+        { code: 'PM 20019110', name: 'Wiring Harness',    qty: '2,400 EA',  qtyNum: 2400,  leadTime: '4 days', leadDays: 4, initiation: '24 May 2026', costPerTrip: '₹340', costNum: 340, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '2,400 EA', qtyNum: 2400, leadTime: '4 days', leadDays: 4, initiation: '24 May 2026', costPerTrip: '₹340', costNum: 340, status: 'ok' as MatStatus, selected: true },
+            { label: 'Split shipment',   qty: '2 × 1,200 EA', qtyNum: 2400, leadTime: '4 days', leadDays: 4, initiation: '24 May 2026', costPerTrip: '₹390', costNum: 390, status: 'attention' as MatStatus, note: 'Two trips, higher handling' },
+          ] },
       ],
     },
     procurement: {
@@ -127,10 +164,26 @@ const OPTIONS = [
       from: 'UTR', to: 'U535',
       lane: 'Not set' as 'Available' | 'Not set',
       materials: [
-        { code: 'PM 30098721', name: 'Glass Panel',       qty: '8,200 EA',  qtyNum: 8200,  leadTime: '4 days', leadDays: 4, initiation: '18 May 2026', costPerTrip: '₹450', costNum: 450, status: 'attention' as MatStatus, note: 'Cost/trip 50% above route average' },
-        { code: 'RM 10047230', name: 'Foam Padding',      qty: '4,600 EA',  qtyNum: 4600,  leadTime: '7 days', leadDays: 7, initiation: '15 May 2026', costPerTrip: '₹380', costNum: 380, status: 'attention' as MatStatus, note: 'Qty short of plan by 1,400 EA' },
-        { code: 'PM 30099004', name: 'Trim Clip Set',     qty: '3,100 EA',  qtyNum: 3100,  leadTime: '3 days', leadDays: 3, initiation: '20 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus },
-        { code: 'RM 10047555', name: 'Lubricant Drum',    qty: '1,250 EA',  qtyNum: 1250,  leadTime: '2 days', leadDays: 2, initiation: '21 May 2026', costPerTrip: '₹290', costNum: 290, status: 'ok' as MatStatus },
+        { code: 'PM 30098721', name: 'Glass Panel',       qty: '8,200 EA',  qtyNum: 8200,  leadTime: '4 days', leadDays: 4, initiation: '18 May 2026', costPerTrip: '₹450', costNum: 450, status: 'attention' as MatStatus, note: 'Cost/trip 50% above route average',
+          scenarios: [
+            { label: 'Standard truck (fragile-rated)', qty: '8,200 EA', qtyNum: 8200, leadTime: '4 days', leadDays: 4, initiation: '18 May 2026', costPerTrip: '₹450', costNum: 450, status: 'attention' as MatStatus, note: 'Cost/trip 50% above route average', selected: true },
+            { label: 'Dedicated carrier', qty: '8,200 EA', qtyNum: 8200, leadTime: '3 days', leadDays: 3, initiation: '19 May 2026', costPerTrip: '₹560', costNum: 560, status: 'attention' as MatStatus, note: 'Premium rate, lower breakage risk' },
+          ] },
+        { code: 'RM 10047230', name: 'Foam Padding',      qty: '4,600 EA',  qtyNum: 4600,  leadTime: '7 days', leadDays: 7, initiation: '15 May 2026', costPerTrip: '₹380', costNum: 380, status: 'attention' as MatStatus, note: 'Qty short of plan by 1,400 EA',
+          scenarios: [
+            { label: 'Standard truck',   qty: '4,600 EA', qtyNum: 4600, leadTime: '7 days', leadDays: 7, initiation: '15 May 2026', costPerTrip: '₹380', costNum: 380, status: 'attention' as MatStatus, note: 'Qty short of plan by 1,400 EA', selected: true },
+            { label: 'Two-lot transfer', qty: '4,600 + 1,400 EA', qtyNum: 6000, leadTime: '9 days', leadDays: 9, initiation: '13 May 2026', costPerTrip: '₹430', costNum: 430, status: 'attention' as MatStatus, note: 'Covers shortfall, longer window' },
+          ] },
+        { code: 'PM 30099004', name: 'Trim Clip Set',     qty: '3,100 EA',  qtyNum: 3100,  leadTime: '3 days', leadDays: 3, initiation: '20 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '3,100 EA', qtyNum: 3100, leadTime: '3 days', leadDays: 3, initiation: '20 May 2026', costPerTrip: '₹300', costNum: 300, status: 'ok' as MatStatus, selected: true },
+            { label: 'Club with Glass Panel', qty: '3,100 EA', qtyNum: 3100, leadTime: '4 days', leadDays: 4, initiation: '18 May 2026', costPerTrip: '₹160', costNum: 160, status: 'ok' as MatStatus },
+          ] },
+        { code: 'RM 10047555', name: 'Lubricant Drum',    qty: '1,250 EA',  qtyNum: 1250,  leadTime: '2 days', leadDays: 2, initiation: '21 May 2026', costPerTrip: '₹290', costNum: 290, status: 'ok' as MatStatus,
+          scenarios: [
+            { label: 'Standard truck',   qty: '1,250 EA', qtyNum: 1250, leadTime: '2 days', leadDays: 2, initiation: '21 May 2026', costPerTrip: '₹290', costNum: 290, status: 'ok' as MatStatus, selected: true },
+            { label: 'Milk-run consolidation', qty: '1,250 EA', qtyNum: 1250, leadTime: '4 days', leadDays: 4, initiation: '19 May 2026', costPerTrip: '₹180', costNum: 180, status: 'ok' as MatStatus },
+          ] },
       ],
     },
     procurement: {
@@ -164,6 +217,16 @@ const OPTIONS = [
 type Option = typeof OPTIONS[number];
 type ScoreKey = 'excellent' | 'moderate' | 'poor';
 
+interface IutScenario {
+  label: string;
+  qty: string; qtyNum: number;
+  leadTime: string; leadDays: number;
+  initiation: string;
+  costPerTrip: string; costNum: number;
+  status: MatStatus; note?: string;
+  selected?: boolean;
+}
+
 interface Material {
   code: string; name: string;
   qty: string; qtyNum: number;
@@ -171,6 +234,7 @@ interface Material {
   initiation: string;
   costPerTrip: string; costNum: number;
   status: MatStatus; note?: string;
+  scenarios: IutScenario[];
 }
 
 /* Aggregates across an option's IUT materials */
@@ -440,6 +504,13 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
   const agg = useMemo(() => iutAgg(iut), [iut]);
   const mats = useMemo(() => sortedMaterials(iut.materials as Material[]), [iut]);
   const laneOk = iut.lane === 'Available';
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (code: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code); else next.add(code);
+      return next;
+    });
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -468,6 +539,7 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              <th className="w-8" />
               <th className="text-left px-4 py-2">Material</th>
               <th className="text-right px-3 py-2">Transfer Qty</th>
               <th className="text-right px-3 py-2">Lead Time</th>
@@ -476,31 +548,97 @@ function IutSection({ iut }: { iut: Option['iut'] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {mats.map((m) => (
-              <tr key={m.code} className={m.status === 'attention' ? 'bg-amber-50/60' : ''}>
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">{m.name}</div>
-                      <div className="font-mono text-[10px] text-slate-500">{m.code}</div>
-                    </div>
-                  </div>
-                  {m.status === 'attention' && m.note && (
-                    <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
-                      <AlertTriangle className="w-3 h-3 flex-none" />{m.note}
-                    </div>
+            {mats.map((m) => {
+              const isOpen = expanded.has(m.code);
+              const panelId = `iut-scenarios-${m.code.replace(/\s/g, '-')}`;
+              return (
+                <Fragment key={m.code}>
+                  <tr
+                    onClick={() => toggle(m.code)}
+                    className={`cursor-pointer transition-colors ${m.status === 'attention' ? 'bg-amber-50/60 hover:bg-amber-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <td className="px-2 py-2.5 w-8 text-center align-middle">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggle(m.code); }}
+                        aria-expanded={isOpen}
+                        aria-controls={panelId}
+                        aria-label={`${isOpen ? 'Hide' : 'Show'} transfer scenarios for ${m.name}`}
+                        className="p-0.5 rounded hover:bg-slate-200/60 transition-colors align-middle"
+                      >
+                        {isOpen
+                          ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+                          : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                      </button>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-none ${m.status === 'attention' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                        <div>
+                          <div className="text-xs font-bold text-slate-800">{m.name}</div>
+                          <div className="font-mono text-[10px] text-slate-500">{m.code} · <span className="text-indigo-500 font-sans font-semibold">{m.scenarios.length} scenarios</span></div>
+                        </div>
+                      </div>
+                      {m.status === 'attention' && m.note && (
+                        <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-1">
+                          <AlertTriangle className="w-3 h-3 flex-none" />{m.note}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{m.qty}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.leadTime}</td>
+                    <td className="px-3 py-2.5 text-xs text-slate-600 whitespace-nowrap">{m.initiation}</td>
+                    <td className="px-4 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.costPerTrip}</td>
+                  </tr>
+                  {isOpen && (
+                    <tr className="bg-indigo-50/40">
+                      <td />
+                      <td colSpan={5} className="px-3 pb-3 pt-1">
+                        <div id={panelId} className="rounded-lg border border-indigo-100 bg-white overflow-hidden">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 bg-slate-50/60">
+                                <th className="text-left px-3 py-1.5">Scenario</th>
+                                <th className="text-right px-3 py-1.5">Transfer Qty</th>
+                                <th className="text-right px-3 py-1.5">Lead Time</th>
+                                <th className="text-left px-3 py-1.5">Initiation</th>
+                                <th className="text-right px-3 py-1.5">Cost / Trip</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {m.scenarios.map((s) => (
+                                <tr key={s.label} className={s.selected ? 'bg-emerald-50/50' : ''}>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-bold text-slate-800">{s.label}</span>
+                                      {s.selected && (
+                                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wider">Selected</span>
+                                      )}
+                                    </div>
+                                    {s.note && (
+                                      <div className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 mt-0.5">
+                                        <AlertTriangle className="w-3 h-3 flex-none" />{s.note}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2 text-xs text-slate-700 text-right whitespace-nowrap">{s.qty}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">{s.leadTime}</td>
+                                  <td className="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">{s.initiation}</td>
+                                  <td className="px-3 py-2 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{s.costPerTrip}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                </td>
-                <td className="px-3 py-2.5 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{m.qty}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.leadTime}</td>
-                <td className="px-3 py-2.5 text-xs text-slate-600 whitespace-nowrap">{m.initiation}</td>
-                <td className="px-4 py-2.5 text-xs text-slate-600 text-right whitespace-nowrap">{m.costPerTrip}</td>
-              </tr>
-            ))}
+                </Fragment>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 border-t-2 border-slate-200">
+              <td />
               <td className="px-4 py-3 text-xs font-bold text-slate-800 uppercase tracking-wider">Total · {agg.count} materials</td>
               <td className="px-3 py-3 text-xs font-bold text-slate-800 text-right whitespace-nowrap">{agg.totalQty.toLocaleString('en-IN')} EA</td>
               <td className="px-3 py-3 text-xs text-slate-600 text-right whitespace-nowrap">max {agg.maxLead} days</td>
