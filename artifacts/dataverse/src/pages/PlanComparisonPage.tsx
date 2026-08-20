@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import {
   ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
   BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, Maximize2, Minimize2,
 } from 'lucide-react';
 
 /* ───────────────────────────── DATA ───────────────────────────── */
@@ -758,9 +758,10 @@ export default function PlanComparisonPage() {
                         onClick={() => toggleOpt(opt.id)}
                         aria-expanded={false}
                         aria-label={`Expand ${opt.label}`}
-                        className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors"
+                        title={`Expand ${opt.label}`}
                       >
-                        <ChevronRight className="w-4 h-4" />{opt.label}
+                        <Maximize2 className="w-3.5 h-3.5" />{opt.label}
                       </button>
                     </th>
                   );
@@ -806,9 +807,10 @@ export default function PlanComparisonPage() {
                         onClick={() => toggleOpt(opt.id)}
                         aria-expanded={true}
                         aria-label={`Contract ${opt.label}`}
+                        title={`Contract ${opt.label}`}
                         className="ml-auto p-1 rounded-lg hover:bg-slate-200/60 transition-colors flex-none"
                       >
-                        <ChevronDown className="w-4 h-4 text-indigo-600" />
+                        <Minimize2 className="w-3.5 h-3.5 text-slate-400 hover:text-indigo-600" />
                       </button>
                     </div>
                   </th>
