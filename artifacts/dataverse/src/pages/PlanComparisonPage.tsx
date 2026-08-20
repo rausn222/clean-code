@@ -217,29 +217,30 @@ const OPTIONS = [
 type Option = typeof OPTIONS[number];
 type ScoreKey = 'excellent' | 'moderate' | 'poor';
 
-/* ── Plan categories (single-view expandable list) ── */
-interface Plan {
+/* ── Strategy categories — each MAIN option carries its own set of these ── */
+interface Strategy {
   key: string;
   name: string;
   badge?: 'Best' | 'New' | 'Base';
   icon: React.ElementType;
-  opt: Option;
   showIut: boolean;
   showProc: boolean;
-  cost: number;
-  saving: number | null;   // vs No Action baseline
+  costFactor: number;   // vs the option's base total cost
   days: number;
   endDate: string;
 }
 
-const PLANS: Plan[] = [
-  { key: 'iut-break-moq', name: 'IUT + Break MOQ',        icon: Layers,       opt: OPTIONS[0], showIut: true,  showProc: true,  cost:  965000, saving: 589000, days: 26, endDate: '15 Jun 2026' },
-  { key: 'iut-proc',      name: 'IUT + Procurement',      icon: Star,         opt: OPTIONS[1], showIut: true,  showProc: true,  cost: 1070000, saving: 484000, days: 25, endDate: '14 Jun 2026', badge: 'Best' },
-  { key: 'iut',           name: 'IUT',                    icon: Truck,        opt: OPTIONS[0], showIut: true,  showProc: false, cost: 1141000, saving: 413000, days: 25, endDate: '14 Jun 2026' },
-  { key: 'proc',          name: 'Procurement',            icon: ShoppingCart, opt: OPTIONS[1], showIut: false, showProc: true,  cost: 1454000, saving: 100000, days: 23, endDate: '12 Jun 2026' },
-  { key: 'iut-proc-new',  name: 'IUT + Procurement New',  icon: Star,         opt: OPTIONS[2], showIut: true,  showProc: true,  cost: 1078000, saving: 476000, days: 25, endDate: '14 Jun 2026', badge: 'New' },
-  { key: 'no-action',     name: 'No Action',              icon: CheckCheck,   opt: OPTIONS[0], showIut: false, showProc: false, cost: 1554000, saving: null,   days: 23, endDate: '12 Jun 2026', badge: 'Base' },
+const STRATEGIES: Strategy[] = [
+  { key: 'iut-break-moq', name: 'IUT + Break MOQ',       icon: Layers,       showIut: true,  showProc: true,  costFactor: 0.90,  days: 26, endDate: '15 Jun 2026' },
+  { key: 'iut-proc',      name: 'IUT + Procurement',     icon: Star,         showIut: true,  showProc: true,  costFactor: 1.00,  days: 25, endDate: '14 Jun 2026', badge: 'Best' },
+  { key: 'iut',           name: 'IUT',                   icon: Truck,        showIut: true,  showProc: false, costFactor: 1.07,  days: 25, endDate: '14 Jun 2026' },
+  { key: 'proc',          name: 'Procurement',           icon: ShoppingCart, showIut: false, showProc: true,  costFactor: 1.36,  days: 23, endDate: '12 Jun 2026' },
+  { key: 'iut-proc-new',  name: 'IUT + Procurement New', icon: Star,         showIut: true,  showProc: true,  costFactor: 1.005, days: 25, endDate: '14 Jun 2026', badge: 'New' },
+  { key: 'no-action',     name: 'No Action',             icon: CheckCheck,   showIut: false, showProc: false, costFactor: 1.45,  days: 23, endDate: '12 Jun 2026', badge: 'Base' },
 ];
+
+const stratCost = (opt: Option, s: Strategy) => Math.round(opt.totalCost * s.costFactor / 1000) * 1000;
+const noActionCost = (opt: Option) => stratCost(opt, STRATEGIES.find((s) => s.key === 'no-action')!);
 
 interface IutScenario {
   label: string;
@@ -342,9 +343,8 @@ function SectionDivider({ icon: Icon, label }: { icon: React.ElementType; label:
   );
 }
 
-function FocusDetail({ plan }: { plan: Plan }) {
-  const { opt, showIut, showProc } = plan;
-  const { overview: ov, iut, procurement: po } = opt;
+function OverviewBlock({ opt }: { opt: Option }) {
+  const ov = opt.overview;
 
   return (
     <div className="flex flex-col gap-4">
@@ -397,31 +397,37 @@ function FocusDetail({ plan }: { plan: Plan }) {
         })}
       </div>
 
-      {/* IUT */}
-      {showIut && (
+    </div>
+  );
+}
+
+/* Detail for one strategy inside a main option */
+function StrategyDetail({ opt, strat }: { opt: Option; strat: Strategy }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {strat.showIut && (
         <>
           <SectionDivider icon={Truck} label="IUT Transfer" />
-          <IutSection key={`iut-${plan.key}`} iut={iut} />
+          <IutSection key={`iut-${opt.id}-${strat.key}`} iut={opt.iut} />
         </>
       )}
 
-      {/* PROCUREMENT */}
-      {showProc && (
+      {strat.showProc && (
         <>
           <SectionDivider icon={ShoppingCart} label="Procurement" />
-          <ProcurementSection key={`po-${plan.key}`} po={po} />
+          <ProcurementSection key={`po-${opt.id}-${strat.key}`} po={opt.procurement} />
         </>
       )}
 
-      {!showIut && !showProc && (
+      {!strat.showIut && !strat.showProc && (
         <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-5 py-6 text-center">
           Baseline scenario — no IUT transfer or procurement action is taken.
         </div>
       )}
 
       <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
-        <span className="text-sm font-semibold">Total Plan Cost</span>
-        <span className="text-lg font-bold">{fmt(plan.cost)}</span>
+        <span className="text-sm font-semibold">Total Cost · {strat.name}</span>
+        <span className="text-lg font-bold">{fmt(stratCost(opt, strat))}</span>
       </div>
     </div>
   );
@@ -751,20 +757,30 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
 
 /* ─────────────────────────── PAGE ─────────────────────────── */
 
-const BADGE_STYLE: Record<NonNullable<Plan['badge']>, string> = {
+const BADGE_STYLE: Record<NonNullable<Strategy['badge']>, string> = {
   Best: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   New:  'bg-indigo-100 text-indigo-700 border-indigo-200',
   Base: 'bg-slate-100 text-slate-500 border-slate-200',
 };
 
 export default function PlanComparisonPage() {
-  const [selectedKey, setSelectedKey] = useState('iut-proc');
-  const [openKeys, setOpenKeys] = useState<Set<string>>(new Set(['iut-proc']));
+  /* MAIN OPTION selection + expansion */
+  const [selectedOptId, setSelectedOptId] = useState(1);
+  const [openOptIds, setOpenOptIds] = useState<Set<number>>(new Set([1]));
+  /* per-option strategy selection ("optId" -> strategy key) + expansion ("optId:stratKey") */
+  const [stratSelection, setStratSelection] = useState<Record<number, string>>({ 1: 'iut-proc', 2: 'iut-proc', 3: 'iut-proc' });
+  const [openStrats, setOpenStrats] = useState<Set<string>>(new Set());
 
-  const toggleOpen = (key: string) =>
-    setOpenKeys((prev) => {
+  const toggleOpt = (id: number) =>
+    setOpenOptIds((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const toggleStrat = (id: string) =>
+    setOpenStrats((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
 
@@ -774,35 +790,35 @@ export default function PlanComparisonPage() {
       {/* ── PAGE HEADER ── */}
       <div>
         <h1 className="text-xl font-bold text-slate-900">Plan Comparison</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Select a plan on the left · expand any row to see its details</p>
+        <p className="text-sm text-slate-500 mt-0.5">Pick a main option on the left · expand it to compare its strategies (IUT, Procurement, …)</p>
       </div>
 
-      {/* ── PLAN LIST ── */}
+      {/* ── MAIN OPTIONS ── */}
       <div className="flex flex-col gap-3">
-        {PLANS.map((plan) => {
-          const isSelected = plan.key === selectedKey;
-          const isOpen = openKeys.has(plan.key);
-          const Icon = plan.icon;
+        {OPTIONS.map((opt) => {
+          const isSelected = opt.id === selectedOptId;
+          const isOpen = openOptIds.has(opt.id);
+          const baseline = noActionCost(opt);
           return (
             <div
-              key={plan.key}
+              key={opt.id}
               className={`rounded-2xl border bg-white shadow-sm overflow-hidden transition-colors ${
                 isSelected ? 'border-indigo-400 ring-1 ring-indigo-200' : 'border-slate-200'
               }`}
             >
-              {/* Row header */}
+              {/* MAIN OPTION row */}
               <div
-                onClick={() => toggleOpen(plan.key)}
-                className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+                onClick={() => toggleOpt(opt.id)}
+                className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
                   isSelected ? 'bg-indigo-50/50 hover:bg-indigo-50' : 'hover:bg-slate-50'
                 }`}
               >
                 {/* Leftmost selection radio */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); setSelectedKey(plan.key); }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedOptId(opt.id); }}
                   role="radio"
                   aria-checked={isSelected}
-                  aria-label={`Select plan ${plan.name}`}
+                  aria-label={`Select ${opt.label}`}
                   className="flex-none"
                 >
                   <span className={`block w-5 h-5 rounded-full border-2 transition-colors ${
@@ -810,15 +826,16 @@ export default function PlanComparisonPage() {
                   }`} />
                 </button>
 
-                <Icon className={`w-4 h-4 flex-none ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <span className="text-sm font-bold text-slate-800">{plan.name}</span>
-                  {plan.badge && (
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[plan.badge]}`}>
-                      {plan.badge}
+                  <span className="text-base font-bold text-slate-900">{opt.label}</span>
+                  {opt.isRecommended && (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 uppercase tracking-wider">
+                      <Star className="w-2.5 h-2.5 fill-current" />Recommended
                     </span>
                   )}
+                  <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                    <PlantBadge plant={opt.iut.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={opt.iut.to} sm />
+                  </span>
                   {isSelected && (
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600">
                       <CheckCircle2 className="w-3 h-3" />Selected
@@ -828,20 +845,14 @@ export default function PlanComparisonPage() {
 
                 <div className="ml-auto flex items-center gap-5 flex-none">
                   <div className="text-right">
-                    <div className={`text-sm font-bold ${plan.saving === null ? 'text-red-500' : 'text-slate-900'}`}>{fmt(plan.cost)}</div>
-                    {plan.saving !== null
-                      ? <div className="text-[10px] font-semibold text-emerald-600">↓ {fmt(plan.saving)} vs No Action</div>
-                      : <div className="text-[10px] font-semibold text-slate-400">baseline</div>}
-                  </div>
-                  <div className="text-right hidden sm:block">
-                    <div className="text-sm font-bold text-slate-800">{plan.days}d</div>
-                    <div className="text-[10px] text-slate-400">till {plan.endDate}</div>
+                    <div className="text-sm font-bold text-slate-900">{fmt(opt.totalCost)}</div>
+                    <div className="text-[10px] text-slate-400">base total cost</div>
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); toggleOpen(plan.key); }}
+                    onClick={(e) => { e.stopPropagation(); toggleOpt(opt.id); }}
                     aria-expanded={isOpen}
-                    aria-controls={`plan-detail-${plan.key}`}
-                    aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${plan.name} details`}
+                    aria-controls={`opt-detail-${opt.id}`}
+                    aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${opt.label}`}
                     className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
                   >
                     {isOpen
@@ -851,10 +862,92 @@ export default function PlanComparisonPage() {
                 </div>
               </div>
 
-              {/* Expanded detail */}
+              {/* MAIN OPTION expanded: overview + its own strategy list */}
               {isOpen && (
-                <div id={`plan-detail-${plan.key}`} className="border-t border-slate-200 bg-slate-50/50 p-4">
-                  <FocusDetail plan={plan} />
+                <div id={`opt-detail-${opt.id}`} className="border-t border-slate-200 bg-slate-50/50 p-4 flex flex-col gap-4">
+                  <OverviewBlock opt={opt} />
+
+                  <SectionDivider icon={Layers} label={`Strategies · ${opt.label}`} />
+                  <div className="flex flex-col gap-2">
+                    {STRATEGIES.map((strat) => {
+                      const stratId = `${opt.id}:${strat.key}`;
+                      const sSelected = stratSelection[opt.id] === strat.key;
+                      const sOpen = openStrats.has(stratId);
+                      const cost = stratCost(opt, strat);
+                      const saving = strat.key === 'no-action' ? null : baseline - cost;
+                      const Icon = strat.icon;
+                      return (
+                        <div
+                          key={strat.key}
+                          className={`rounded-xl border bg-white overflow-hidden transition-colors ${
+                            sSelected ? 'border-indigo-300 ring-1 ring-indigo-100' : 'border-slate-200'
+                          }`}
+                        >
+                          {/* Strategy row */}
+                          <div
+                            onClick={() => toggleStrat(stratId)}
+                            className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer transition-colors ${
+                              sSelected ? 'bg-indigo-50/40 hover:bg-indigo-50' : 'hover:bg-slate-50'
+                            }`}
+                          >
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setStratSelection((prev) => ({ ...prev, [opt.id]: strat.key })); }}
+                              role="radio"
+                              aria-checked={sSelected}
+                              aria-label={`Select strategy ${strat.name} for ${opt.label}`}
+                              className="flex-none"
+                            >
+                              <span className={`block w-4 h-4 rounded-full border-2 transition-colors ${
+                                sSelected ? 'border-indigo-600 bg-indigo-600 shadow-[inset_0_0_0_2.5px_white]' : 'border-slate-300 bg-white hover:border-indigo-400'
+                              }`} />
+                            </button>
+
+                            <Icon className={`w-4 h-4 flex-none ${sSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
+
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
+                              <span className="text-xs font-bold text-slate-800">{strat.name}</span>
+                              {strat.badge && (
+                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[strat.badge]}`}>
+                                  {strat.badge}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="ml-auto flex items-center gap-4 flex-none">
+                              <div className="text-right">
+                                <div className={`text-xs font-bold ${saving === null ? 'text-red-500' : 'text-slate-900'}`}>{fmt(cost)}</div>
+                                {saving !== null
+                                  ? <div className="text-[9px] font-semibold text-emerald-600">↓ {fmt(saving)} vs No Action</div>
+                                  : <div className="text-[9px] font-semibold text-slate-400">baseline</div>}
+                              </div>
+                              <div className="text-right hidden sm:block">
+                                <div className="text-xs font-bold text-slate-800">{strat.days}d</div>
+                                <div className="text-[9px] text-slate-400">till {strat.endDate}</div>
+                              </div>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleStrat(stratId); }}
+                                aria-expanded={sOpen}
+                                aria-controls={`strat-detail-${opt.id}-${strat.key}`}
+                                aria-label={`${sOpen ? 'Collapse' : 'Expand'} ${strat.name} details`}
+                                className="p-1 rounded-lg hover:bg-slate-200/60 transition-colors"
+                              >
+                                {sOpen
+                                  ? <ChevronDown className="w-4 h-4 text-indigo-600" />
+                                  : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Strategy expanded: its sections */}
+                          {sOpen && (
+                            <div id={`strat-detail-${opt.id}-${strat.key}`} className="border-t border-slate-200 bg-slate-50/60 p-3.5">
+                              <StrategyDetail opt={opt} strat={strat} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
