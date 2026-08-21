@@ -2,7 +2,7 @@ import { Fragment, useMemo, useState } from 'react';
 import {
   ArrowRight, CheckCircle2, AlertTriangle, Truck, ShoppingCart,
   BarChart3, Star, CheckCheck, Wifi, WifiOff, Layers,
-  ChevronDown, ChevronRight, Maximize2, Minimize2, GitCompareArrows, X,
+  ChevronDown, ChevronRight, Maximize2, Minimize2, Eye, EyeOff, Factory, Trash2, CalendarDays, GitCompareArrows, X,
 } from 'lucide-react';
 
 /* ───────────────────────────── DATA ───────────────────────────── */
@@ -387,6 +387,110 @@ function StrategyDetail({ opt, strat }: { opt: Option; strat: Strategy }) {
       )}
 
       <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3.5 shadow-md">
+        <span className="text-sm font-semibold">Total Cost · {strat.name}</span>
+        <span className="text-lg font-bold">{fmt(stratCost(opt, strat))}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── SELECTED PLAN — collapsible sections, contracted by default ── */
+function SelectedPlanSections({ opt, strat }: { opt: Option; strat: Strategy }) {
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
+  const ViewButton = ({ id, label }: { id: string; label: string }) => {
+    const isOpen = openSections.has(id);
+    return (
+      <button
+        onClick={() => toggle(id)}
+        aria-expanded={isOpen}
+        aria-controls={`sel-section-${id}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-colors flex-none ${
+          isOpen
+            ? 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700'
+            : 'bg-white border-indigo-300 text-indigo-600 hover:bg-indigo-50'
+        }`}
+      >
+        {isOpen ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        {isOpen ? 'Hide' : 'View'} {label}
+      </button>
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {strat.showIut && opt.iuts.map((leg, i) => {
+        const id = `iut-${i}`;
+        const agg = iutAgg(leg);
+        const isOpen = openSections.has(id);
+        return (
+          <div key={id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-2.5 flex-wrap">
+              <Truck className="w-4 h-4 text-indigo-500 flex-none" />
+              <span className="text-xs font-bold text-slate-800">IUT Transfer</span>
+              <span className="inline-flex items-center gap-1">
+                <PlantBadge plant={leg.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={leg.to} sm />
+              </span>
+              <span className="text-[11px] text-slate-500">
+                <b className="text-slate-700">{agg.count}</b> materials · <b className="text-slate-700">{agg.totalQty.toLocaleString('en-IN')} EA</b>
+              </span>
+              {agg.attention > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                  <AlertTriangle className="w-3 h-3" />{agg.attention} need attention
+                </span>
+              )}
+              <div className="ml-auto"><ViewButton id={id} label="details" /></div>
+            </div>
+            {isOpen && (
+              <div id={`sel-section-${id}`} className="border-t border-slate-200 bg-slate-50/50 p-3">
+                <IutSection iut={leg} />
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {strat.showProc && (() => {
+        const id = 'proc';
+        const agg = poAgg(opt.procurement);
+        const isOpen = openSections.has(id);
+        return (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center gap-3 px-4 py-2.5 flex-wrap">
+              <ShoppingCart className="w-4 h-4 text-indigo-500 flex-none" />
+              <span className="text-xs font-bold text-slate-800">Procurement</span>
+              <span className="text-[11px] text-slate-500">
+                <b className="text-slate-700">{agg.count}</b> POs · <b className="text-slate-700">{agg.suppliers}</b> suppliers · <b className="text-slate-700">{fmt(agg.totalValue)}</b>
+              </span>
+              {agg.attention > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600">
+                  <AlertTriangle className="w-3 h-3" />{agg.attention} need attention
+                </span>
+              )}
+              <div className="ml-auto"><ViewButton id={id} label="details" /></div>
+            </div>
+            {isOpen && (
+              <div id={`sel-section-${id}`} className="border-t border-slate-200 bg-slate-50/50 p-3">
+                <ProcurementSection po={opt.procurement} />
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {!strat.showIut && !strat.showProc && (
+        <div className="text-sm text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-5 py-6 text-center">
+          Baseline scenario — no IUT transfer or procurement action is taken.
+        </div>
+      )}
+
+      <div className="flex items-center justify-between bg-indigo-600 text-white rounded-xl px-5 py-3 shadow-md">
         <span className="text-sm font-semibold">Total Cost · {strat.name}</span>
         <span className="text-lg font-bold">{fmt(stratCost(opt, strat))}</span>
       </div>
@@ -928,7 +1032,7 @@ export default function PlanComparisonPage() {
           </div>
         </div>
         <div className="p-4 bg-slate-50/40">
-          <StrategyDetail opt={selOpt} strat={selStratG} />
+          <SelectedPlanSections key={`${selected.optId}:${selected.stratKey}`} opt={selOpt} strat={selStratG} />
         </div>
       </div>
 
@@ -1034,26 +1138,52 @@ export default function PlanComparisonPage() {
                 </button>
               </td>
             </tr>
-            {showOverview && [
-              { l: 'FG Producible · UTR',   v: (o: Option) => o.overview.fgUTR.toLocaleString('en-IN') + ' units' },
-              { l: 'FG Producible · U535',  v: (o: Option) => o.overview.fgU535.toLocaleString('en-IN') + ' units' },
-              { l: 'Business Waste · UTR',  v: (o: Option) => fmt(o.overview.wasteUTR) },
-              { l: 'Business Waste · U535', v: (o: Option) => fmt(o.overview.wasteU535) },
-              { l: 'Stop Date · UTR / U535', v: (o: Option) => `${o.overview.stopUTR} / ${o.overview.stopU535}` },
-            ].map((row) => (
-              <tr key={row.l} className="border-b border-slate-100">
-                <td className="px-4 py-2 text-xs font-semibold text-slate-500">{row.l}</td>
-                {visibleOpts.map((opt) => (
-                  expandedOpts.has(opt.id)
-                    ? (
-                      <td key={opt.id} className="px-4 py-2 text-xs font-bold text-slate-800">
-                        {row.v(opt)}
+            {showOverview && ([
+              { l: 'FG Producible · UTR',    icon: Factory,      v: (o: Option) => o.overview.fgUTR.toLocaleString('en-IN') + ' units',  num: (o: Option) => o.overview.fgUTR,   best: 'max' as const },
+              { l: 'FG Producible · U535',   icon: Factory,      v: (o: Option) => o.overview.fgU535.toLocaleString('en-IN') + ' units', num: (o: Option) => o.overview.fgU535,  best: 'max' as const },
+              { l: 'Business Waste · UTR',   icon: Trash2,       v: (o: Option) => fmt(o.overview.wasteUTR),                             num: (o: Option) => o.overview.wasteUTR,  best: 'min' as const },
+              { l: 'Business Waste · U535',  icon: Trash2,       v: (o: Option) => fmt(o.overview.wasteU535),                            num: (o: Option) => o.overview.wasteU535, best: 'min' as const },
+              { l: 'Stop Date · UTR / U535', icon: CalendarDays, v: (o: Option) => `${o.overview.stopUTR} / ${o.overview.stopU535}`,     num: null, best: null },
+            ]).map((row) => {
+              const RowIcon = row.icon;
+              const shown = visibleOpts.filter((o) => expandedOpts.has(o.id));
+              let bestId: number | null = null;
+              if (row.num && row.best && shown.length > 1) {
+                const vals = shown.map((o) => row.num!(o));
+                const target = row.best === 'max' ? Math.max(...vals) : Math.min(...vals);
+                if (vals.filter((v) => v === target).length === 1) {
+                  bestId = shown[vals.indexOf(target)].id;
+                }
+              }
+              return (
+                <tr key={row.l} className="border-b border-slate-100">
+                  <td className="px-4 py-2.5">
+                    <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <span className="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-none">
+                        <RowIcon className="w-3.5 h-3.5 text-indigo-500" />
+                      </span>
+                      {row.l}
+                    </span>
+                  </td>
+                  {visibleOpts.map((opt) => {
+                    if (!expandedOpts.has(opt.id)) return <td key={opt.id} className="px-2 py-2 bg-slate-50/80" />;
+                    const isBest = bestId === opt.id;
+                    return (
+                      <td key={opt.id} className={`px-4 py-2.5 text-xs ${isBest ? 'bg-emerald-50/70' : ''}`}>
+                        <span className={`inline-flex items-center gap-1.5 font-bold ${isBest ? 'text-emerald-700' : 'text-slate-800'}`}>
+                          {row.v(opt)}
+                          {isBest && (
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                              Best
+                            </span>
+                          )}
+                        </span>
                       </td>
-                    )
-                    : <td key={opt.id} className="px-2 py-2 bg-slate-50/80" />
-                ))}
-              </tr>
-            ))}
+                    );
+                  })}
+                </tr>
+              );
+            })}
 
             {/* ── STRATEGY ROWS ── */}
             <tr
