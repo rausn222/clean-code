@@ -717,12 +717,17 @@ function ProcurementSection({ po }: { po: Option['procurement'] }) {
 }
 
 function ScenarioComparison({
-  comparedKeys, onRemove,
-}: { comparedKeys: string[]; onRemove: (key: string) => void }) {
+  comparedPairs, onRemove,
+}: { comparedPairs: string[]; onRemove: (pair: string) => void }) {
   const [open, setOpen] = useState(true);
-  const plans = comparedKeys
-    .map((k) => STRATEGIES.find((p) => p.key === k))
-    .filter((p): p is Strategy => Boolean(p));
+  const plans = comparedPairs
+    .map((pair) => {
+      const [optIdStr, ...rest] = pair.split(':');
+      const opt = OPTIONS.find((o) => o.id === Number(optIdStr));
+      const strat = STRATEGIES.find((s) => s.key === rest.join(':'));
+      return opt && strat ? { pair, opt, strat, label: `${opt.label} · ${strat.name}` } : null;
+    })
+    .filter((p): p is { pair: string; opt: Option; strat: Strategy; label: string } => Boolean(p));
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -733,14 +738,14 @@ function ScenarioComparison({
       >
         <GitCompareArrows className="w-4 h-4 text-indigo-600 flex-none" />
         <span className="text-sm font-bold text-slate-800">Scenario Comparison</span>
-        <span className="text-[11px] text-slate-400">component-level numbers · {plans.length} plans</span>
+        <span className="text-[11px] text-slate-400">component-level numbers · {plans.length} scenarios</span>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           {plans.map((p) => (
-            <span key={p.key} className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
-              {p.name}
+            <span key={p.pair} className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700">
+              {p.label}
               <button
-                onClick={(e) => { e.stopPropagation(); onRemove(p.key); }}
-                aria-label={`Remove ${p.name} from comparison`}
+                onClick={(e) => { e.stopPropagation(); onRemove(p.pair); }}
+                aria-label={`Remove ${p.label} from comparison`}
                 className="p-0.5 rounded-full hover:bg-indigo-100"
               >
                 <X className="w-3 h-3" />
@@ -765,7 +770,7 @@ function ScenarioComparison({
         <div id="scenario-comparison-panel" className="border-t border-slate-200">
           {plans.length < 2 ? (
             <div className="px-5 py-8 text-center text-sm text-slate-500">
-              Pick at least 2 plans with the <b>Compare</b> checkbox on a plan row to see components side by side.
+              Tick <b>Compare</b> on at least 2 scenario cells in the table above — any strategy from any option — to see components side by side.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -777,14 +782,14 @@ function ScenarioComparison({
                     <th className="text-right px-3 py-2 align-bottom" rowSpan={2}>Open PO</th>
                     <th className="text-right px-3 py-2 align-bottom" rowSpan={2}>Unit Price</th>
                     {plans.map((p) => (
-                      <th key={p.key} colSpan={2} className="text-center px-3 py-2 border-l border-slate-200 text-indigo-500">
-                        {p.name}
+                      <th key={p.pair} colSpan={2} className="text-center px-3 py-2 border-l border-slate-200 text-indigo-500">
+                        {p.label}
                       </th>
                     ))}
                   </tr>
                   <tr className="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 bg-slate-50/60">
                     {plans.map((p) => (
-                      <Fragment key={p.key}>
+                      <Fragment key={p.pair}>
                         <th className="text-right px-3 py-1.5 border-l border-slate-200">Producible FG</th>
                         <th className="text-right px-3 py-1.5">Leftover RM+PM</th>
                       </Fragment>
@@ -812,9 +817,9 @@ function ScenarioComparison({
                           <td className="px-3 py-2.5 text-xs text-slate-700 text-right whitespace-nowrap">{c.openPO > 0 ? `${c.openPO.toLocaleString('en-IN')} EA` : '—'}</td>
                           <td className="px-3 py-2.5 text-xs text-slate-700 text-right whitespace-nowrap">₹{c.unitPrice}</td>
                           {plans.map((p) => {
-                            const f = c.byPlan[p.key];
+                            const f = c.byPlan[p.strat.key];
                             return (
-                              <Fragment key={p.key}>
+                              <Fragment key={p.pair}>
                                 <td className="px-3 py-2.5 text-right whitespace-nowrap border-l border-slate-100">
                                   <div className="text-xs font-bold text-indigo-700">{f.producibleFG.toLocaleString('en-IN')}</div>
                                   <div className="text-[10px] text-slate-400">prod end {f.prodEnd}</div>
@@ -846,16 +851,9 @@ const BADGE_STYLE: Record<NonNullable<Strategy['badge']>, string> = {
 };
 
 export default function PlanComparisonPage() {
-  /* which options are included in the comparison table */
-  const [compareOpts, setCompareOpts] = useState<Set<number>>(new Set([1, 2, 3]));
-  const toggleCompareOpt = (id: number) =>
-    setCompareOpts((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  /* per-option strategy selection ("optId" -> strategy key) + expansion ("optId:stratKey") */
-  const [stratSelection, setStratSelection] = useState<Record<number, string>>({ 1: 'iut-proc', 2: 'iut-proc', 3: 'iut-proc' });
+  /* the single selected variant: one option + one strategy */
+  const [selected, setSelected] = useState<{ optId: number; stratKey: string }>({ optId: 1, stratKey: 'iut-proc' });
+  /* strategy-cell expansion ("optId:stratKey") */
   const [openStrats, setOpenStrats] = useState<Set<string>>(new Set());
   /* option columns expand/contract */
   const [expandedOpts, setExpandedOpts] = useState<Set<number>>(new Set([1, 2, 3]));
@@ -876,14 +874,19 @@ export default function PlanComparisonPage() {
       return next;
     });
 
-  const visibleOpts = OPTIONS.filter((o) => compareOpts.has(o.id));
+  const visibleOpts = OPTIONS;
 
-  /* Strategies picked for the cross-plan Scenario Comparison panel */
-  const [compareKeys, setCompareKeys] = useState<string[]>(['iut-proc', 'iut']);
-  const toggleCompare = (key: string) =>
-    setCompareKeys((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+  /* Scenarios (option + strategy pairs, "optId:stratKey") picked for comparison */
+  const [comparePairs, setComparePairs] = useState<string[]>(['1:iut-proc', '2:iut-proc']);
+  const toggleComparePair = (pair: string) =>
+    setComparePairs((prev) =>
+      prev.includes(pair) ? prev.filter((k) => k !== pair) : [...prev, pair],
     );
+
+  const selOpt = OPTIONS.find((o) => o.id === selected.optId)!;
+  const selStratG = STRATEGIES.find((s) => s.key === selected.stratKey)!;
+  const selCostG = stratCost(selOpt, selStratG);
+  const selSavingG = selStratG.key === 'no-action' ? null : noActionCost(selOpt) - selCostG;
 
   return (
     <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 pb-16 flex flex-col gap-5">
@@ -891,32 +894,42 @@ export default function PlanComparisonPage() {
       {/* ── PAGE HEADER ── */}
       <div>
         <h1 className="text-xl font-bold text-slate-900">Plan Comparison</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Choose options to compare · pick a strategy per option · each header shows the selected plan's details</p>
+        <p className="text-sm text-slate-500 mt-0.5">Your selected plan's details are shown first · pick any strategy from any option below · tick Compare on any cells to contrast scenarios</p>
       </div>
 
-      {/* ── OPTION PICKER — choose which options to compare ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Compare options:</span>
-        {OPTIONS.map((opt) => {
-          const on = compareOpts.has(opt.id);
-          return (
-            <label
-              key={opt.id}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-bold cursor-pointer select-none transition-colors ${
-                on ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-200 text-slate-400 hover:border-indigo-300'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={on}
-                onChange={() => toggleCompareOpt(opt.id)}
-                aria-label={`Include ${opt.label} in comparison`}
-                className="w-3.5 h-3.5 rounded border-slate-300 accent-indigo-600"
-              />
-              {opt.label}
-            </label>
-          );
-        })}
+      {/* ── SELECTED VARIANT DETAILS ── */}
+      <div className="bg-white rounded-2xl border border-emerald-300 ring-1 ring-emerald-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50/60 border-b border-emerald-200 flex-wrap">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-none" />
+          <span className="text-sm font-bold text-slate-900">Selected Plan · {selOpt.label} — {selStratG.name}</span>
+          {selStratG.badge && (
+            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wider ${BADGE_STYLE[selStratG.badge]}`}>
+              {selStratG.badge}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-x-2 gap-y-1 flex-wrap">
+            {selOpt.iuts.map((leg, i) => (
+              <span key={i} className="inline-flex items-center gap-1">
+                <PlantBadge plant={leg.from} sm /><ArrowRight className="w-3 h-3 text-indigo-400" /><PlantBadge plant={leg.to} sm />
+              </span>
+            ))}
+          </span>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-sm font-bold text-slate-900">{fmt(selCostG)}</div>
+              {selSavingG !== null
+                ? <div className="text-[10px] font-semibold text-emerald-600">↓ {fmt(selSavingG)} vs No Action</div>
+                : <div className="text-[10px] font-semibold text-slate-400">baseline</div>}
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-bold text-slate-800">{selStratG.days}d</div>
+              <div className="text-[10px] text-slate-400">till {selStratG.endDate}</div>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 bg-slate-50/40">
+          <StrategyDetail opt={selOpt} strat={selStratG} />
+        </div>
       </div>
 
       {/* ── COMPARISON TABLE — options side by side ── */}
@@ -929,9 +942,7 @@ export default function PlanComparisonPage() {
               </th>
               {visibleOpts.map((opt) => {
                 const isExpanded = expandedOpts.has(opt.id);
-                const selStrat = STRATEGIES.find((s) => s.key === stratSelection[opt.id])!;
-                const selCost = stratCost(opt, selStrat);
-                const selSaving = selStrat.key === 'no-action' ? null : noActionCost(opt) - selCost;
+                const isSelOpt = selected.optId === opt.id;
                 if (!isExpanded) {
                   return (
                     <th key={opt.id} className="px-2 py-3 text-left align-top w-24 bg-slate-50/80">
@@ -967,17 +978,19 @@ export default function PlanComparisonPage() {
                           ))}
                         </div>
                         <div className="text-xs font-bold text-slate-700 mt-1">{fmt(opt.totalCost)}<span className="font-normal text-slate-400 text-[10px]"> base</span></div>
-                        {/* Selected strategy details */}
-                        <div className="mt-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1">
-                          <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-                            <CheckCircle2 className="w-3 h-3" />Selected · {selStrat.name}
+                        {/* Selected marker — only on the option holding the selection */}
+                        {isSelOpt && (
+                          <div className="mt-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-1">
+                            <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                              <CheckCircle2 className="w-3 h-3" />Selected · {selStratG.name}
+                            </div>
+                            <div className="text-[10px] font-bold text-slate-800 mt-0.5">
+                              {fmt(selCostG)}
+                              {selSavingG !== null && <span className="font-semibold text-emerald-600"> · ↓ {fmt(selSavingG)}</span>}
+                              <span className="font-normal text-slate-400"> · {selStratG.days}d</span>
+                            </div>
                           </div>
-                          <div className="text-[10px] font-bold text-slate-800 mt-0.5">
-                            {fmt(selCost)}
-                            {selSaving !== null && <span className="font-semibold text-emerald-600"> · ↓ {fmt(selSaving)}</span>}
-                            <span className="font-normal text-slate-400"> · {selStrat.days}d</span>
-                          </div>
-                        </div>
+                        )}
                       </div>
                       <button
                         onClick={() => toggleOpt(opt.id)}
@@ -1076,25 +1089,12 @@ export default function PlanComparisonPage() {
                         )}
                       </div>
                       <div className="text-[10px] text-slate-400 mt-1 ml-6">{strat.days}d · till {strat.endDate}</div>
-                      <label
-                        onClick={(e) => e.stopPropagation()}
-                        className="ml-6 mt-1 inline-flex items-center gap-1.5 cursor-pointer select-none text-[10px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={compareKeys.includes(strat.key)}
-                          onChange={() => toggleCompare(strat.key)}
-                          aria-label={`Add ${strat.name} to comparison`}
-                          className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600"
-                        />
-                        Compare
-                      </label>
                     </td>
 
                     {/* One cell per option */}
                     {visibleOpts.map((opt) => {
                       const stratId = `${opt.id}:${strat.key}`;
-                      const sSelected = stratSelection[opt.id] === strat.key;
+                      const sSelected = selected.optId === opt.id && selected.stratKey === strat.key;
                       const sOpen = openStrats.has(stratId);
                       const cost = stratCost(opt, strat);
                       const saving = strat.key === 'no-action' ? null : noActionCost(opt) - cost;
@@ -1111,9 +1111,9 @@ export default function PlanComparisonPage() {
                         >
                           <div className="flex items-start gap-2">
                             <button
-                              onClick={(e) => { e.stopPropagation(); setStratSelection((prev) => ({ ...prev, [opt.id]: strat.key })); }}
+                              onClick={(e) => { e.stopPropagation(); setSelected({ optId: opt.id, stratKey: strat.key }); }}
                               aria-pressed={sSelected}
-                              aria-label={`Select strategy ${strat.name} for ${opt.label}`}
+                              aria-label={`Select ${strat.name} from ${opt.label} as the plan`}
                               className="flex-none mt-0.5"
                             >
                               <span className={`block w-4 h-4 rounded-full border-2 transition-colors ${
@@ -1135,6 +1135,19 @@ export default function PlanComparisonPage() {
                                 {sOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                                 {sOpen ? 'Hide details' : 'More details'}
                               </button>
+                              <label
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 flex items-center gap-1 cursor-pointer select-none text-[10px] font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={comparePairs.includes(stratId)}
+                                  onChange={() => toggleComparePair(stratId)}
+                                  aria-label={`Compare ${strat.name} from ${opt.label}`}
+                                  className="w-3 h-3 rounded border-slate-300 accent-indigo-600"
+                                />
+                                Compare
+                              </label>
                             </div>
                           </div>
                         </td>
@@ -1164,8 +1177,8 @@ export default function PlanComparisonPage() {
 
       {/* ── SCENARIO COMPARISON ── */}
       <ScenarioComparison
-        comparedKeys={compareKeys}
-        onRemove={(key) => setCompareKeys((prev) => prev.filter((k) => k !== key))}
+        comparedPairs={comparePairs}
+        onRemove={(pair) => setComparePairs((prev) => prev.filter((k) => k !== pair))}
       />
 
       {/* Legend */}
